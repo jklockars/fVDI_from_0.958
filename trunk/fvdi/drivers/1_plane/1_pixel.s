@@ -1,17 +1,24 @@
-*-------------------------------------------------------*
-*	Draw in single plane modes			*	
-*-------------------------------------------------------*
+*****
+* Single plane pixel get/set
+*
+* $Id: 1_pixel.s,v 1.2 2002-07-03 21:43:25 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
+* This software is licensed under the GNU General Public License.
+* Please, see LICENSE.TXT for further information.
+*****
+
 both		equ	1	; Write in both FastRAM and on screen
 longs		equ	1
 get		equ	1
 mul		equ	1	; Multiply rather than use table
 shift		equ	1
 
-	include		"..\pixelmac.dev"
-	include		"..\..\vdi.inc"
+	include		"pixelmac.dev"
+	include		"vdi.inc"
 
-	xdef		write_pixel
-	xdef		read_pixel
+	xdef		_write_pixel
+	xdef		_read_pixel
 
 	xref		get_colour_masks
 
@@ -31,7 +38,7 @@ shift		equ	1
 *	d1	x or table address
 *	d2	y or table length (high) and type (0 - coordinates)
 * XXX:	?
-write_pixel:
+_write_pixel:
 	move.l		a1,d3
 	bclr		#0,d3
 	bne		.unknown_write
@@ -155,7 +162,7 @@ write_pixel:
 * In:	a1	VDI struct, source MFDB
 *	d1	x
 *	d2	y
-read_pixel:
+_read_pixel:
 	move.l		4(a1),d0
 	beq		.normal
 

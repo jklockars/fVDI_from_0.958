@@ -1,6 +1,13 @@
-*-------------------------------------------------------*
-*	Draw in single plane modes			*	
-*-------------------------------------------------------*
+*****
+* Single plane text drawing
+*
+* $Id: 1_text.s,v 1.2 2002-07-03 21:43:25 johan Exp $
+*
+* Copyright 1998-2002, Johan Klockars 
+* This software is licensed under the GNU General Public License.
+* Please, see LICENSE.TXT for further information.
+*****
+
 both		set	1	; Write in both FastRAM and on screen
 longs		equ	1
 get		equ	1
@@ -10,8 +17,8 @@ shift		equ	1
 only_16		equ	1
 
 
-	include		"..\pixelmac.dev"
-	include		"..\..\vdi.inc"
+	include		"pixelmac.dev"
+	include		"vdi.inc"
 
 	xdef		text_area,_text_area
 
