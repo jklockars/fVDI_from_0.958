@@ -1,3 +1,7 @@
+2003-01-21 - standa <opichals@seznam.cz>
+ARAnyM driver NatFeat calls dispatch casts added in c_mouse_draw
+call.
+
 2002-10-21 - johan
 ARAnyM driver NatFeat support.
 Miscellaneous minor improvements and cleanups for ARAnyM driver.
