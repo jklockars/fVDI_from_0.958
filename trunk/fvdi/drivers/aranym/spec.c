@@ -5,8 +5,7 @@
 
 extern long CDECL c_get_videoramaddress(void); /* STanda */
 extern void CDECL c_set_resolution(long width, long height, long depth, long freq); /* STanda */
-extern void CDECL debug_aranym(long freq); /* STanda */
-
+extern int nf_initialize();
 
 #if 0
 char r_16[] = {5, 15, 14, 13, 12, 11};
@@ -45,28 +44,28 @@ char b_16[] = {5, 8, 9, 10, 11, 12};
 char r_16f[] = {5, 11, 12, 13, 14, 15};
 char g_16f[] = {6, 5, 6, 7, 8, 9, 10};
 char b_16f[] = {5, 0, 1, 2, 3, 4};
-char r_32f[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
 char r_32[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
-char b_32f[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
-char g_32f[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
 char g_32[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
 char b_32[] = {8,  0,  1,  2,  3,  4,  5,  6,  7};
+char r_32f[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
+char g_32f[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
+char b_32f[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
 #endif
 char none[] = {0};
 
 Mode mode[7] = /* FIXME: big and little endian differences. */
 	{
-	 { 1, CHUNKY | CHECK_PREVIOUS,               {r_8,  g_8,  b_8,  none, none, none}, 0, 2, 2, 1},
-	 { 2, CHUNKY | CHECK_PREVIOUS,               {r_8,  g_8,  b_8,  none, none, none}, 0, 2, 2, 1},
-	 { 4, CHUNKY | CHECK_PREVIOUS,               {r_8,  g_8,  b_8,  none, none, none}, 0, 2, 2, 1},
-	 { 8, CHUNKY | CHECK_PREVIOUS,               {r_8,  g_8,  b_8,  none, none, none}, 0, 2, 2, 1},
-	 {16, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_16f, g_16f, b_16f, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_565*/
-	 {24, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32f, g_32f, b_32f, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_RGB*/
-	 {32, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32, g_32, b_32, none, none, none}, 0, 2, 2, 1}}; /*DEPTH_SUPPORT_ARGB*/
+	 { 1, CHUNKY | CHECK_PREVIOUS,               {r_8,   g_8,   b_8,   none, none, none}, 0, 2, 2, 1},
+	 { 2, CHUNKY | CHECK_PREVIOUS,               {r_8,   g_8,   b_8,   none, none, none}, 0, 2, 2, 1},
+	 { 4, CHUNKY | CHECK_PREVIOUS,               {r_8,   g_8,   b_8,   none, none, none}, 0, 2, 2, 1},
+	 { 8, CHUNKY | CHECK_PREVIOUS,               {r_8,   g_8,   b_8,   none, none, none}, 0, 2, 2, 1},
+	 {16, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_16f, g_16f, b_16f, none, none, none}, 0, 2, 2, 1},
+	 {24, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32f, g_32f, b_32f, none, none, none}, 0, 2, 2, 1},
+	 {32, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32,  g_32,  b_32,  none, none, none}, 0, 2, 2, 1}};
 
 extern Device device;
 
-char driver_name[] = "ARAnyM 2001-10-30 (|| bit)";
+char driver_name[] = "NatFeat/ARAnyM 2002-10-21 (xx bit, shadow)";
 
 struct {
 	short used; /* Whether the mode option was used or not. */
@@ -96,7 +95,8 @@ Mode *graphics_mode = &mode[1];
 
 short debug = 0;
 
-short shadow = 0;
+short shadow = 1;
+short nf_check = 1;
 
 extern void *c_write_pixel;
 extern void *c_read_pixel;
@@ -127,31 +127,24 @@ void *get_colour_r  = &c_get_colour_16;
 #if 0
 short cache_img = 0;
 short cache_from_screen = 0;
-
-long mode_no = 0;
-
-extern short max_mode;
-
-extern Modes mode_tab[];
-
-char *preset[] = {"640x480x8@60	   ", "800x600x8@70    ", "1024x768x8@70   ", "1152x864x8@70   ",
-                  "800x600x16@70   ", "1024x768x16@70  ", "1152x864x16@70  ", "1280x1024x16@70 ",
-                  "800x600x32@70   ", "1024x768x32@70  "};
 #endif
 
 long set_mode(const char **ptr);
+long set_scrninfo(const char **ptr);
 
 
 Option options[] = {
 #if 0
-   {"aesbuf",     set_aesbuf,     -1},  /* aesbuf address, set AES background buffer address */
-   {"screen",	  set_screen,	  -1},  /* screen address, set old screen address */
-   {"imgcache",	  &cache_img,	   1},  /* imgcache, turn on caching of images blitted to the screen */
-   {"screencache",&cache_from_screen, 1},  /* screencache, turn on caching of images blitted from the screen */
+	{"aesbuf",     set_aesbuf,        -1},  /* aesbuf address, set AES background buffer address */
+	{"screen",     set_screen,        -1},  /* screen address, set old screen address */
+	{"imgcache",   &cache_img,         1},  /* imgcache, turn on caching of images blitted to the screen */
+	{"screencache",&cache_from_screen, 1},  /* screencache, turn on caching of images blitted from the screen */
 #endif
-   {"mode",       set_mode,       -1},  /* mode key/<n>/WIDTHxHEIGHTxDEPTH@FREQ */
-   {"shadow",     &shadow,         1},  /* shadow, use a FastRAM buffer */
-   {"debug",      &debug,          2}   /* debug, turn on debugging aids */
+	{"mode",       set_mode,          -1},  /* mode WIDTHxHEIGHTxDEPTH@FREQ */
+	{"noshadow",   &shadow,            0},  /* noshadow, do not use a RAM buffer */
+	{"assumenf",   &nf_check,          0},  /* assumenf, do not look for __NF cookie */
+	{"scrninfo",   set_scrninfo,      -1},  /* scrninfo fb, make vq_scrninfo return values regarding actual fb layout */
+	{"debug",      &debug,             2}   /* debug, turn on debugging aids */
 };
 
 
@@ -180,81 +173,61 @@ char *get_num(char *token, short *num)
 long set_mode(const char **ptr)
 {
 	char token[80], *tokenptr;
-	short depth;
 	
 	if (!(*ptr = access->funcs.skip_space(*ptr)))
 		;		/* *********** Error, somehow */
 	*ptr = access->funcs.get_token(*ptr, token, 80);
 
-
-#if 1
 	tokenptr = token;
 	tokenptr = get_num(tokenptr, &resolution.width);
 	tokenptr = get_num(tokenptr, &resolution.height);
 	tokenptr = get_num(tokenptr, &resolution.bpp);
 	tokenptr = get_num(tokenptr, &resolution.freq);
 
-	depth = (resolution.bpp / 8) - 1;
 	resolution.used = 1;
-#else
-	rage_mode = -1;
-	if (access->funcs.equal(token, "key"))
-		rage_mode = access->funcs.misc(0, 0, 0) - '0';		/* Fetch key value */
-	else if (!token[1])
-		rage_mode = access->funcs.atol(token);		/* Single character mode */
-	if (rage_mode != -1)
-		tokenptr = preset[rage_mode];
-	else
-		tokenptr = token;
-	rage_mode = search_mode(tokenptr);
-
-	if ((rage_mode < 0) || (rage_mode > max_mode))
-		rage_mode = 0;
-
-	depth = (res_info[rage_mode].pll[3] & 3) - 1;
-#endif
-
 	
 	switch (resolution.bpp) {
-		case 1:	graphics_mode = &mode[0];
-				break;
-		case 2:	graphics_mode = &mode[1];
-				break;
-		case 4:	graphics_mode = &mode[2];
-				break;
-		default:
-				graphics_mode = &mode[depth+3];
-				break;
+	case 1:
+		graphics_mode = &mode[0];
+		break;
+	case 2:
+		graphics_mode = &mode[1];
+		break;
+	case 4:
+		graphics_mode = &mode[2];
+		break;
+	default:
+		resolution.bpp = 16;		/* Default as 16 bit */
+	case 8:
+	case 16:
+	case 24:
+	case 32:
+		graphics_mode = &mode[resolution.bpp / 8 + 2];
+		break;
 	}
 
-	switch (depth) {
-	case 0:
+	switch (resolution.bpp) {
+	case 8:
 		set_colours_r = &c_set_colours_8;
 		get_colours_r = &c_get_colours_8;
 		get_colour_r  = &c_get_colour_8;
-#if 0
 		driver_name[27] = '8';
 		driver_name[28] = ' ';
-#endif
 		break;
-	case 1:
+	case 16:
 		set_colours_r = &c_set_colours_16;
 		get_colours_r = &c_get_colours_16;
 		get_colour_r  = &c_get_colour_16;
-#if 0
 		driver_name[27] = '1';
 		driver_name[28] = '6';
-#endif
 		break;
-	case 2:
-	case 3:
+	case 24:
+	case 32:
 		set_colours_r = &c_set_colours_32;
 		get_colours_r = &c_get_colours_32;
 		get_colour_r  = &c_get_colour_32;
-#if 0
 		driver_name[27] = '3';
 		driver_name[28] = '2';
-#endif
 		break;
 	}
 
@@ -289,54 +262,98 @@ long set_screen(const char **ptr)
 #endif
 
 
+long set_scrninfo(const char** ptr)
+{
+	char token[80];
+
+	if (!(*ptr = access->funcs.skip_space(*ptr)))
+		;		/* *********** Error, somehow */
+	*ptr = access->funcs.get_token(*ptr, token, 80);
+
+	if (access->funcs.equal(token, "fb")) {
+		mode[4].bits.red = r_16;
+		mode[4].bits.green = g_16;
+		mode[4].bits.blue = b_16;
+		mode[4].org = 0x81;
+		mode[5].bits.red = r_32;
+		mode[5].bits.green = g_32;
+		mode[5].bits.blue = b_32;
+		mode[5].org = 0x81;
+		mode[6].bits.red = r_32;
+		mode[6].bits.green = g_32;
+		mode[6].bits.blue = b_32;
+		mode[6].org = 0x81;
+	} else {
+		mode[4].bits.red = r_16f;
+		mode[4].bits.green = g_16f;
+		mode[4].bits.blue = b_16f;
+		mode[4].org = 0x01;
+		mode[5].bits.red = r_32f;
+		mode[5].bits.green = g_32f;
+		mode[5].bits.blue = b_32f;
+		mode[5].org = 0x81;
+		mode[6].bits.red = r_32f;
+		mode[6].bits.green = g_32f;
+		mode[6].bits.blue = b_32f;
+		mode[6].org = 0x01;
+	}
+
+	if (me && me->device)
+		setup_scrninfo(me->device, graphics_mode);
+
+	return 1;
+}
+
+
 /*
  * Handle any driver specific parameters
  */
 long check_token(char *token, const char **ptr)
 {
-   int i;
-   int normal;
-   char *xtoken;
+	int i;
+	int normal;
+	char *xtoken;
 
-   xtoken = token;
-   switch (token[0]) {
-   case '+':
-	  xtoken++;
-	  normal = 1;
-	  break;
-   case '-':
-	  xtoken++;
-	  normal = 0;
-	  break;
-   default:
-	  normal = 1;
-	  break;
-   }
-   for(i = 0; i < sizeof(options) / sizeof(Option); i++) {
-	  if (access->funcs.equal(xtoken, options[i].name)) {
-	 switch (options[i].type) {
-	 case -1:	  /* Function call */
-		return ((long (*)(const char **))options[i].varfunc)(ptr);
-	 case 0:	  /* Default 1, set to 0 */
-		*(short *)options[i].varfunc = 1 - normal;
-		return 1;
-	 case 1:	 /* Default 0, set to 1 */
-		*(short *)options[i].varfunc = normal;
-		return 1;
-	 case 2:	 /* Increase */
-		*(short *)options[i].varfunc += -1 + 2 * normal;
-		return 1;
-	 case 3:
-	   if (!(*ptr = access->funcs.skip_space(*ptr)))
-		  ;	 /* *********** Error, somehow */
-		*ptr = access->funcs.get_token(*ptr, token, 80);
-	   *(short *)options[i].varfunc = token[0];
-	   return 1;
-	 }
-	  }
-   }
+	xtoken = token;
+	switch (token[0]) {
+	case '+':
+		xtoken++;
+		normal = 1;
+		break;
+	case '-':
+		xtoken++;
+		normal = 0;
+		break;
+	default:
+		normal = 1;
+		break;
+	}
 
-   return 0;
+	for(i = 0; i < sizeof(options) / sizeof(Option); i++) {
+		if (access->funcs.equal(xtoken, options[i].name)) {
+			switch (options[i].type) {
+			case -1:	  /* Function call */
+				return ((long (*)(const char **))options[i].varfunc)(ptr);
+			case 0:	  /* Default 1, set to 0 */
+				*(short *)options[i].varfunc = 1 - normal;
+				return 1;
+			case 1:	 /* Default 0, set to 1 */
+				*(short *)options[i].varfunc = normal;
+				return 1;
+			case 2:	 /* Increase */
+				*(short *)options[i].varfunc += -1 + 2 * normal;
+				return 1;
+			case 3:
+				if (!(*ptr = access->funcs.skip_space(*ptr)))
+					;	 /* *********** Error, somehow */
+				*ptr = access->funcs.get_token(*ptr, token, 80);
+				*(short *)options[i].varfunc = token[0];
+				return 1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 
@@ -350,11 +367,24 @@ void CDECL initialize(Virtual *vwk)
 	Workstation *wk;
 	int old_palette_size;
 	Colour *old_palette_colours;
+	long fb_base;
 
-	long fb_base = c_get_videoramaddress();
-#if 0
-	int i;
-#endif
+	if (nf_check) {
+		long nf_value;
+		nf_value = access->funcs.get_cookie("__NF", 0);
+		if (nf_value == -1) {
+			access->funcs.puts("  Could not find NatFeat cookie!");
+			access->funcs.puts("\x0d\x0a");
+			return;
+		}
+	}
+	if (!nf_initialize()) {
+		access->funcs.puts("  No or incompatible NatFeat fVDI!");
+		access->funcs.puts("\x0d\x0a");
+		return;
+	}
+
+	fb_base = c_get_videoramaddress();
 
 #if 0
 	debug = access->funcs.misc(0, 1, 0);
@@ -379,8 +409,9 @@ void CDECL initialize(Virtual *vwk)
 		wk->screen.mfdb.height = resolution.height;
 	} else {
 		/* FIXME: Hack to get it working after boot in less than 16bit */
-		resolution.bpp = graphics_mode->bpp; /* 16bit bz default */
+		resolution.bpp = graphics_mode->bpp; /* 16 bit by default */
 	}
+
 
 	/*
 	 * Some things need to be changed from the	
@@ -396,7 +427,7 @@ void CDECL initialize(Virtual *vwk)
 
 	wk->screen.look_up_table = 0;			/* Was 1 (???)	Shouldn't be needed (graphics_mode) */
 	wk->screen.mfdb.standard = 0;
-	if (wk->screen.pixel.width > 0)		   /* Starts out as screen width */
+	if (wk->screen.pixel.width > 0)			/* Starts out as screen width */
 		wk->screen.pixel.width = (wk->screen.pixel.width * 1000L) / wk->screen.mfdb.width;
 	else								   /*	or fixed DPI (negative) */
 		wk->screen.pixel.width = 25400 / -wk->screen.pixel.width;
@@ -404,7 +435,7 @@ void CDECL initialize(Virtual *vwk)
 		wk->screen.pixel.height = (wk->screen.pixel.height * 1000L) / wk->screen.mfdb.height;
 	else									/*	 or fixed DPI (negative) */
 		wk->screen.pixel.height = 25400 / -wk->screen.pixel.height;
-
+	
 
 	/*
 	 * This code needs more work.
@@ -437,18 +468,9 @@ void CDECL initialize(Virtual *vwk)
 	device.byte_width = wk->screen.wrap;
 	device.address = wk->screen.mfdb.address;
 
-
-#if 0
-	debug_aranym(wk->screen.mfdb.width); /* STanda: ARAnyM emul_op debug call (20) */
-	debug_aranym(wk->screen.mfdb.bitplanes); /* STanda: ARAnyM emul_op debug call (20) */
-#endif
-
-	if (!wk->screen.shadow.address)
-		driver_name[20] = 0;
-
-	if (debug > 1) {
-		access->funcs.puts("  RageII initialization completed!");
-		access->funcs.puts("\x0d\x0a");
+	if (!wk->screen.shadow.address) {
+		driver_name[33] = ')';
+		driver_name[34] = 0;
 	}
 }
 
