@@ -1,7 +1,9 @@
 /*
  * fVDI integer sin/cos/sqrt code
  *
- * The sin/cos part is almost unmodified from code with an
+ * $Id: math.c,v 1.2 2003-04-06 13:45:23 johan Exp $
+ *
+ * The sin/cos part is an optimized version of code with an
  * original copyright as follows.
  * Johan Klockars, 1999
  */
@@ -30,7 +32,6 @@
  * Integer sine and cosine functions.
  */
 
-
 #define HALFPI	900 
 #define PI	1800
 #define TWOPI	3600
@@ -51,61 +52,48 @@ static short sin_tbl[92] = {
 		32269, 32364, 32448, 32523, 32587, 32642, 32687, 32722,
 		32747, 32762, 32767, 32767 
 		};
+
 /*
  * Returns integer sin between -32767 and 32767.
  * Uses integer lookup table sintable^[].
  * Expects angle in tenths of degree 0 - 3600.
  * Assumes positive angles only.
  */
-short Isin(short angle) 
+short Isin(unsigned short angle) 
 {
-	short  direction;		/* When checking quadrants, must keep track of direction in array. */
-	short  index, remainder, tmpsin;	/* Holder for sin. */
-	short  quadrant;		/* 0-3 = 1st, 2nd, 3rd, 4th. */
+	short index;
+	unsigned short remainder, tmpsin;	/* Holder for sin. */
+	short  half;			/* 0-1 = 1st/2nd, 3rd/4th. */
+	short *table;
 
-	while (angle > 3600) 
-		angle -= 3600;
-	quadrant = angle / HALFPI;
-	direction = 1;
-
-	switch (quadrant) {
-	case 0:
-		break;
-	case 1:
-		angle = PI - angle;
-		break;
-	case 2:
+	half = 0;
+	while (angle >= PI) {
+		half ^= 1;
 		angle -= PI;
-		break;
-	case 3:
-		angle = TWOPI - angle;
-		break;
-	case 4:
-		angle -= TWOPI;
-		break;
 	}
+	if (angle >= HALFPI)
+		angle = PI - angle;	
 
 	index = angle / 10;
 	remainder = angle % 10;
-	tmpsin = sin_tbl[index];
-	if (remainder != 0)   /* Add interpolation. */
-		tmpsin += ((sin_tbl[index + 1] - tmpsin) * remainder) / 10;
-		if (quadrant > 1) 
-			tmpsin = -tmpsin;
+	table = &sin_tbl[index];
+	tmpsin = *table++;
+	if (remainder)		/* Add interpolation. */
+		tmpsin += (unsigned short)((unsigned short)(*table - tmpsin) * remainder) / 10;
 
-	return tmpsin;
+	if (half > 0)
+		return -tmpsin;
+	else
+		return tmpsin;
 }
+
 
 /*
  * Return integer cos between -32767 and 32767.
  */
 short Icos(short angle) 
 {
-	angle = angle + HALFPI;
-	if (angle > TWOPI)
-		angle -= TWOPI;
-
-	return Isin(angle);
+	return Isin(angle + HALFPI);
 }
 
 
@@ -115,15 +103,15 @@ static ulong_t isqrt(ulong_t N)
 {
         unsigned long l2, u, v, u2, n;
 
-        if (2 > N) {
+        if (N < 2)
                 return N;
-        }
+
         u = N;
         l2 = 0;
         /* 1/2 * log_2 N = highest bit in the result */
-        while ((u >>= 2)) {
+        while ((u >>= 2))
                 l2++;
-        }
+
         u = 1L << l2;
         v = u;
         u2 = u << l2;
@@ -136,9 +124,11 @@ static ulong_t isqrt(ulong_t N)
                         u2 = n;
                 }
         }
+
         return u;
 }
 #endif
+
 
 #if 1
 short isqrt(unsigned long x)
