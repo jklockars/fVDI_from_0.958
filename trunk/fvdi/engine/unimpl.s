@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.6 2003-04-06 13:36:45 johan Exp $
+* $Id: unimpl.s,v 1.7 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,15 +19,7 @@ transparent	equ	1		; Fall through?
 *
 *****
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	redirect
 	xref	_no_vex

@@ -3,14 +3,14 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.1 2004-10-17 17:53:54 johan Exp $
+ * $Id: utility.h,v 1.2 2004-10-17 21:44:11 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
 
-int init_utility(void);
+long init_utility(void);
 
 /*
  * Memory access
@@ -23,14 +23,14 @@ long get_l(long addr);
  * Cookie and XBRA access
  */
 long get_cookie(const unsigned char *cname, long super);
-int set_cookie(const unsigned char *name, long value);
-int remove_xbra(long vector, const unsigned char *name);
+long set_cookie(const unsigned char *name, long value);
+long remove_xbra(long vector, const unsigned char *name);
 void check_cookies(void);
 
 /*
  * Memory pool allocation (from set of same sized blocks)
  */
-int initialize_pool(long size, long n);
+long initialize_pool(long size, long n);
 char *allocate_block(long size);
 void free_block(void *addr);
 
@@ -49,7 +49,7 @@ long equal(const char *str1, const char *str2);
  * Character numerics
  */
 long numeric(long ch);
-int check_base(char ch, int base);
+long check_base(char ch, long base);
 long atol(const char *text);
 void ltoa(char *buf, long n, unsigned long base);
 long str2long(const unsigned char *text);

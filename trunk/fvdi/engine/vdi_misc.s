@@ -11,15 +11,7 @@ always_clip_p	equ	1		; Always clip points?
 always_clip_l	equ	0		; Always clip lines?
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xdef	clip_rect,clip_point,setup_blit,setup_plot,clip_line
 

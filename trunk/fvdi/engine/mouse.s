@@ -16,15 +16,7 @@ mouse_interval	equ	1		; Interval between mouse updates
 sven_mouse	equ	1		; Use Sven's timer draw code?
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	redirect
 	xref	_malloc,_free

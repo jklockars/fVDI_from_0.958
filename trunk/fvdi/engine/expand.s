@@ -20,11 +20,7 @@ mul		equ	1	; Multiply rather than use table
 shift		equ	1
 
 	include		"vdi.inc"
-  ifne lattice
-	include		"pixelmac.dev"
-  else
-	include		"pixelmac.tas"
-  endc
+	include		"pixelmac.inc"
 
 	xdef		expand_area,_expand_area
 

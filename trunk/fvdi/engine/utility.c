@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.8 2004-10-17 17:52:55 johan Exp $
+ * $Id: utility.c,v 1.9 2004-10-17 21:44:11 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -140,7 +140,7 @@ long get_cookie(const unsigned char *cname, long super)
  * Follows an XBRA chain and removes a link if found.
  * Returns 0 if XBRA id not found.
  */
-int remove_xbra(long vector, const unsigned char *name)
+long remove_xbra(long vector, const unsigned char *name)
 {
    long link, *addr, name_l, xbra_l;
    link = vector;
@@ -166,7 +166,7 @@ int remove_xbra(long vector, const unsigned char *name)
  * Create/expand jar if needed.
  * Returns != 0 if an old cookie was replaced.
  */
-int set_cookie(const unsigned char *name, long value)
+long set_cookie(const unsigned char *name, long value)
 {
    long *addr, *old_addr;
    long name_l;
@@ -216,7 +216,7 @@ int set_cookie(const unsigned char *name, long value)
  * Initialize an internal memory pool.
  * Returns zero on error.
  */
-int initialize_pool(long size, long n)
+long initialize_pool(long size, long n)
 {
    char *addr, *ptr;
 
@@ -353,7 +353,7 @@ long numeric(long ch)
 }
 
 
-int check_base(char ch, int base)
+long check_base(char ch, long base)
 {
    if (numeric(ch) && (ch < '0' + base))
       return ch - '0';
@@ -695,7 +695,7 @@ long get_size(const char *name)
 }
 
 
-int init_utility(void)
+long init_utility(void)
 {
    long tmp;
    

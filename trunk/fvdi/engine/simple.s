@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.5 2004-10-17 15:36:48 johan Exp $
+* $Id: simple.s,v 1.6 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -15,15 +15,7 @@ neg_pal_n	equ	9		; Number of negative palette entries
 HANDLES		equ	32		; Max number of handles
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	_v_opnwk,_v_opnvwk,_v_clsvwk,_v_clswk
 	xref	_old_gdos

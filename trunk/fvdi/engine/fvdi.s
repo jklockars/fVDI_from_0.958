@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.4 2002-07-10 22:07:23 johan Exp $
+* $Id: fvdi.s,v 1.5 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -30,15 +30,7 @@ STACK_SIZE	equ	4096		; Used to be 2048
 fvdi_magic	equ	1969
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	_startup
 	xref	_basepage

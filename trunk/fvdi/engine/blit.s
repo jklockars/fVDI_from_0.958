@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.7 2002-08-03 12:24:46 johan Exp $
+* $Id: blit.s,v 1.8 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -12,15 +12,7 @@ transparent	equ	1		; Fall through?
 lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	clip_rect
 	xref	setup_blit,setup_plot,tos_colour

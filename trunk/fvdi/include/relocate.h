@@ -40,10 +40,10 @@ typedef struct _Funcs {
 	void CDECL (*error)(const char *text1, const char *text2);
 	void* CDECL (*malloc)(long size, long type);			/* Uses Mxalloc if possible */
 	long CDECL (*free)(void *addr);
-	void CDECL (*puts)(char *text);
+	void CDECL (*puts)(const char *text);
 	void CDECL (*ltoa)(char *buf, long n, unsigned long base);
 	long CDECL (*get_cookie)(const unsigned char *cname, long super);
-	long  CDECL (*set_cookie)(const unsigned char *cname, long value);
+	long CDECL (*set_cookie)(const unsigned char *cname, long value);
 	long CDECL (*fixup_font)(Fontheader *font, char *buffer, long flip);
 	long CDECL (*unpack_font)(Fontheader *header, long format);
 	long CDECL (*insert_font)(Fontheader **first_font, Fontheader *new_font);
@@ -51,7 +51,7 @@ typedef struct _Funcs {
 	char* CDECL (*allocate_block)(long size);
 	void CDECL (*free_block)(void *address);
 	void CDECL (*cache_flush)(void);
-	long CDECL (*misc)(long func, long par, char *token);
+	long CDECL (*misc)(long func, long par, const char *token);
 } Funcs;
 
 typedef struct _Vars {

@@ -9,15 +9,7 @@
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xdef	vsm_color,vsm_height,vsm_type,vqm_attributes
 

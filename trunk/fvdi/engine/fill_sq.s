@@ -9,15 +9,7 @@
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	_malloc
 

@@ -1,7 +1,7 @@
 *****
 * fVDI drawing functions
 *
-* $Id: draw.s,v 1.6 2004-10-17 17:52:55 johan Exp $
+* $Id: draw.s,v 1.7 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -13,15 +13,7 @@ transparent	equ	1		; Fall through?
 ;max_arc_count	equ	256
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	clip_point,clip_line,clip_rect
 	xref	setup_plot,tos_colour

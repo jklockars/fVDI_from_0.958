@@ -474,27 +474,41 @@ calc_addr macro	dreg,treg
 ;	move.w		(treg)+,d0
 	move.w		(\2)+,d0
 	sub.w		code_low(a7),d0
-  ifne	only_16
+   ifne	only_16
 	lsl.w		#4,d0
-  endc
-  ifeq	only_16
+   endc
+   ifeq	only_16
 	mulu		d4,d0
-  endc
+   endc
 ;	add.w		d0,dreg
 	add.w		d0,\1
 	endm
   else
+   ifne gas
+	.macro	calc_addr dreg,treg
+	move.w		(\treg)+,d0
+	sub.w		code_low(a7),d0
+    ifne	only_16
+	lsl.w		#4,d0
+    endc
+    ifeq	only_16
+	mulu		d4,d0
+    endc
+	add.w		d0,\dreg
+	.endm
+   else
 	macro	calc_addr dreg,treg
 	move.w		(treg)+,d0
 	sub.w		code_low(a7),d0
-  ifne	only_16
+    ifne	only_16
 	lsl.w		#4,d0
-  endc
-  ifeq	only_16
+    endc
+    ifeq	only_16
 	mulu		d4,d0
-  endc
+    endc
 	add.w		d0,dreg
 	endm
+   endc
   endc
 
 	dc.b		"display4"

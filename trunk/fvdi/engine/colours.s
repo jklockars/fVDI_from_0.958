@@ -1,7 +1,7 @@
 *****
 * fVDI colour functions
 *
-* $Id: colours.s,v 1.3 2003-04-06 13:46:32 johan Exp $
+* $Id: colours.s,v 1.4 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2000, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -13,15 +13,7 @@ transparent	equ	1		; Fall through?
 neg_pal_n	equ	9		; Number of negative palette entries
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref	_malloc,_free
 	xref	redirect

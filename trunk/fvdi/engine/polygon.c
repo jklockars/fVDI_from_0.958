@@ -1,7 +1,7 @@
 /*
  * fVDI polygon fill functions
  *
- * $Id: polygon.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ * $Id: polygon.c,v 1.4 2004-10-17 21:44:11 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -14,7 +14,7 @@
 #include "fvdi.h"
 #include "function.h"
 
-#if 0
+#ifdef __GNUC__
 #define SMUL_DIV(x,y,z)	((short)(((short)(x)*(long)((short)(y)))/(short)(z)))
 #else
  #ifdef __PUREC__

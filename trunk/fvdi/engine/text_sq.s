@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.3 2002-07-01 22:24:40 johan Exp $
+* $Id: text_sq.s,v 1.4 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -13,15 +13,7 @@ transparent	equ	1		; Fall through?
 SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	include	"vdi.inc"
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent

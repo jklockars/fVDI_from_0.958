@@ -3,12 +3,7 @@
 *============================================*
 
 	include	"compiler.inc"
-
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xref		_sub_call
 
@@ -35,7 +30,7 @@
 * 1 word to int_out
 *
 _appl_init:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#10,(a0)+
 	move.w		#0,(a0)+
 	move.w		#1,(a0)+
@@ -50,7 +45,7 @@ _appl_init:
 * 1 word to int_out
 *
 _appl_exit:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#19,(a0)+
 	move.w		#0,(a0)+
 	move.w		#1,(a0)+
@@ -66,7 +61,7 @@ _appl_exit:
 * 5 words to int_out
 *
 _wind_get:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#104,(a0)+
 	move.w		#2,(a0)+
 	move.w		#5,(a0)+
@@ -83,7 +78,7 @@ _wind_get:
 * handle = graf_handle();
 *
 _graf_handle:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#77,(a0)+
 	move.w		#0,(a0)+
 	move.w		#5,(a0)+
@@ -98,7 +93,7 @@ _graf_handle:
 * handle = call_v_opnwk(long dev_id, short *int_out, short *pts_out);
 *
 _call_v_opnwk:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#1,(a0)+
 	move.w		#0,(a0)+
 	addq.l		#2,a0
@@ -123,13 +118,13 @@ _call_v_opnwk:
 	move.l		#int_out,vdi_int_out_addr
 	move.l		#pts_out,vdi_pts_out_addr
 	moveq		#0,d0
-	move.w		control+12,d0
+	move.w		_control+12,d0
 	rts
 
 * handle = scall_v_opnwk(long dev_id, short *int_out, short *pts_out);
 *
 _scall_v_opnwk:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#1,(a0)+
 	move.w		#0,(a0)+
 	addq.l		#2,a0
@@ -154,13 +149,13 @@ _scall_v_opnwk:
 	move.l		#int_out,vdi_int_out_addr
 	move.l		#pts_out,vdi_pts_out_addr
 	moveq		#0,d0
-	move.w		control+12,d0
+	move.w		_control+12,d0
 	rts
 
 * handle = call_v_opnvwk(long handle, short *int_out, short *pts_out);
 *
 _call_v_opnvwk:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#100,(a0)+
 	move.w		#0,(a0)+
 	move.w		#6,(a0)+
@@ -188,13 +183,13 @@ _call_v_opnvwk:
 	move.l		#int_out,vdi_int_out_addr
 	move.l		#pts_out,vdi_pts_out_addr
 	moveq		#0,d0
-	move.w		control+12,d0
+	move.w		_control+12,d0
 	rts
 
 * void call_v_clsvwk(long handle);
 *
 _call_v_clsvwk:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#101,(a0)+
 	move.w		#0,(a0)+
 	move.w		#0,(a0)+
@@ -209,7 +204,7 @@ _call_v_clsvwk:
 * void vq_extnd(long handle, long info_flag, short *int_out, short *pts_out);
 *
 _vq_extnd:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#102,(a0)+
 	move.w		#0,(a0)+
 	move.w		#6,(a0)+
@@ -230,7 +225,7 @@ _vq_extnd:
 * void vq_color(long handle, long colour, long flag, short *int_out);
 *
 _vq_color:
-	lea		control,a0
+	lea		_control,a0
 	move.w		#26,(a0)+
 	move.w		#0,(a0)+
 	move.w		#0,(a0)+
@@ -277,13 +272,13 @@ _set_inout:
 *
 _vdi:
 	move.l		4(a7),d0
-	move.w		d0,control+12
+	move.w		d0,_control+12
 	move.l		8(a7),d0
-	move.w		d0,control
+	move.w		d0,_control
 	move.l		12(a7),d0
-	move.w		d0,control+2
+	move.w		d0,_control+2
 	move.l		16(a7),d0
-	move.w		d0,control+4
+	move.w		d0,_control+4
 	bsr		VDI
 	rts
 
@@ -291,13 +286,13 @@ _vdi:
 *
 _sub_vdi:
 	move.l		4(a7),d0
-	move.w		d0,control+12
+	move.w		d0,_control+12
 	move.l		8(a7),d0
-	move.w		d0,control
+	move.w		d0,_control
 	move.l		12(a7),d0
-	move.w		d0,control+2
+	move.w		d0,_control+2
 	move.l		16(a7),d0
-	move.w		d0,control+4
+	move.w		d0,_control+4
 	bsr		subVDI
 	rts
 
@@ -305,13 +300,13 @@ _sub_vdi:
 *
 _fvdi:
 	move.l		4(a7),d0
-	move.w		d0,control+12
+	move.w		d0,_control+12
 	move.l		8(a7),d0
-	move.w		d0,control
+	move.w		d0,_control
 	move.l		12(a7),d0
-	move.w		d0,control+2
+	move.w		d0,_control+2
 	move.l		16(a7),d0
-	move.w		d0,control+4
+	move.w		d0,_control+4
 	bsr		fVDI
 	rts
 
@@ -379,14 +374,14 @@ _linea_fonts:
 	data
 
 vdipb:
-vdi_control_addr:	dc.l	control
+vdi_control_addr:	dc.l	_control
 vdi_int_in_addr:	dc.l	int_in
 vdi_pts_in_addr:	dc.l	pts_in
 vdi_int_out_addr:	dc.l	int_out
 vdi_pts_out_addr:	dc.l	pts_out
 
 aespb:
-aes_control_addr:	dc.l	control
+aes_control_addr:	dc.l	_control
 aes_global_addr:	dc.l	global
 aes_int_in_addr:	dc.l	int_in
 aes_int_out_addr:	dc.l	int_out
@@ -396,7 +391,6 @@ aes_addr_out_addr:	dc.l	addr_out
 
 	bss
 
-control:
 _control:
 opcode:			ds.w	1
 sintin:			ds.w	1

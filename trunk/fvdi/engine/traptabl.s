@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.3 2002-07-01 22:25:28 johan Exp $
+* $Id: traptabl.s,v 1.4 2004-10-17 21:44:11 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -12,16 +12,7 @@ transparent	equ	1		; Fall through?
 
 
 	include	"vdi.inc"
-
-
-*
-* Macros
-*
-  ifne lattice
-	include	"macros.dev"
-  else
-	include	"macros.tas"
-  endc
+	include	"macros.inc"
 
 	xdef	default_functions,default_opcode5,default_opcode11
 	xdef	_default_functions,_default_opcode5,_default_opcode11

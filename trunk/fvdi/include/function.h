@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.1 2004-10-17 17:53:54 johan Exp $
+ * $Id: function.h,v 1.2 2004-10-17 21:44:11 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -17,8 +17,6 @@ extern void mouse_move(void);
 extern void mouse_timer(void);
 
 extern void bad_or_non_fvdi_handle(void);
-
-extern int initialize_pool(long size, long n);
 
 extern int load_prefs(Virtual *vwk, char *sysname);
 extern Virtual *initialize_vdi(void);

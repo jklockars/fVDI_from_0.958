@@ -1,7 +1,7 @@
 /*
  * fVDI Bezier code
  *
- * $Id: bezier.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ * $Id: bezier.c,v 1.4 2004-10-17 21:44:11 johan Exp $
  *
  * Copyright 1999-2001/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -112,6 +112,12 @@ extern short line_types[];
 	if (tmp > max)		\
 		max = tmp;	\
 }
+
+
+short CDECL calc_bez(char *marks, short *points, long flags,
+                     long maxpnt, long maxin, short **xmov, short **xpts,
+                     short *pnt_mv_cnt, short *x_used);
+
 
 /*================================================================
 	Internal static variables
