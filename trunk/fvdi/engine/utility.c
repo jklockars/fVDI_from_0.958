@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.6 2002-07-03 21:31:58 johan Exp $
+ * $Id: utility.c,v 1.7 2002-07-10 22:03:07 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -398,7 +398,7 @@ void puts(const char *text)
    if (debug_out == -2)
       Cconws(text);
    else if (debug_out == -1)
-      ((void (*)(const char *))&ARAnyM_out)(text);
+      ((void CDECL (*)(const char *))&ARAnyM_out)(text);
    else
       while (*text)
          Bconout(debug_out, *text++);
