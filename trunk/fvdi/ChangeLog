@@ -1,3 +1,7 @@
+2002-08-03 - johan
+Fixes to make the ARAnyM driver work with the new native API.
+A couple of minor bug fixes.
+
 2002-07-10 - johan
 Version bumped to 0.96 due to incompatibility with old drivers.
 Driver API updated to make it mostly independent of the fVDI structures.

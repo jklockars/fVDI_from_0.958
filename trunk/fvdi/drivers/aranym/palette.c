@@ -3,7 +3,9 @@
  */
 #include "fvdi.h"
 #include "relocate.h"
-extern void CDECL set_colour_hook(long paletteIndex, short red, short green, short blue, long tcWord); /* STanda */
+
+
+extern void CDECL c_set_colour_hook(long paletteIndex, long red, long green, long blue, long tcWord); /* STanda */
 
 #define ECLIPSE 0
 #define NOVA 0		/* 1 - byte swap 16 bit colour value (NOVA etc) */
@@ -174,9 +176,8 @@ SETNAME(Virtual *vwk, long start, long entries, unsigned short *requested, Colou
 				break;
 			}
 #endif
-			set_colour_hook(start + i, palette[start + i].vdi.red, palette[start + i].vdi.green,
+			c_set_colour_hook(start + i, palette[start + i].vdi.red, palette[start + i].vdi.green,
 			                palette[start + i].vdi.blue, (long)tc_word ); /* STanda */
-
 			*(PIXEL *)&palette[start + i].real = (PIXEL)tc_word;
 		}
 	} else {
@@ -217,11 +218,9 @@ SETNAME(Virtual *vwk, long start, long entries, unsigned short *requested, Colou
 				break;
 			}
 #endif
-			set_colour_hook(start + i, palette[start + i].vdi.red, palette[start + i].vdi.green,
+			c_set_colour_hook(start + i, palette[start + i].vdi.red, palette[start + i].vdi.green,
 			                palette[start + i].vdi.blue, (long)tc_word ); /* STanda */
-
 			*(PIXEL *)&palette[start + i].real = (PIXEL)tc_word;
 		}
 	}
 }
-

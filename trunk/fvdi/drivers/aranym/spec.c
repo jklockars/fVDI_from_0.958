@@ -2,22 +2,11 @@
 #include "relocate.h"
 #include "driver.h"
 
-#define ARANYM
 
-#ifdef ARANYM
-extern long CDECL get_videoramaddress(void); /* STanda */
-extern void CDECL set_resolution(long width, long height, long depth, long freq); /* STanda */
+extern long CDECL c_get_videoramaddress(void); /* STanda */
+extern void CDECL c_set_resolution(long width, long height, long depth, long freq); /* STanda */
 extern void CDECL debug_aranym(long freq); /* STanda */
-#endif
 
-
-#if 0
-#define FAST		/* Write in FastRAM buffer */
-#define BOTH		/* Write in both FastRAM and on screen */
-#else
-#undef FAST
-#undef BOTH
-#endif
 
 #if 0
 char r_16[] = {5, 15, 14, 13, 12, 11};
@@ -79,7 +68,6 @@ extern Device device;
 
 char driver_name[] = "ARAnyM 2001-10-30 (|| bit)";
 
-#ifdef ARANYM
 struct {
 	short used; /* Whether the mode option was used or not. */
 	short width;
@@ -87,7 +75,6 @@ struct {
 	short bpp;
 	short freq;
 } resolution = {0, 640, 480, 16, 85};
-#endif
 
 
 extern Driver *me;
@@ -111,7 +98,6 @@ short debug = 0;
 
 short shadow = 0;
 
-#ifdef ARANYM
 extern void *c_write_pixel;
 extern void *c_read_pixel;
 extern void *c_line_draw;
@@ -136,7 +122,6 @@ void *mouse_draw_r  = &c_mouse_draw;
 void *set_colours_r = &c_set_colours_16;
 void *get_colours_r = &c_get_colours_16;
 void *get_colour_r  = &c_get_colour_16;
-#endif
 
 
 #if 0
@@ -192,36 +177,6 @@ char *get_num(char *token, short *num)
 }
 
 
-#if RAGE
-int search_mode(char *token)
-{
-	short width, height, bpp, freq;
-	int b, w, f;
-
-	token = get_num(token, &width);
-	token = get_num(token, &height);
-	token = get_num(token, &bpp);
-	token = get_num(token, &freq);
-
-
-	b = 0;
-	while ((mode_tab[b].bpp != -1) &&
-		   ((unsigned int)mode_tab[b + 1].bpp <= bpp))
-		b++;
-	w = 0;
-	while ((mode_tab[b].res_freq[w].width != -1) &&
-		   ((unsigned int)mode_tab[b].res_freq[w + 1].width <= width))
-		w++;
-	f = 0;
-	while ((f < mode_tab[b].res_freq[w].n) &&
-		   ((unsigned int)mode_tab[b].res_freq[w].freqs[f + 1].frequency <= freq))
-		f++;
-
-	return &mode_tab[b].res_freq[w].freqs[f] - res_info;
-}
-#endif
-
-
 long set_mode(const char **ptr)
 {
 	char token[80], *tokenptr;
@@ -232,7 +187,7 @@ long set_mode(const char **ptr)
 	*ptr = access->funcs.get_token(*ptr, token, 80);
 
 
-#ifdef ARANYM
+#if 1
 	tokenptr = token;
 	tokenptr = get_num(tokenptr, &resolution.width);
 	tokenptr = get_num(tokenptr, &resolution.height);
@@ -393,17 +348,10 @@ long check_token(char *token, const char **ptr)
 void CDECL initialize(Virtual *vwk)
 {
 	Workstation *wk;
-#ifdef FAST
-	char *buf;
-#endif
 	int old_palette_size;
 	Colour *old_palette_colours;
-#ifdef FAST
-	int fast_w_bytes;
-#endif
-#ifdef ARANYM
-	long fb_base = get_videoramaddress();
-#endif
+
+	long fb_base = c_get_videoramaddress();
 #if 0
 	int i;
 #endif
@@ -424,7 +372,6 @@ void CDECL initialize(Virtual *vwk)
 	wk = vwk->real_address;
 
 
-#ifdef ARANYM
 	if (resolution.used) {
 		resolution.bpp = graphics_mode->bpp; /* Table value (like rounded down) --- e.g. no 23bit but 16 etc */
 
@@ -446,7 +393,6 @@ void CDECL initialize(Virtual *vwk)
 
 	wk->screen.coordinates.max_x = wk->screen.mfdb.width - 1;
 	wk->screen.coordinates.max_y = (wk->screen.mfdb.height & 0xfff0) - 1;	/* Desktop can't deal with non-16N heights */
-#endif
 
 	wk->screen.look_up_table = 0;			/* Was 1 (???)	Shouldn't be needed (graphics_mode) */
 	wk->screen.mfdb.standard = 0;
@@ -492,36 +438,11 @@ void CDECL initialize(Virtual *vwk)
 	device.address = wk->screen.mfdb.address;
 
 
-#ifdef ARANYM
 #if 0
 	debug_aranym(wk->screen.mfdb.width); /* STanda: ARAnyM emul_op debug call (20) */
 	debug_aranym(wk->screen.mfdb.bitplanes); /* STanda: ARAnyM emul_op debug call (20) */
 #endif
-#endif
 
-
-#ifdef FAST
-	if (shadow) {
- #if 0			/* It's not clear that this is a good idea */
-		fast_w_bytes = (wk->screen.wrap + 15) & 0xfffffff0;
- #else
-		fast_w_bytes = wk->screen.wrap;
- #endif
-		buf = (char *)access->funcs.malloc((long)fast_w_bytes * wk->screen.mfdb.height + 255, 1);
-		if (buf) {
-			wk->screen.shadow.buffer = buf;
-			wk->screen.shadow.address = (void *)(((long)buf + 255) & 0xffffff00L);
-			wk->screen.shadow.wrap = fast_w_bytes;
-		} else {
-			access->funcs.error("Can't allocate FastRAM!", 0);
-			wk->screen.shadow.buffer = 0;
-			wk->screen.shadow.address = 0;
-		}
- #ifndef BOTH
-		wk->screen.mfdb.address = wk->screen.shadow.address;
- #endif
-	}
-#endif
 	if (!wk->screen.shadow.address)
 		driver_name[20] = 0;
 
@@ -559,8 +480,8 @@ long CDECL setup(long type, long value)
 Virtual* CDECL opnwk(Virtual *vwk)
 {
 	if (resolution.used) {
-		set_resolution(resolution.width, resolution.height, resolution.bpp, resolution.freq);
-		device.address = (void*)get_videoramaddress();
+		c_set_resolution(resolution.width, resolution.height, resolution.bpp, resolution.freq);
+		device.address = (void*)c_get_videoramaddress();
 		me->default_vwk->real_address->screen.mfdb.address = device.address;
 	}
 
