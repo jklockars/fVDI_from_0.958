@@ -1,7 +1,12 @@
 *****
 * fVDI structure declarations, by Johan Klockars
 *
-* This is auto-generated from fVDI.h
+* $Id: types.inc,v 1.3 2002-05-15 00:40:19 johan Exp $
+*
+* This is auto-generated from fVDI.h using
+*  gcc -E fvdi.h | structer Virtual=vwk Workstation=wk Fontheader=font \
+*  MFDB=mfdb Colour=colour RGB=rgb List=list Driver=driver Mouse=mouse \
+*  Device=dev >types.inc
 *
 * Most assembly files in the fVDI engine, as well as in its
 * device drivers, need to include this file.
