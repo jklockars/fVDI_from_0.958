@@ -1,7 +1,9 @@
 /*
  * fVDI preferences and driver loader
  *
- * Copyright 1997-2000, Johan Klockars 
+ * $Id: loader.c,v 1.3 2002-06-10 08:32:17 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -94,7 +96,8 @@ short arc_split = 16384;  /* 1/4 as many lines as largest ellipse axel radius in
 short arc_min = 16;       /* Minimum number of lines in an ellipse */
 short arc_max = 256;      /* Maximum */
 short no_vex = 0;
-short serial_out = 0;
+short debug_out = -2;
+short interactive = 0;
 short stand_alone = 0;
 
 static char path[PATH_SIZE];
@@ -149,7 +152,8 @@ Option options[] = {
    {"arcmin",     set_arc_min,    -1},  /* arcmin n, minimum number of line to use in an ellipse */
    {"arcmax",     set_arc_max,    -1},  /* arcmax n, maximum number of lines to use in an ellipse */
    {"palette",    load_palette,   -1},  /* palette filename, loads the palette (3*short per colour) specified */
-   {"serialout",  &serial_out,     1},  /* serialout, send all debug (and similar) output to serial port */
+   {"debugout",   &debug_out,      4},  /* debugout n, send all debug (and similar) output to device number n */
+   {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
    {"standalone", &stand_alone,    1}   /* standalone, forces fVDI to refrain from relying on an underlying VDI */
 };
 
@@ -507,11 +511,17 @@ long check_token(Virtual *vwk, char *token, const char **ptr)
          case 2:     /* Increase */
             *(short *)options[i].varfunc += -1 + 2 * normal;
             return 1;
-         case 3:
+         case 3:     /* Single character */
            if (!(*ptr = skip_space(*ptr)))
               ;  /* *********** Error, somehow */
             *ptr = get_token(*ptr, token, TOKEN_SIZE);
            *(short *)options[i].varfunc = token[0];
+           return 1;
+         case 4:     /* Number */
+           if (!(*ptr = skip_space(*ptr)))
+              ;  /* *********** Error, somehow */
+            *ptr = get_token(*ptr, token, TOKEN_SIZE);
+           *(short *)options[i].varfunc = atol(token);
            return 1;
          }
       }
