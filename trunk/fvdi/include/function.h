@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.2 2004-10-17 21:44:11 johan Exp $
+ * $Id: function.h,v 1.3 2004-10-24 13:01:53 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -67,6 +67,7 @@ extern void lib_vdi_pp(void *, void *, void *, void *);
 #endif
 
 extern void link_mouse_routines(void);
+extern void unlink_mouse_routines(void);
 extern void *lib_vst_color;
 extern void *lib_vst_font;
 extern void *lib_vst_point;

@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ * $Id: workstn.c,v 1.4 2004-10-24 12:59:39 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -369,9 +369,25 @@ void v_clsvwk(Virtual *vwk, VDIpars *pars)
 
 void v_clswk(Virtual *vwk, VDIpars *pars)
 {
-	/* Should call driver specific function, among other things */
+	Driver *driver;
 
 	v_clsvwk(vwk, pars);
+
+	unlink_mouse_routines();
+
+	screen_wk = 0;
+#if 0
+	if (driver_list->type != ...)		/* Sanity check */
+#endif
+	driver = (Driver *)driver_list->value;
+#if 0
+	if (driver->flags & 1)
+#endif
+
+	((void (*)(Virtual *))(driver->clswk))(vwk);
+
+	if (old_wk_handle)
+		scall_v_clswk(old_wk_handle);
 
 	return;
 }

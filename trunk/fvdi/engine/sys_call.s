@@ -12,7 +12,7 @@
 	xdef		_vq_extnd,_vq_color
 	xdef		_graf_handle
 	xdef		_call_v_opnwk,_call_v_opnvwk,_call_v_clsvwk
-	xdef		_scall_v_opnwk
+	xdef		_scall_v_opnwk,_scall_v_clswk
 	xdef		_get_sub_call
 	xdef		_set_inout
 	xdef		_vdi,_sub_vdi,_fvdi
@@ -151,6 +151,20 @@ _scall_v_opnwk:
 	moveq		#0,d0
 	move.w		_control+12,d0
 	rts
+
+* handle = scall_v_clswk(long handle);
+*
+_scall_v_clswk:
+	lea		_control,a0
+	move.w		#2,0(a0)
+	move.w		#0,2(a0)
+	move.w		#0,6(a0)
+	move.l		4(a7),d0
+	move.w		d0,12(a0)
+	bsr		subVDI
+	moveq		#0,d0
+	rts
+
 
 * handle = call_v_opnvwk(long handle, short *int_out, short *pts_out);
 *
