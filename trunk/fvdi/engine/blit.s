@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.6 2002-07-10 22:12:25 johan Exp $
+* $Id: blit.s,v 1.7 2002-08-03 12:24:46 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -365,12 +365,14 @@ _default_fill:
 	tst.w	d7
 	bne	.table_lfill
 
-	move.w	d4,d6
+	move.w	d4,d7
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
 .loopy_sl:
 	move.w	d2,d4
 	jsr	(a1)
 	addq.w	#1,d2
-	cmp.w	d6,d2
+	cmp.w	d7,d2
 	ble	.loopy_sl
 
 .end_default_fill:
