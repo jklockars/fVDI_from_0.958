@@ -1,7 +1,7 @@
 /*
  * C structure parser
  *
- * $Id: struct.y,v 1.2 2002-05-13 01:28:11 johan Exp $
+ * $Id: struct.y,v 1.3 2002-07-01 21:10:21 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -75,6 +75,8 @@ deflist :
 
 def :      var ';'
                  { $$ = $1; }
+	|  union ';'
+                 { $$ = mkvar(mktype(_Uniondef, 0, $1), mkid(0, -1)); }
 ;
 
 struct :   STRUCT IDENTIFIER '{' deflist '}'

@@ -1,7 +1,7 @@
 /*
  * C structure expression creation and printing functions
  *
- * $Id: expr.c,v 1.2 2002-05-13 01:28:11 johan Exp $
+ * $Id: expr.c,v 1.3 2002-07-01 21:10:21 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -51,7 +51,9 @@ Expression mkid(Identifier name, int count)
 
 void printid(Expression expr)
 {
-   if (expr->info.id.count >= 0)        /* Use to be >, 981114 */
+   if (!expr->info.id.name)
+      printf("<anonymous>;\n");
+   else if (expr->info.id.count >= 0)        /* Use to be >, 981114 */
       printf("%s[%d];\n", expr->info.id.name->string, expr->info.id.count);
    else
       printf("%s;\n", expr->info.id.name->string);
@@ -108,7 +110,10 @@ Expression mkunion(Identifier name, List defs)
 
 void printunion(Expression expr)
 {
-   printf("union %s {\n", expr->info.strct.name->string);
+   if (expr->info.unjon.name)
+      printf("union %s {\n", expr->info.unjon.name->string);
+   else
+      printf("union {\n");
    printdefs(expr->info.unjon.defs);
    printf("} ");
 }
@@ -145,8 +150,11 @@ void printtype(Expression expr)
    case _Struct:
       printf("struct %s ", expr->info.def.name->string);
       break;
-   case _Structdef:
-      printstruct(expr->info.def.type);
+   case _Union:
+      printf("union %s ", expr->info.def.name->string);
+      break;
+   case _Uniondef:
+      printunion(expr->info.def.type);
       break;
    case _Typedef:
       printf("%s ", expr->info.def.name->string);

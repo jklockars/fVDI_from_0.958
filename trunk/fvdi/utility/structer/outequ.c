@@ -1,7 +1,7 @@
 /*
  * Assembly equ output functions
  *
- * $Id: outequ.c,v 1.2 2002-05-13 01:28:11 johan Exp $
+ * $Id: outequ.c,v 1.3 2002-07-01 21:10:21 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -44,7 +44,8 @@ void out(char *name, int pos)
    int i;
    
    for(i = 0; i < count; i++) {
-      printf("%s_", outer[i]);
+      if (outer[i])
+         printf("%s_", outer[i]);
    }
    printf("%s\tequ\t%d\n", name, pos);
 }
@@ -97,7 +98,10 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       exit(-1);
 #endif
    }
-   name = cur_expr->info.var.id->info.id.name->string;
+   if (cur_expr->info.var.id->info.id.name)
+      name = cur_expr->info.var.id->info.id.name->string;
+   else
+      name = 0;
 
    switch (type_expr->info.def.sort) {
    case _Char:
@@ -178,7 +182,8 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
 #endif
       }
       pos = (pos + 1) & 0xfffe;
-      out(name, pos);
+      if (name)
+         out(name, pos);
       dummy = ulist_to_equ(name, expr->info.unjon.defs, pos, all_defs, size);
       *size = (*size + 1) & 0xfffe;
       break;
