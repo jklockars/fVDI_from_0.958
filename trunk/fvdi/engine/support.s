@@ -1,7 +1,9 @@
 *****
 * fVDI support routines
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: support.s,v 1.4 2002-07-01 22:27:18 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -245,10 +247,10 @@ redirect:
 redirect_d0:
 	move.l	control(a1),a0
 	cmp.w	handle(a0),d0		; Already correct?
-	bne	.call
+	bne	call
 	move.l	a1,d1			; That's where the VDI wants it
 	return
-.call:
+call:
 	tst.w	_stand_alone
 	bne	.no_redirect
 	bsr	call_other
