@@ -1,9 +1,9 @@
 aranym.sys
 .C	[-b0 -b4 -r6 -v -d0 -m0 -rs -fm -i..\..\include\ -i..\include\ -j*e]
-.S	[-d -m0 -i..\..\include\]
+.S	[-d -m0 -i..\..\include\ -dlattice=1]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
-..\COMMON\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include\ -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h)
+..\COMMON\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include\ -i..\include\ -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h,../include/driver.h)
 ..\COMMON\COLOURS.C		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include\ -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h)
 ..\COMMON\LINEACHK.S	(../../include/vdi.inc,../../include/types.inc,../../include/linea.inc)
 ..\COMMON\CLIP.S		(../../include/vdi.inc,../../include/types.inc)
