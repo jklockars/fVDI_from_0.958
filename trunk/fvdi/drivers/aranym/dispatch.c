@@ -47,7 +47,7 @@ static long NF_fVDI;
 
 
 int
-nf_initialize()
+nf_initialize(long cookie)
 {
 	if (!(NF_fVDI = nfGetID(("fVDI"))))
 		return 0;
