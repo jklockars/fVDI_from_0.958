@@ -1,40 +1,61 @@
 IMPORTANT
 =========
-Please, note that not everything in this repository is necessarily GPLed at the
-moment. Most notably, the RageII stuff, which still relies on some files from
-ATI which are not under the GPL. In general, consider anything that does not
-have an explicit GPL notice to _not_ be GPLed.
+Please, note that not everything in this repository is necessarily
+GPLed at the moment. Most notably, the RageII stuff, which still
+relies on some files from ATI which are not under the GPL (unless you
+have been given a priviledged user name, you will not be able to
+access the RageII files, anyway). In general, consider anything that
+does not have an explicit GPL notice to _not_ be GPLed.
 
-In many cases, even things without the notice should really have one. Until
-you've checked with me, consider them to be under a normal copyright, however,
-and thus not to be modified, used or distributed without permission.
-I'll try to get all the appropriate copyright notices in there eventually.
+In many cases, even things without the notice should really have one.
+Until you have checked with me, consider them to be under a normal
+copyright, however, and thus not to be modified, used or distributed
+without permission.
 
-The CVS repository is password protected at the moment and is not supposed to
-be made available, even with only read access, to the general public in its
-current form (mainly because there are things in there that are not GPLed).
-Please, keep your user name and password to yourself (or within the development
-team, where applicable).
+I will get all the appropriate copyright notices in there eventually.
 
+---
 
-I changed the directory structure somewhat while moving this onto my PC, so
-some things will not compile quite as they are. I'm working my way through these
-problems, but it may take a while before everything builds without trouble again.
+The CVS repository now has public read access, and write access will
+be granted when deemed appropriate (contact me by email).
+
+User names (besides 'anonymous') are personal and must not be used to
+allow access for any third party. If you know someone you think should
+have write access, have him contact me about it.
+To be able to grant write access, I need a user name and an encrypted
+(standard Unix passwd encryption, such as provided by 'mkpasswd' or
+http://www.cuci.nl/services/genpassword.html) password.
+
+Note that none of the user names used to access the CVS are 'real'.
+That is, they can not be used to access any other parts of the server
+than the CVS repository itself.
+
+---
+
+I changed the directory structure somewhat when I set up the CVS
+repository, so some things will not compile quite as they are. I am
+working my way through these problems, but it may take a while before
+everything builds without trouble again.
+
 If you need to compile something that has problems, the differences are:
-- The contents of the fvdi/engine and fvdi/include directories used to be in
-  the same one. Just move them up out of those directories (to /fvdi) for now,
-  to be able to compile.
-- fvdi/utility/acc used to be simply /fvdi/acc. It probably uses some files
-  that are now in /fvdi/include and assumes them to be in /fvdi.
-- The contents of fvdi/drivers/include and fvdi/drivers/common used to be in
-  fvdi/drivers. The drivers make use of stuff from /fvdi/include and assumes it
-  to be in /fvdi.
+- The contents of the fvdi/engine and fvdi/include directories used to
+  be in the same one. Just move them up out of those directories
+  (to /fvdi) for now, to be able to compile.
+- fvdi/utility/acc used to be simply /fvdi/acc. It probably uses some
+  files that are now in /fvdi/include and assumes them to be in /fvdi.
+- The contents of fvdi/drivers/include and fvdi/drivers/common used to
+  be in fvdi/drivers. The drivers make use of stuff from /fvdi/include
+  and assumes it to be in /fvdi.
 
-It is possible that I'll make further changes to the directory structure
-in the future, but for now I think this should be OK.
+It is possible that I will make further changes to the directory
+structure in the future, but for now I think this should be OK.
 
-Note that none of the older versions are in the CVS repository at this time.
+---
 
-Johan Klockars
-2001-10-29
+Note that none of the older versions are in the CVS repository yet.
+Eventually, I hope to get the entire history of fVDI in there...
 
+---
+
+Johan Klockars  (rand@cd.chalmers.se)
+$Id: readme.now,v 1.3 2002-05-10 23:39:36 johan Exp $
