@@ -1,7 +1,7 @@
 /*
  * C struct to assembly equ converter
  *
- * $Id: main.c,v 1.2 2002-05-13 01:26:48 johan Exp $
+ * $Id: main.c,v 1.3 2002-07-01 21:08:56 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -25,14 +25,15 @@ extern convert(char *, List);
 
 int opt;
 char *filename = NULL;
-FILE *infile;
+extern FILE *yyin;
 
 int main(int argc, char **argv)
 {
    int i, total, usage, collisions;
    int count;
    char *name[10];
-   
+
+   yyin = stdin;
    count = 0;
    opt = 0;
    if (argc > 1) {
@@ -49,8 +50,7 @@ int main(int argc, char **argv)
                printf("No file name given!\n");
                exit(1);
             }
-            fclose(stdin);
-            if (!(infile = fopen(filename, "r"))) {
+            if (!(yyin = fopen(filename, "r"))) {
                printf("Could not open file!\n");
                exit(1);
             }
