@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.5 2002-07-03 21:31:26 johan Exp $
+* $Id: unimpl.s,v 1.6 2003-04-06 13:36:45 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -48,7 +48,7 @@ transparent	equ	1		; Fall through?
 	xdef	v_set_app_buff
 	xdef	vq_tabstatus,v_hardcopy,v_dspcur,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
-	xdef	v_rbox,v_rfbox
+;	xdef	v_rbox,v_rfbox
 	xdef	start_unimpl,end_unimpl
 	xdef	special_5,special_11
 
@@ -164,9 +164,11 @@ v_bit_image:
 v_contourfill:
 v_cellarray:
 
+  ifne 0
 v_rbox:
 v_rfbox:
 	done_return
+  endc
 
 end_unimpl:
 
