@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.5 2004-10-17 17:52:55 johan Exp $
+ * $Id: loader.c,v 1.6 2004-10-24 13:01:11 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -770,7 +770,7 @@ int load_prefs(Virtual *vwk, char *sysname)
 
    if (driver_list) {			/* Some driver loaded? */
       Fontheader **system_font, *header;
-      int header_size = sizeof(Fontheader) - sizeof(Fontextra);
+      long header_size = sizeof(Fontheader) - sizeof(Fontextra);
       Workstation *wk;
       List *tmp = driver_list;
       while (tmp) {			/* For all drivers */

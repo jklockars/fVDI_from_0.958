@@ -101,7 +101,7 @@ echo Assembling $file ;
 m68k-atari-mint-as -m68040 --defsym gas=1 --defsym lattice=0 -I../include -I../drivers/include -I../drivers/1_plane -o $file.o <$file ;
 done
 
-m68k-atari-mint-gcc -O2 -c -I../include/ \
+m68k-atari-mint-gcc -mshort -m68040 -O2 -fomit-frame-pointer -c -I../include/ \
 bezier.c \
 conic.c \
 escape.c \

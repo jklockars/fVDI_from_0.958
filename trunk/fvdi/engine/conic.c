@@ -1,7 +1,7 @@
 /*
  * fVDI circle/ellipse/pie/arc code
  *
- * $Id: conic.c,v 1.5 2004-10-17 21:44:11 johan Exp $
+ * $Id: conic.c,v 1.6 2004-10-24 13:01:11 johan Exp $
  *
  * Copyright 1999/2001-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -99,9 +99,9 @@ void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad
 }
 
 
-int clc_nsteps(int xrad, int yrad)
+long clc_nsteps(long xrad, long yrad)
 {
-	int n_steps;
+	long n_steps;
 
 	if (xrad > yrad)
 		n_steps = xrad;
@@ -244,7 +244,7 @@ void rounded_box(Virtual *vwk, long gdp_code, long x1, long y1, long x2, long y2
 	short rdeltax, rdeltay;
 	short xc, yc, xrad, yrad;
 	Workstation *wk = vwk->real_address;
-	int n_steps;
+	long n_steps;
 #if 0
 	arb_corner(PTSIN, LLUR);
 #endif

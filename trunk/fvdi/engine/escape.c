@@ -1,7 +1,7 @@
 /*
  * fVDI console functions
  *
- * $Id: escape.c,v 1.2 2004-10-17 17:52:55 johan Exp $
+ * $Id: escape.c,v 1.3 2004-10-24 13:01:11 johan Exp $
  *
  * Copyright 2002-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -21,13 +21,13 @@
 
 
 static long
-get_colour(Virtual *vwk, int reversed)
+get_colour(Virtual *vwk, long reversed)
 {
    long colour = vwk->text.colour.foreground & 0xffffL;
    if (vwk->console.reversed)
       colour = (colour << 16) | (vwk->text.colour.background & 0xffffL);
    else
-      colour = colour | (vwk->text.colour.background << 16);
+      colour = colour | ((long)vwk->text.colour.background << 16);
    if (reversed)
       colour = (colour << 16) | ((colour >> 16) & 0xffffL);
 

@@ -1,6 +1,6 @@
 FVDI_PC.PRG
 .C	[-H -X -Y -P -I=..\include]
-.S	[-D=lattice=0 -S -Y -I=..\include -I=..\drivers\include -I=..\drivers\1_plane]
+.S	[-D=lattice=0 -D=gas=0 -S -Y -I=..\include -I=..\drivers\include -I=..\drivers\1_plane]
 =
 FVDI.S		(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
 UNIMPL.S	(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
