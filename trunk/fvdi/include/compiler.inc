@@ -1,1 +1,1 @@
-lattice		equ	1		; Assemble for DevPac/Lattice?
+lattice		equ	0		; Assemble for DevPac/Lattice?

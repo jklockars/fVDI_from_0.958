@@ -56,19 +56,19 @@ char b_16[] = {5, 8, 9, 10, 11, 12};
 char r_16f[] = {5, 11, 12, 13, 14, 15};
 char g_16f[] = {6, 5, 6, 7, 8, 9, 10};
 char b_16f[] = {5, 0, 1, 2, 3, 4};
-char r_32[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
-char g_32[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
-char b_32[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
-char r_32f[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
-char g_32f[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
-char b_32f[] = {8,  0,  1,  2,  3,  4,  5,  6,  7};
+char r_32f[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
+char r_32[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
+char b_32f[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
+char g_32f[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
+char g_32[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
+char b_32[] = {8,  0,  1,  2,  3,  4,  5,  6,  7};
 #endif
 char none[] = {0};
 
 Mode mode[4] = /* FIXME: big and little endian differences. */
 	{{ 8, CHUNKY | CHECK_PREVIOUS,               {r_8,  g_8,  b_8,  none, none, none}, 0, 2, 1, 1},
-	 {16, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_16, g_16, b_16, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_565*/
-	 {24, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32, g_32, b_32, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_RGB*/
+	 {16, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_16f, g_16f, b_16f, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_565*/
+	 {24, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32f, g_32f, b_32f, none, none, none}, 0, 2, 2, 1}, /*DEPTH_SUPPORT_RGB*/
 	 {32, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32, g_32, b_32, none, none, none}, 0, 2, 2, 1}}; /*DEPTH_SUPPORT_ARGB*/
 
 extern Device device;
@@ -98,7 +98,7 @@ extern long tokenize( char* value );
 
 long wk_extend = 0;
 
-short accel_s = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_EXPAND;
+short accel_s = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_EXPAND | A_FILLPOLY;
 short accel_c = A_SET_PAL | A_GET_COL;
 
 Mode *graphics_mode = &mode[1];

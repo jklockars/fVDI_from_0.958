@@ -10,6 +10,7 @@
 	xdef		_expand_area
 	xdef		_blit_area
 	xdef		_fill_area
+	xdef		_fill_polygon
 	xdef		_set_colour_hook
 	xdef		_set_resolution
 	xdef		_debug_aranym
@@ -55,6 +56,10 @@ _blit_area:
 
 _line_draw:
 	FVDI_DISPATCH	7
+	rts
+
+_fill_polygon:
+	FVDI_DISPATCH	8
 	rts
 
 _set_colour_hook:
