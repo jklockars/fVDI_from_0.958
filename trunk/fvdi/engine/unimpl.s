@@ -1,7 +1,9 @@
 *****
 * fVDI unimplemented functions
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: unimpl.s,v 1.4 2002-07-01 23:17:32 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -44,9 +46,6 @@ transparent	equ	1		; Fall through?
 	xdef	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
 	xdef	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
 	xdef	v_set_app_buff
-;	xdef	vq_chcells,vq_exit_cur,v_enter_cur,v_curup
-;	xdef	v_curdown,v_curright,v_curleft,v_curhome,v_eeos,v_eeol
-;	xdef	vs_curaddress,v_curtext,v_rvon,v_rvoff,vq_curaddress
 	xdef	vq_tabstatus,v_hardcopy,v_dspcur,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
 	xdef	v_rbox,v_rfbox
@@ -97,9 +96,12 @@ vsin_mode:			; An experiment
 .done:
 	done_return
 
+
 	data
 setting:
 	dc.b	-1,-1,-1,-1,-1,0
+
+
 	text
 
 	dc.b	0,0,"Normal IO",0
@@ -147,19 +149,7 @@ vqt_pairkern:
 v_set_app_buff:
 	done_return
 
-	dc.b	0,"Terminal",0
-;vq_chcells:
-;vq_exit_cur:
-;v_enter_cur:
-;v_curup:
-;v_curdown:
-;v_curright:
-;v_curleft:
-;v_curhome:
-;vs_curaddress:
-;v_rvon:
-;v_rvoff:
-;vq_curaddress:
+	dc.b	0,"ESC",0
 vq_tabstatus:
 v_hardcopy:
 v_dspcur:
@@ -173,10 +163,6 @@ v_bit_image:
 	dc.b	0,0,"Drawing",0
 v_contourfill:
 v_cellarray:
-
-;v_eeos:
-;v_eeol:
-;v_curtext:
 
 v_rbox:
 v_rfbox:
