@@ -1,7 +1,7 @@
 /*
  * fVDI generic device driver initialization, by Johan Klockars
  *
- * $Id: init.c,v 1.4 2002-07-10 22:13:40 johan Exp $
+ * $Id: init.c,v 1.5 2003-04-06 14:07:10 johan Exp $
  *
  * Since it would be difficult to do without this file when
  * writing new device drivers, and to make it possible for
@@ -169,8 +169,6 @@ void setup_scrninfo(Device *device, Mode *graphics_mode)
 	device->format = graphics_mode->format;
 	device->clut = graphics_mode->clut;
 	device->bit_depth = graphics_mode->bpp;
-	device->dummy1 = (1L << graphics_mode->bpp) >> 16;
-	device->colours = (1L << graphics_mode->bpp) & 0xffff;
 #if 0
 	device->byte_width = wk->screen.wrap;
 	device->address = wk->screen.mfdb.address;
@@ -185,6 +183,10 @@ void setup_scrninfo(Device *device, Mode *graphics_mode)
 	device->bits.organization = graphics_mode->org;	
 	device->dummy2 = 0;
 	if (device->clut == 2) {
+		int bits = gmbits->red[0] + gmbits->green[0] + gmbits->blue[0];
+		device->dummy1 = (1L << bits) >> 16;
+		device->colours = (1L << bits) & 0xffff;
+
 		for(i = 0; i < gmbits->red[0]; i++)
 			device->scrmap.bitnumber.red[i] = gmbits->red[i + 1];
 		for(i = gmbits->red[0]; i < 16; i++)
@@ -212,6 +214,9 @@ void setup_scrninfo(Device *device, Mode *graphics_mode)
 		for(i = 0; i < 144; i++)
 			device->scrmap.bitnumber.reserved[i] = 0;
 	} else {
+		device->dummy1 = (1L << graphics_mode->bpp) >> 16;
+		device->colours = (1L << graphics_mode->bpp) & 0xffff;
+
 		for(i = 0; i < sizeof(tos_colours); i++)
 			device->scrmap.vdi2pix[i] = tos_colours[i];
 		if (graphics_mode->bpp == 8) {
