@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.2 2004-10-17 17:52:55 johan Exp $
+ * $Id: setup.c,v 1.3 2004-10-24 13:00:16 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -132,7 +132,7 @@ Virtual *initialize_vdi(void)
    wk->drawing.primitives.supported = 8;    /* Everything but rounded rectangles */
    wk->drawing.primitives.attributes = ((3 + 1) <<  0) + ((0 + 1) <<  3) + ((3 + 1) <<  6) +
 	                                    ((3 + 1) <<  9) + ((3 + 1) << 12) + ((0 + 1) << 15) +
-	                                    ((3 + 1) << 18) + ((0 + 0) << 21) + ((0 + 0) << 24) + ((2 + 1) << 27);
+	                                    ((3L + 1) << 18) + ((0L + 0) << 21) + ((0L + 0) << 24) + ((2L + 1) << 27);
    wk->drawing.rubber_banding = 0;
    wk->drawing.flood_fill = 0;
    wk->drawing.writing_modes = 4;
@@ -406,6 +406,19 @@ void link_mouse_routines(void)
 }
 
 
+void unlink_mouse_routines(void)
+{
+   if (old_curv) {
+      *(long *)&control[7] = (long)old_curv;
+      vdi(old_wk_handle, 127, 0, 0);
+   }
+   if (old_timv) {
+      *(long *)&control[7] = (long)old_timv;
+      vdi(old_wk_handle, 118, 0, 0);
+   }
+}
+
+
 /*
  * Find all previously opened workstations and copy their setup.
  * Also links in the mouse routines under some circumstances.
@@ -481,19 +494,11 @@ void copy_workstations(Virtual *def, long really_copy)
 
 
 /*
- * Unlink mouse routines.
  * Really supposed to handle most shut-down operations.
  */
 void shut_down(void)
 {
-   if (old_curv) {
-      *(long *)&control[7] = (long)old_curv;
-      vdi(old_wk_handle, 127, 0, 0);
-   }
-   if (old_timv) {
-      *(long *)&control[7] = (long)old_timv;
-      vdi(old_wk_handle, 118, 0, 0);
-   }
+   unlink_mouse_routines();
 }
 
 
