@@ -252,31 +252,23 @@ _vq_color:
 *
 _set_inout:
 	move.l		4(a7),d0
-;	bne		1$
 	lbne		.skip1,1
 	move.l		#int_in,d0
-;1$:
  label .skip1,1
 	move.l		d0,vdi_int_in_addr
 	move.l		8(a7),d0
-;	bne		2$
 	lbne		.skip2,2
 	move.l		#pts_in,d0
-;2$:
  label .skip2,2
 	move.l		d0,vdi_pts_in_addr
 	move.l		12(a7),d0
-;	bne		3$
 	lbne		.skip3,3
 	move.l		#int_out,d0
-;3$:
  label .skip3,3
 	move.l		d0,vdi_int_out_addr
 	move.l		16(a7),d0
-;	bne		4$
 	lbne		.skip4,4
 	move.l		#pts_out,d0
-;4$:
  label .skip4,4
 	move.l		d0,vdi_pts_out_addr
 	rts

@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 neg_pal_n	equ	9		; Number of negative palette entries
@@ -49,7 +47,6 @@ vs_fg_color:
 	moveq	#-1,d0
 	move.w	subfunction(a2),d1
 	cmp.w	#4,d1
-;	bhi	2$	; .end
 	lbhi	.end,2
 	add.w	d1,d1
 	lea	fg_offset,a2
@@ -66,14 +63,12 @@ vs_fg_color:
 	addq.l	#4,a1
 	addq.l	#1,a1			; Odd for new style entries
 	move.l	vwk_palette(a0),d1
-;	bne	1$
 	lbne	.exists,1
 
 	move.l	d0,a3
 	movem.l	d2/a0-a2,-(a7)
 	move.l	#3,-(a7)
 	move.l	#neg_pal_n*colour_struct_size,-(a7)	; Only negative indices
-;	bsr	_malloc
 	jsr	_malloc
 	addq.l	#8,a7
 	movem.l	(a7)+,d2/a0-a2
@@ -81,13 +76,11 @@ vs_fg_color:
 	move.l	d0,d1
 	moveq	#-1,d0
 	tst.l	d1
-;	beq	2$
 	lbeq	.end,2
 	add.l	#neg_pal_n*colour_struct_size+1,d1
 	move.l	d1,vwk_palette(a0)
 	move.l	a3,d0
 
-;1$:
  label .exists,1
 	and.w	#$fffe,d1
 	move.l	vwk_real_address(a0),a2
@@ -97,7 +90,6 @@ vs_fg_color:
 	movem.l	(a7)+,a1
 
 	moveq	#1,d0
-;2$:			; .end:
  label .end,2
 	move.l	intout(a1),a2
 	move.w	d0,(a2)
@@ -120,7 +112,6 @@ vs_bg_color:
 	moveq	#-1,d0
 	move.w	subfunction(a2),d1
 	cmp.w	#4,d1
-;	bhi	2$	; .end
 	lbhi	.end,2
 	add.w	d1,d1
 	lea	bg_offset,a2
@@ -137,14 +128,12 @@ vs_bg_color:
 	addq.l	#4,a1
 	addq.l	#1,a1			; Odd for new style entries
 	move.l	vwk_palette(a0),d1
-;	bne	1$
 	lbne	.exists,1
 
 	move.l	d0,a3
 	movem.l	d2/a0-a2,-(a7)
 	move.l	#3,-(a7)
 	move.l	#neg_pal_n*colour_struct_size,-(a7)	; Only negative inidices
-;	bsr	_malloc
 	jsr	_malloc
 	addq.l	#8,a7
 	movem.l	(a7)+,d2/a0-a2
@@ -152,13 +141,11 @@ vs_bg_color:
 	move.l	d0,d1
 	moveq	#-1,d0
 	tst.l	d1
-;	beq	2$
 	lbeq	.end,2
 	add.l	#neg_pal_n*colour_struct_size+1,d1
 	move.l	d1,vwk_palette(a0)
 	move.l	a3,d0
 
-;1$:
  label .exists,1
 	and.w	#$fffe,d1
 	move.l	vwk_real_address(a0),a2
@@ -168,7 +155,6 @@ vs_bg_color:
 	movem.l	(a7)+,a1
 
 	moveq	#1,d0
-;2$:			; .end:
  label .end,2
 	move.l	intout(a1),a2
 	move.w	d0,(a2)
@@ -186,7 +172,6 @@ vq_fg_color:
 	move.l	control(a1),a2
 	move.w	subfunction(a2),d1
 	cmp.w	#4,d1
-;	bhi	3$	; .error
 	lbhi	.error,3
 	add.w	d1,d1
 	lea	fg_offset,a2
@@ -196,16 +181,12 @@ vq_fg_color:
 	move.l	vwk_real_address(a0),a2
 	mulu	#colour_struct_size,d0
 	move.l	vwk_palette(a0),d2
-;	bne	1$	; .local_palette
 	lbne	.local_palette,1
 	move.l	wk_screen_palette_colours(a2),d2
-;1$:			; .local_palette:
  label .local_palette,1
 	bclr	#0,d2
 	move.l	d2,a0			; a0 no longer -> VDI
-;	bne	4$	; .neg_palette		; Only part local?
 	lbne	.neg_palette,4
-;2$			; .normal_palette:
  label .normal_palette,2
 	add.w	d0,a0
 
@@ -216,19 +197,15 @@ vq_fg_color:
 	move.w	(a0)+,(a2)+
 	done_return
 
-;3$:			; .error:
  label .error,3
 	move.l	intout(a1),a2
 	move.w	#-1,(a2)
 	done_return
 
-;4$:			; .neg_palette:		; Sometimes only the negative palette is local
- label .neg_palette,4
+ label .neg_palette,4		; Sometimes only the negative palette is local
 	tst.w	d0
-;	bmi	2$	; .normal_palette
 	lbmi	.normal_palette,2
 	move.l	wk_screen_palette_colours(a2),a0
-;	bra	2$	; .normal_palette
 	lbra	.normal_palette,2
 	
 
@@ -241,7 +218,6 @@ vq_bg_color:
 	move.l	control(a1),a2
 	move.w	subfunction(a2),d1
 	cmp.w	#4,d1
-;	bhi	3$	; .error
 	lbhi	.error,3
 	add.w	d1,d1
 	lea	bg_offset,a2
@@ -251,16 +227,12 @@ vq_bg_color:
 	move.l	vwk_real_address(a0),a2
 	mulu	#colour_struct_size,d0
 	move.l	vwk_palette(a0),d2
-;	bne	1$	; .local_palette
 	lbne	.local_palette,1
 	move.l	wk_screen_palette_colours(a2),d2
-;1$:			; .local_palette:
  label .local_palette,1
 	bclr	#0,d2
 	move.l	d2,a0			; a0 no longer -> VDI
-;	bne	4$	; .neg_palette		; Only part local?
-	lbne	.neg_palette,4
-;2$			; .normal_palette:
+	lbne	.neg_palette,4		; Only part local?
  label .normal_palette,2
 	add.w	d0,a0
 
@@ -271,19 +243,15 @@ vq_bg_color:
 	move.w	(a0)+,(a2)+
 	done_return
 
-;3$:			; .error:
  label .error,3
 	move.l	intout(a1),a2
 	move.w	#-1,(a2)
 	done_return
 
-;4$:			; .neg_palette:		; Sometimes only the negative palette is local
- label .neg_palette,4
+ label .neg_palette,4			; Sometimes only the negative palette is local
 	tst.w	d0
-;	bmi	2$	; .normal_palette
 	lbmi	.normal_palette,2
 	move.l	wk_screen_palette_colours(a2),a0
-;	bra	2$	; .normal_palette
 	lbra	.normal_palette,2
 
 
@@ -438,7 +406,6 @@ lib_vs_color:
 	movem.l	d2/a0/a2,-(a7)
 	move.l	#3,-(a7)
 	move.l	d0,-(a7)
-;	bsr	_malloc
 	jsr	_malloc
 	addq.l	#8,a7
 	movem.l	(a7)+,d2/a0/a2
@@ -508,18 +475,15 @@ lib_vs_color:
 	sub.l	#neg_pal_n*colour_struct_size,d1
 	move.l	d1,a1
 	moveq	#neg_pal_n-1,d0
-;1$:
  label .loop3,1
 	move.l	(a1)+,(a3)+		; Assume Colour is 16 bytes large
 	move.l	(a1)+,(a3)+
 	move.l	(a1)+,(a3)+
 	move.l	(a1)+,(a3)+
-;	dbra	d0,1$
 	ldbra	d0,.loop3,1
 
 	movem.l	d2/a0/a2,-(a7)
 	move.l	d1,-(a7)
-;	bsr	_free
 	jsr	_free
 	addq.l	#4,a7
 	movem.l	(a7)+,d2/a0/a2
@@ -528,13 +492,11 @@ lib_vs_color:
 	move.l	wk_screen_palette_colours(a2),a1
 	move.w	wk_screen_palette_size(a2),d1
 	subq.w	#1,d1
-;2$:
  label .loop4,2
 	move.l	(a1)+,(a3)+		; Assume Colour is 16 bytes large
 	move.l	(a1)+,(a3)+
 	move.l	(a1)+,(a3)+
 	move.l	(a1)+,(a3)+
-;	dbra	d1,2$
 	ldbra	d1,.loop4,2
 
 	move.l	vwk_palette(a0),d1

@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 mouse_size	equ	4		; Mostly for testing
@@ -75,15 +73,12 @@ lib_vsc_form:
 	move.l	a1,-(a7)
 	lea	wk_mouse_mask(a1),a1
 	moveq	#15,d0				; Mask and data rows
-;1$:			; .loop:
  label .loop,1
 	move.l	(a2)+,(a1)+
-;	dbra	d0,1$	; .loop
 	ldbra	d0,.loop,1
 	move.l	(a7)+,a1
 
 	move.l	wk_r_mouse(a1),d0
-;	beq	2$	; .done
 	lbeq	.done,2
 	uses_d1
 	move.l	d0,a2
@@ -104,7 +99,6 @@ lib_vsc_form:
 ;3$:			; .no_error
 	move.l	(a7)+,a0
 	used_d1
-;2$:			; .done
  label .done,2
 
 	move.w	#1,-(a7)
@@ -140,20 +134,15 @@ v_show_c:
 lib_v_show_c:
 	move.w	(a1),d0				; Always show?
 	move.l	vwk_real_address(a0),a1		; Does not affect flags
-;	beq	2$	; .set
 	lbeq	.set_,2
 	move.w	wk_mouse_hide(a1),d0
-;	beq	1$	; .end			; Already shown?
 	lbeq	.end,1				; Already shown?
 	subq.w	#1,d0
-;2$:			; .set:
  label .set_,2
 	move.w	d0,wk_mouse_hide(a1)
-;	bhi	1$	; .end			; Still not shown?
 	lbhi	.end,1				; Still not shown?
 
 	tst.w	wk_mouse_type(a1)		; If no mouse type, leave to old VDI
-;	beq	1$	; .end
 	lbeq	.end,1
 
 
@@ -180,11 +169,9 @@ lib_v_show_c:
 	bsr	mouse_unshow
 	used_d1
  endc
-;1$:			; .end:
  label .end,1
 	rts
 
-;3$:			; .call_r_mouse
  label .call_r_mouse,3
 	uses_d1
 	move.l	d0,a2
@@ -201,7 +188,6 @@ lib_v_show_c:
 	move.w	d0,pointer_delay
 	move.l	(a7)+,a0
 	used_d1
-;	bra	1$	; .end
 	lbra	.end,1
 
 
@@ -230,11 +216,9 @@ lib_v_hide_c:
 	move.w	d0,wk_mouse_hide(a1)
 
 	cmp.w	#1,d0				; Already hidden?
-;	bhi	1$	; .not_shown
 	lbhi	.not_shown,1
 
 	tst.w	wk_mouse_type(a1)		; If no mouse type, leave to old VDI
-;	beq	1$	; .end
 	lbeq	.not_shown,1
 
 	move	sr,d0
@@ -251,16 +235,13 @@ lib_v_hide_c:
 ;	bmi	1$	; .not_shown
 
 	move.l	wk_r_mouse(a1),d0
-;	bne	2$	; .call_r_mouse
 	lbne	.call_r_mouse,2
 	uses_d1
 	bsr	mouse_unshow
 	used_d1
-;1$:			; .not_shown:
  label .not_shown,1
 	rts
 
-;2$:			; .call_r_mouse
  label .call_r_mouse,2
 	uses_d1
 	move.l	d0,a2
@@ -277,7 +258,6 @@ lib_v_hide_c:
 	move.w	d0,pointer_delay
 	move.l	(a7)+,a0
 	used_d1
-;	bra	1$	; .not_shown
 	lbra	.not_shown,1
 
 

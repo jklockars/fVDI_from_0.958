@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
@@ -154,14 +152,11 @@ lib_v_ftext_offset:
 
 	moveq	#0,d2			; Width total
 	moveq	#0,d5			; max width
-;	bra	2$
 	lbra	.no_char,2
-;1$:			; .loop:
  label .loop,1
 	move.w	(a4)+,d1
 	sub.w	d3,d1			; Negative numbers are higher
 	cmp.w	d4,d1			;  than code_high
-;	bhi	2$	; .no_char
 	lbhi	.no_char,2
 	add.w	d1,d1
 	move.w	2(a3,d1.w),d6
@@ -169,13 +164,10 @@ lib_v_ftext_offset:
 	add.w	(a2),d2
 	add.w	d6,d2
 	cmp.w	d2,d5
-;	bhi	2$
 	lbhi	.no_char,2
 	move.w	d2,d5			; Remember widest
-;2$:			; .no_char:
  label .no_char,2
 	addq.l	#4,a2
-;	dbra	d0,1$	; .loop
 	ldbra	d0,.loop,1
 
 	movem.l	(a7)+,d2-d6/a2-a4
@@ -259,20 +251,15 @@ lib_v_justified:
 
 	moveq	#0,d2			; Width total
 	moveq	#0,d5			; Spaces
-;	bra	2$
 	lbra	.no_char,2
-;1$:			; .loop:
  label .loop,1
 	move.w	(a4)+,d1
 	sub.w	d3,d1			; Negative numbers are higher
 	cmp.w	d4,d1			;  than code_high
-;	bhi	2$	; .no_char
 	lbhi	.no_char,2
 	cmp.b	#' ',d1
-;	bne	3$
 	lbne	.skip,3
 	addq.w	#1,d5
-;3$:
  label .skip,3
 	add.w	d1,d1
 	move.w	2(a3,d1.w),d6
@@ -280,9 +267,7 @@ lib_v_justified:
 	add.w	d6,d2
 	move.w	d6,(a2)+
 	move.w	#0,(a2)+
-;2$:			; .no_char:
  label .no_char,2
-;	dbra	d0,1$	; .loop
 	ldbra	d0,.loop,1
 
 	move.w	10(a1),d6
@@ -429,21 +414,16 @@ _default_text:
 
 	moveq	#0,d3			; Width total
 ;	subq.w	#1,d0
-;	bra	2$
 	lbra	.no_char,2
-;1$:			; .size_loop:
  label .size_loop,1
 	move.w	(a1)+,d1
 	sub.w	d2,d1			; Negative numbers are higher
 	cmp.w	d4,d1			;  than code_high
-;	bhi	2$	; .no_char
 	lbhi	.no_char,2
 	add.w	d1,d1
 	add.w	2(a3,d1.w),d3
 	sub.w	0(a3,d1.w),d3
-;2$:			; .no_char:
  label .no_char,2
-;	dbra	d0,1$	; .size_loop
 	ldbra	d0,.size_loop,1
 
 	movem.l	(a7)+,d0-d2/d4/a1/a3
@@ -492,11 +472,9 @@ _default_text:
 	moveq	#0,d4
 	moveq	#0,d5
 	moveq	#0,d6
-;1$:
  label .loop,1
 	movem.l	d3-d6,(a3)
 	add.w	#16,a3
-;	dbra	d1,1$
 	ldbra	d1,.loop,1
 	movem.l	(a7),d5/a0/a3/a5
 .no_clear:
@@ -540,17 +518,13 @@ _default_text:
 	move.w	font_underline(a5),d1
 	subq.w	#1,d1
 	moveq	#-1,d3
-;1$:
  label .loop1,1
 	move.l	a3,a0
 	move.w	d0,d2
-;2$:
  label .loop2,2
 	move.l	d3,(a0)+
-;	dbra	d2,2$
 	ldbra	d2,.loop2,2
 	add.w	d5,a3
-;	dbra	d1,1$
 	ldbra	d1,.loop1,1
 	move.l	4(a7),a0
 	move.w	vwk_text_effects(a0),d0
@@ -572,16 +546,13 @@ _default_text:
 	subq.w	#1,d1
 	move.w	font_skewing(a5),d3
 	moveq	#0,d4
-;1$:
  label .loop1b,1
 	move.l	a3,a0
 	move.w	d0,d2
-;2$:
  label .loop2b,2
 	move.l	-4(a0),d6
 	lsr.l	d4,d6
 	move.w	d6,-(a0)
-;	dbra	d2,2$
 	ldbra	d2,.loop2b,2
 	moveq	#0,d6
 	move.w	-(a0),d6
@@ -589,12 +560,9 @@ _default_text:
 	move.w	d6,(a0)
 	sub.w	d5,a3
 	rol.w	#1,d3
-;	bcc	3$
 	lbcc	.skip,3
 	addq.w	#1,d4
-;3$:
  label .skip,3
-;	dbra	d1,1$
 	ldbra	d1,.loop1b,1
 	move.l	4(a7),a0
 	move.w	vwk_text_effects(a0),d0
@@ -631,18 +599,14 @@ _default_text:
 	move.w	d2,d3
 	swap	d3
 	move.w	d2,d3
-;1$:
  label .loop1c,1
 	move.l	a3,a0
 	move.w	d0,d2
-;2$:
  label .loop2c,2
 	and.l	d3,(a0)+
-;	dbra	d2,2$
 	ldbra	d2,.loop2c,2
 	add.w	d5,a3
 	rol.l	#1,d3
-;	dbra	d1,1$
 	ldbra	d1,.loop1c,1
 .no_light:
 

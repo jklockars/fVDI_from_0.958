@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
@@ -40,10 +38,8 @@ vsl_color:
 	move.w	(a2),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_line_colour_foreground(a0)
 	move.l	intout(a1),a2
@@ -59,10 +55,8 @@ lib_vsl_color:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_line_colour_foreground(a0)
 	rts
@@ -87,24 +81,18 @@ vsl_width:
 
   ifne 1			; Desktop (7?) and Kandinsky (negative) uses strange numbers
 	cmp.w	wk_drawing_line_wide_width_max(a2),d0
-;	ble	2$
 	lble	.ok1,2
 	move.w	wk_drawing_line_wide_width_max(a2),d0
-;2$:
  label .ok1,2
 	cmp.w	wk_drawing_line_wide_width_min(a2),d0
-;	bge	3$
 	lbge	.ok2,3
 	move.w	wk_drawing_line_wide_width_min(a2),d0
-;3$:
  label .ok2,3
   endc
 
 	tst.w   wk_drawing_line_wide_width_possibilities(a2)
-;	beq	1$	; .ok
 	lbeq	.ok,1
 	nop				; What if not continuous?
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_line_width(a0)
 	move.l	ptsout(a1),a2
@@ -119,34 +107,28 @@ vsl_width:
 lib_vsl_width:
 	move.w	(a1),d0
 
-	ifne 0
+  ifne 0
 	subq.w	#1,d0			; Allow odd widths
 	and.w	#$00fe,d0		;   up to 255
 	addq.w	#1,d0
-	endc
+  endc
 
 	move.l	vwk_real_address(a0),a2
 
   ifne 1
 	cmp.w	wk_drawing_line_wide_width_max(a2),d0
-;	ble	2$
 	lble	.ok1,2
 	move.w	wk_drawing_line_wide_width_max(a2),d0
-;2$:
  label .ok1,2
 	cmp.w	wk_drawing_line_wide_width_min(a2),d0
-;	bge	3$
 	lbge	.ok2,3
 	move.w	wk_drawing_line_wide_width_min(a2),d0
-;3$:
  label .ok2,3
   endc
 
 	tst.w   wk_drawing_line_wide_width_possibilities(a2)
-;	beq	1$	; .ok
 	lbeq	.ok,1
 	nop				; What if not continuous?
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_line_width(a0)
 	rts
@@ -160,16 +142,12 @@ lib_vsl_width:
 vsl_type:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_line_types(a2),d0	; # line types
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; Solid
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_line_type(a0)
 	move.l	intout(a1),a2
@@ -183,16 +161,12 @@ vsl_type:
 _lib_vsl_type:
 lib_vsl_type:
 	move.w	(a1),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_line_types(a2),d0	; # line types
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; Solid
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_line_type(a0)
 	rts
@@ -230,18 +204,14 @@ vsl_ends:
 	move.l	intin(a1),a2
 	move.w	(a2)+,d0
 	cmp.w	d1,d0			; # end styles
-;	bls	1$	; .ok1
 	lbls	.ok1,1
 	moveq	#0,d0			; Squared
-;1$:			; .ok1:
  label .ok1,1
 	swap	d0
 	move.w	(a2),d0
 	cmp.w	d1,d0
-;	bls	2$	; .ok2
 	lbls	.ok2,2
 	move.w	#0,d0			; Squared
-;2$:			; .ok2:
  label .ok2,2
 	move.l	d0,vwk_line_ends(a0)
 	used_d1
@@ -256,18 +226,14 @@ lib_vsl_ends:
 	move.l	vwk_real_address(a0),a2
 	move.w	wk_drawing_line_wide_types_possible(a2),d1
 	cmp.w	d1,d0			; # end styles
-;	bls	1$	; .ok1
 	lbls	.ok1,1
 	moveq	#0,d0			; Squared
-;1$:			; .ok1:
  label .ok1,1
 	swap	d0
 	move.w	(a1),d0
 	cmp.w	d1,d0
-;	bls	2$	; .ok2
 	lbls	.ok2,2
 	move.w	#0,d0			; Squared
-;2$:			; .ok2:
  label .ok2,2
 	move.l	d0,vwk_line_ends(a0)
 	rts

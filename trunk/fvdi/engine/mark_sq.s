@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
@@ -39,10 +37,8 @@ vsm_color:
 	move.w	(a2),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_marker_colour_foreground(a0)
 	move.l	intout(a1),a2
@@ -58,10 +54,8 @@ lib_vsm_color:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_marker_colour_foreground(a0)
 	rts
@@ -99,16 +93,12 @@ lib_vsm_height:
 	lsr.w	#1,d1
 	add.w	d1,d0			; Half the minimum height
 	divu	wk_drawing_marker_size_height_min(a2),d0	; w = 15n, h = 11n
-;	bne	1$	; .ok1
 	lbne	.ok1,1
 	moveq	#1,d0
-;1$:			; .ok1:
  label .ok1,1
 	cmp.w	wk_drawing_marker_size_possibilities(a2),d0
-;	bls	2$	; .ok2
 	lbls	.ok2,2
 	moveq	#1,d0
-;2$:			; .ok2:
  label .ok2,2
 	move.w	d0,d1
 	mulu	wk_drawing_marker_size_width_min(a2),d0
@@ -127,16 +117,12 @@ lib_vsm_height:
 vsm_type:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_marker_types(a2),d0		; # markers
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#3,d0			; Asterisk
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_marker_type(a0)
 	move.l	intout(a1),a2
@@ -150,16 +136,12 @@ vsm_type:
 _lib_vsm_type:
 lib_vsm_type:
 	move.w	(a1),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_marker_types(a2),d0		; # markers
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#3,d0			; Asterisk
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_marker_type(a0)
 	rts

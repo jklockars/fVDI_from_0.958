@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 neg_pal_n	equ	9		; Number of negative palette entries
@@ -176,42 +174,32 @@ vs_clip:
 _lib_vs_clip:
 lib_vs_clip:
 	move.w	(a1)+,vwk_clip_on(a0)
-;	beq	5$	; .no_clip				; Not sure this is a good idea
-	lbeq	.no_clip,5
+	lbeq	.no_clip,5				; Not sure this is a good idea
 	move.l	(a1),a2
 	move.l	vwk_real_address(a0),a1
 	move.w	(a2)+,d0				; left
-;	bge	1$	; .left_ok
 	lbge	.left_ok,1
 	moveq	#0,d0
-;1$:			; .left_ok:
  label .left_ok,1
 	move.w	d0,vwk_clip_rectangle_x1(a0)
 	move.w	(a2)+,d0				; top
-;	bge	2$	; .top_ok
 	lbge	.top_ok,2
-;2$:			; .top_ok:
  label .top_ok,2
 	move.w	d0,vwk_clip_rectangle_y1(a0)
 	move.w	(a2)+,d0
 	cmp.w	wk_screen_coordinates_max_x(a1),d0	; right
-;	ble	3$	; .right_ok
 	lble	.right_ok,3
 	move.w	wk_screen_coordinates_max_x(a1),d0
-;3$:			; .right_ok:
  label .right_ok,3
 	move.w	d0,vwk_clip_rectangle_x2(a0)
 	move.w	(a2)+,d0
 	cmp.w	wk_screen_coordinates_max_y(a1),d0	; bottom
-;	ble	4$	; .bottom_ok
 	lble	.bottom_ok,4
 	move.w	wk_screen_coordinates_max_y(a1),d0
-;4$:			; .bottom_ok:
  label .bottom_ok,4
 	move.w	d0,vwk_clip_rectangle_y2(a0)
 	rts
 
-;5$:			; .no_clip:
  label .no_clip,5
 	move.l	vwk_real_address(a0),a1
 	moveq	#0,d0
@@ -236,16 +224,12 @@ lib_vs_clip:
 vswr_mode:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_writing_modes(a2),d0		; # write modes
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; Replace
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_mode(a0)
 	move.l	intout(a1),a2
@@ -259,16 +243,12 @@ vswr_mode:
 *	a0	VDI struct
 lib_vswr_mode:
 	move.w	(a1),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_drawing_writing_modes(a2),d0		; # write modes
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; Replace
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_mode(a0)
 	rts
@@ -322,19 +302,15 @@ vq_extnd:
 	move.w	#0,(a2)+		; No pixel sizes in the next few places
 
 	moveq	#27-20-1,d0
-;1$:
  label .loop1,1
 	move.w	#0,(a2)+
-;	dbra	d0,1$
 	ldbra	d0,.loop1,1
 
 	move.w	#2,(a2)+		; Beziers!
 
 	moveq	#29-28-1,d0
-;2$:
  label .loop2,2
 	move.w	#0,(a2)+
-;	dbra	d0,2$
 	ldbra	d0,.loop2,2
 
 	move.w	#0,(a2)+		; 1 - bitmap scale, 2 - new raster functions
@@ -344,10 +320,8 @@ vq_extnd:
 	move.w	#1,(a2)+		; New style colour routines (at least some of them)
 
 	moveq	#39-32-1,d0
-;3$:
  label .loop3,3
 	move.w	#0,(a2)+
-;	dbra	d0,3$
 	ldbra	d0,.loop3,3
 
 	move.w	#0,(a2)+		; Unusable left border
@@ -364,10 +338,8 @@ vq_extnd:
 	move.w	vwk_clip_rectangle_y2,(a1)+
 
 	moveq	#11-3-1,d0
-;4$:
  label .loop4,4
 	move.w	#0,(a1)+
-;	dbra	d0,4$
 	ldbra	d0,.loop4,4
 
 .end_vq_extnd:		; .end:
@@ -405,21 +377,17 @@ opnvwk_values:
 	lea	10*2(a2),a3
 	move.l	wk_drawing_primitives_attributes(a0),d0
 	moveq	#9,d1
-;1$:			; .loop:
  label .loop,1
 	move.w	d0,d2
 	and.w	#$0007,d2
-;	beq	2$	; .not_implemented
 	lbeq	.not_implemented,2
 	subq.w	#1,d2
 	move.w	d2,(a3)+
 	moveq	#10,d2
 	sub.w	d1,d2
 	move.w	d2,-(2+10*2)(a3)
-;2$:			; .not_implemented:
  label .not_implemented,2
 	lsr.l	#3,d0
-;	dbeq	d1,1$	; .loop
 	ldbeq	d1,.loop,1
 	lea	2*10*2(a2),a2
 	cmp.l	a2,a3
@@ -463,10 +431,8 @@ vq_scrninfo:
 	move.l	driver_device(a1),a1
 
 	move.w	#271,d0
-;1$:
  label .loop,1
 	move.w	(a1)+,(a2)+
-;	dbra	d0,1$
 	ldbra	d0,.loop,1
 	sub.w	#271*2+2,a2
 

@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 	include	"vdi.inc"
@@ -41,10 +39,8 @@ vsf_color:
 	move.w	(a2),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_colour_foreground(a0)
 	move.l	intout(a1),a2
@@ -60,10 +56,8 @@ lib_vsf_color:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_colour_foreground(a0)
 	rts
@@ -78,10 +72,8 @@ vsf_interior:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	cmp.w	#4,d0			; # fill types (not from wk struct?)
-;	bls	1$	; .ok
 	lbls	.ok,1
 	moveq	#0,d0			; Hollow
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_interior(a0)
 	move.l	intout(a1),a2
@@ -96,10 +88,8 @@ _lib_vsf_interior:
 lib_vsf_interior:
 	move.w	(a1),d0
 	cmp.w	#4,d0			; # fill types (not from wk struct?)
-;	bls	1$	; .ok
 	lbls	.ok,1
 	moveq	#0,d0			; Hollow
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_interior(a0)
 	rts
@@ -113,15 +103,11 @@ lib_vsf_interior:
 vsf_style:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	cmp.w	#24,d0			; # fill types (not from wk struct?)
-;	bls	2$	; .ok		;   really 12/24 pattern/hatch
 	lbls	.ok,2			;   really 12/24 pattern/hatch
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; First
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_fill_style(a0)
 	move.l	intout(a1),a2
@@ -135,15 +121,11 @@ vsf_style:
 _lib_vsf_style:
 lib_vsf_style:
 	move.w	(a1),d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	cmp.w	#24,d0			; # fill types (not from wk struct?)
-;	bls	2$	; .ok		;   really 12/24 pattern/hatch
 	lbls	.ok,2			;   really 12/24 pattern/hatch
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0			; First
-;2$:			; .ok:
  label .ok,2
 	move.w	d0,vwk_fill_style(a0)
 	rts
@@ -158,10 +140,8 @@ vsf_perimeter:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	cmp.w	#1,d0			; Only on/off (not from wk struct?)
-;	bls	1$	; .ok
 	lbls	.ok,1
 	moveq	#0,d0			; Off
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_perimeter(a0)
 	move.l	intout(a1),a2
@@ -175,10 +155,8 @@ vsf_perimeter:
 lib_vsf_perimeter:
 	move.w	(a1),d0
 	cmp.w	#1,d0			; Only on/off (not from wk struct?)
-;	bls	1$	; .ok
 	lbls	.ok,1
 	moveq	#0,d0			; Off
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_fill_perimeter(a0)
 	rts
@@ -237,10 +215,8 @@ lib_vsf_udpat:
 	move.w	d0,vwk_fill_user_multiplane(a0)
 	move.l	a1,vwk_fill_user_pattern_in_use(a0)
 	subq.w	#1,d1
-;1$:			; .loop:
  label .loop,1
 	move.w	(a2)+,(a1)+
-;	dbra	d1,1$	; .loop
 	ldbra	d1,.loop,1
 	rts
 

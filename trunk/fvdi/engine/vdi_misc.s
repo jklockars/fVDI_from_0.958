@@ -6,7 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
 always_clip_r	equ	1		; Always clip rectangles?
 always_clip_p	equ	1		; Always clip points?
 always_clip_l	equ	0		; Always clip lines?
@@ -436,7 +435,6 @@ p_transp:
 * Draws in xor mode
 * I don't think this does the right thing!
 p_xor:
-;	bcc	1$	; .nothing
 	lbcc	.nothing,1
 	move.l	d0,-(a7)
 ;	move.w	d0,-(a7)
@@ -446,7 +444,6 @@ p_xor:
 	not.w	d0		; Is this right instead perhaps?
 	jsr	(a3)
 	move.l	(a7)+,d0
-;1$:			; .nothing:
  label .nothing,1
 	rts
 
@@ -454,10 +451,8 @@ p_xor:
 *
 * Draws in reverse transparent mode
 p_revtransp:
-;	bcs	1$	; .nothing
 	lbcs	.nothing,1
 	jsr	(a3)
-;1$:			; .nothing:
  label .nothing,1
 	rts
 

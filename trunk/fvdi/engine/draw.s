@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 ;max_arc_count	equ	256
@@ -1017,47 +1015,39 @@ v_ellipse:
 	add.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	1$
 	lbgt	.skip1,1
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc + x, yc + y
-;1$:
  label .skip1,1
 	sub.w	d4,d1
 	sub.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	2$
 	lbgt	.skip2,2
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc - x, yc + y
-;2$:
  label .skip2,2
 	swap	d4
 	sub.w	d4,d2
 	sub.w	d4,d2
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	3$
 	lbgt	.skip3,3
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc - x, yc - y
-;3$:
  label .skip3,3
 	swap	d4
 	add.w	d4,d1
 	add.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	4$
 	lbgt	.skip4,4
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc + x, yc - y
-;4$:
  label .skip4,4
 	swap	d4
 
@@ -1121,47 +1111,39 @@ v_ellipse:
 	add.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	1$
 	lbgt	.skip1,1
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc + x, yc + y
-;1$:
  label .skip1,1
 	sub.w	d4,d1
 	sub.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	2$
 	lbgt	.skip2,2
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc - x, yc + y
-;2$:
  label .skip2,2
 	swap	d4
 	sub.w	d4,d2
 	sub.w	d4,d2
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	3$
 	lbgt	.skip3,3
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc - x, yc - y
-;3$:
  label .skip3,3
 	swap	d4
 	add.w	d4,d1
 	add.w	d4,d1
 	move.l	(a7),a0
 	bsr	clip_point
-;	bgt	4$
 	lbgt	.skip4,4
 	move.l	a7,a0
 	move	#1,ccr
 	jsr	(a1)		; xc + x, yc - y
-;4$:
  label .skip4,4
 	swap	d4
 
@@ -1215,40 +1197,32 @@ v_ellipse:
 	swap	d4
 	add.w	d4,d1
 	bsr	clip_point
-;	bgt	1$
 	lbgt	.skip1,1
 	move.w	d1,(a1)+		; xc + x, yc + y
 	move.w	d2,(a1)+
-;1$:
  label .skip1,1
 	sub.w	d4,d1
 	sub.w	d4,d1
 	bsr	clip_point
-;	bgt	2$
 	lbgt	.skip2,2
 	move.w	d1,(a1)+		; xc - x, yc + y
 	move.w	d2,(a1)+
-;2$:
  label .skip2,2
 	swap	d4
 	sub.w	d4,d2
 	sub.w	d4,d2
 	bsr	clip_point
-;	bgt	3$
 	lbgt	.skip3,3
 	move.w	d1,(a1)+		; xc - x, yc - y
 	move.w	d2,(a1)+
-;3$:
  label .skip3,3
 	swap	d4
 	add.w	d4,d1
 	add.w	d4,d1
 	bsr	clip_point
-;	bgt	4$
 	lbgt	.skip4,4
 	move.w	d1,(a1)+		; xc + x, yc - y
 	move.w	d2,(a1)+
-;4$:
  label .skip4,4
 	swap	d4
 
@@ -1298,40 +1272,32 @@ v_ellipse:
 	swap	d4
 	add.w	d4,d1
 	bsr	clip_point
-;	bgt	1$
 	lbgt	.skip1,1
 	move.w	d1,(a1)+	; xc + x, yc + y
 	move.w	d2,(a1)+
-;1$:
  label .skip1,1
 	sub.w	d4,d1
 	sub.w	d4,d1
 	bsr	clip_point
-;	bgt	2$
 	lbgt	.skip2,2
 	move.w	d1,(a1)+	; xc - x, yc + y
 	move.w	d2,(a1)+
-;2$:
  label .skip2,2
 	swap	d4
 	sub.w	d4,d2
 	sub.w	d4,d2
 	bsr	clip_point
-;	bgt	3$
 	lbgt	.skip3,3
 	move.w	d1,(a1)+	; xc - x, yc - y
 	move.w	d2,(a1)+
-;3$:
  label .skip3,3
 	swap	d4
 	add.w	d4,d1
 	add.w	d4,d1
 	bsr	clip_point
-;	bgt	4$
 	lbgt	.skip4,4
 	move.w	d1,(a1)+	; xc + x, yc - y
 	move.w	d2,(a1)+
-;4$:
  label .skip4,4
 	swap	d4
 
@@ -1445,13 +1411,11 @@ v_fillarea:
 	move.l	control(a1),a2
 
 	move.w	L_intin(a2),d1
-;	beq	1$	; .normal
 	lbeq	.normal,1
 	tst.w	vwk_bezier_on(a0)
 	bne	v_bez_fill
 	cmp.w	#13,subfunction(a2)
 	beq	v_bez_fill
-;1$:			; .normal:
  label .normal,1
 
 	subq.l	#6,a7
@@ -1763,7 +1727,6 @@ lib_v_fillarea:
 
 	move.l	vwk_real_address(a0),a2
 	move.l	wk_r_fillpoly(a2),d0
-;	beq	1$	; .no_accel_poly
 	lbeq	.no_accel_poly,1
 	move.l	(a1)+,d1
 	move.l	d0,a1
@@ -1773,7 +1736,6 @@ lib_v_fillarea:
 	bsr	col_pat		; d0 - colours, d5 - pattern
 	jsr	(a1)
 	bra	.end_lib_v_fillarea
-;1$:			; .no_accel_poly:
  label .no_accel_poly,1
 
 	move.l	#0,-(a7)	; Get a memory block of any size (hopefully large)

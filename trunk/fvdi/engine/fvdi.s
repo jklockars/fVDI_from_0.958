@@ -10,7 +10,6 @@
 debug		equ	1
 stoplog		equ	0		; Log until no more room (not circular)
 
-;lattice		equ	1		; Assemble for DevPac/Lattice?
 off		equ	0		; Skip fVDI code via a branch?
 
 transparent	equ	1		; Fall through?

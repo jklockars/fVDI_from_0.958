@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 
 SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
@@ -63,10 +61,8 @@ lib_vst_color:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	cmp.w	wk_screen_palette_size(a2),d0
-;	blo	1$	; .ok
 	lblo	.ok,1
 	moveq	#BLACK,d0
-;1$:			; .ok:
  label .ok,1
 	move.w	d0,vwk_text_colour_foreground(a0)
 	rts
@@ -129,18 +125,14 @@ vst_alignment:
 lib_vst_alignment:
 	move.w	(a1)+,d0
 	cmp.w	#2,d0		; # horizontal alignments (not from wk struct?)
-;	bls	1$	; .ok1
 	lbls	.ok1,1
 	moveq	#0,d0		; Left
-;1$:			; .ok1:
  label .ok1,1
 	swap	d0
 	move.w	(a1)+,d0
 	cmp.w	#5,d0		; # vertical alignments (not from wk struct?)
-;	bls	2$	; .ok2
 	lbls	.ok2,2
 	move.w	#0,d0		; Baseline
-;2$:			; .ok2:
  label .ok2,2
 	move.l	d0,vwk_text_alignment(a0)
 	move.l	(a1)+,a2
@@ -162,21 +154,16 @@ vst_rotation:
 	move.w	(a2),d0
 	move.l	vwk_real_address(a0),a2
 	tst.w	wk_writing_rotation_possible(a2)
-;	beq	1$	; .none
 	lbeq	.none,1
 	cmp.w	#1,wk_writing_rotation_type(a2)
-;	blo	1$	; .none
 	lblo	.none,1
 	bhi	.any
 	add.w	#450,d0
 	divu	#900,d0			; Only allow right angles
 	cmp.w	#3,d0			; Should probably check font
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:		; .none:
  label .none,1
 	moveq	#0,d0
-;2$:			; .ok:
  label .ok,2
 	mulu	#900,d0
 .any:
@@ -193,25 +180,18 @@ lib_vst_rotation:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	tst.w	wk_writing_rotation_possible(a2)
-;	beq	1$	; .none
 	lbeq	.none,1
 	cmp.w	#1,wk_writing_rotation_type(a2)
-;	blo	1$	; .none
 	lblo	.none,1
-;	bhi	3$	; .any
 	lbhi	.any,3
 	add.w	#450,d0
 	divu	#900,d0			; Only allow right angles
 	cmp.w	#3,d0			; Should probably check font
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:		; .none:
  label .none,1
 	moveq	#0,d0
-;2$:			; .ok:
  label .ok,2
 	mulu	#900,d0
-;3$:			; .any:
  label .any,3
 	move.w	d0,vwk_text_rotation(a0)
 	rts
@@ -241,10 +221,8 @@ _lib_vst_font:
 lib_vst_font:
 	move.w	(a1),d0
 	tst.w	d0
-;	bne	1$	; .ok
 	lbne	.ok,1
 	moveq	#1,d0
-;1$:			; .ok:
  label .ok,1
 	move.l	vwk_text_current_font(a0),d1
 	beq	.start
@@ -316,26 +294,18 @@ lib_vqt_name:
 	move.w	(a1),d0
 	move.l	vwk_real_address(a0),a2
 	tst.w	d0
-;	beq	1$	; .not_ok
 	lbeq	.not_ok,1
 	cmp.w	wk_writing_fonts(a2),d0
-;	bls	2$	; .ok
 	lbls	.ok,2
-;1$:			; .not_ok:
  label .not_ok,1
 	moveq	#1,d0
-;2$:			; .ok:
  label .ok,2
 	subq.w	#1,d0
 	move.l	wk_writing_first_font(a2),a2
-;	bra	4$	; .loopend
 	lbra	.loopend,4
-;3$:			; .loop:
  label .loop,3
 	move.l	font_next(a2),a2
-;4$:			; .loopend:
  label .loopend,4
-;	dbra	d0,3$	; .loop
 	ldbra	d0,.loop,3
 
 	move.l	2(a1),a1
@@ -427,70 +397,50 @@ lib_vqt_xfntinfo:
 	move.l	wk_writing_first_font(a2),a2
 
 	move.w	2(a1),d0
-;	bne	1$	; .id_ok
 	lbne	.id_ok,1
 	move.w	4(a1),d1
-;	bne	6$	; .index_ok
 	lbne	.index_ok,6
 
 	moveq	#1,d0
 	moveq	#1,d1
 	move.l	vwk_text_current_font(a0),d2
-;	beq	5$	; .found
 	lbeq	.found,5
 	move.w	font_id(a2),d0
 
-;1$:			; .id_ok:
  label .id_ok,1
 	moveq	#0,d1
-;2$:			; .search:
  label .search,2
 	addq.w	#1,d1
 	cmp.w	font_id(a2),d0
-;	bls	3$	; .maybe
 	lbls	.maybe,3
 	move.l	font_next(a2),a2
 	move.l	a2,d2
-;	bne	2$	; .search
 	lbne	.search,2
-;	bra	4$	; .not_found
 	lbra	.not_found,4
-;3$:			; .maybe:
  label .maybe,3
-;	bne	4$	; .not_found
 	lbne	.not_found,4
 	moveq	#1,d2
-;	bra	5$	; .found
 	lbra	.found,5
 
-;6$:			; .index_ok:
  label .index_ok,6
 	move.w	d1,d0
-;7$:			; .search2
  label .search2,7
 	subq.w	#1,d1
-;	beq	8$	; .counted
 	lbeq	.counted,8
 	move.l	font_next(a2),a2
 	move.l	a2,d2
-;	bne	7$	; .search2
 	lbne	.search2,7
-;	bra	4$	; .not_found
 	lbra	.not_found,4
-;8$:			; .counted
  label .counted,8
 	move.w	d0,d1
 	move.w	font_id(a2),d0
 	moveq	#1,d2
-;	bra	5$	; .found
 	lbra	.found,5
 
-;4$:			; .not_found
  label .not_found,4
 	moveq	#0,d0
 	moveq	#0,d1
 	moveq	#0,d2
-;5$:			; .found:
  label .found,5
 	swap	d2
 	move.w	d0,d2
@@ -499,70 +449,56 @@ lib_vqt_xfntinfo:
 	addq.l	#4,a1
 	move.l	d2,(a1)+
 	move.w	d1,(a1)+
-;	beq	9$	; .end
 	lbeq	.end,9
 
 	move.l	a2,d2
 	btst	#0,d0
-;	beq	10$
 	lbeq	.l10,10
 	move.l	d2,a2
 	lea	font_name(a2),a2
 	swap	d0
 	moveq	#16-1,d0
-;11$:
  label .loop1,11
 	move.w	(a2)+,d1
 	move.b	d1,(a1)+
-;	dbra	d0,11$
 	ldbra	d0,.loop1,11
 	swap	d0
 	move.b	#0,(a1)+
 	add.w	#50-17,a1
 
-;10$:
  label .l10,10
 	btst	#1,d0
-;	beq	12$
 	lbeq	.l12,12
 	move.l	d2,a2
 	lea	font_name(a2),a2
 	swap	d0
 	moveq	#8-1,d0
-;13$:
  label .loop2,13
 	move.w	(a2)+,d1
 	move.b	d1,(a1)+
-;	dbra	d0,13$
 	ldbra	d0,.loop2,13
 	swap	d0
 	move.b	#0,(a1)+
 	add.w	#50-9,a1
 
-;12$:
  label .l12,12
 	btst	#2,d0
-;	beq	14$
 	lbeq	.l14,14
 	move.l	d2,a2
 	lea	font_name(a2),a2
 	add.w	#16,a2
 	swap	d0
 	moveq	#8-1,d0
-;15$:
  label .loop3,15
 	move.w	(a2)+,d1
 	move.b	d1,(a1)+
-;	dbra	d0,15$
 	ldbra	d0,.loop3,15
 	swap	d0
 	move.b	#0,(a1)+
 	add.w	#50-9,a1
 
-;14$:
  label .l14,14
 
-;9$:			; .end:
  label .end,9
 	move.l	(a7)+,d2
 	rts
@@ -588,21 +524,16 @@ vqt_extent:
 
 	moveq	#0,d2			; Width total
 ;	subq.w	#1,d0
-;	bra	2$
 	lbra	.no_char,2
-;1$:			; .loop:
  label .loop,1
 	move.w	(a1)+,d1
 	sub.w	d3,d1			; Negative numbers are higher
 	cmp.w	d4,d1			;  than code_high
-;	bhi	2$	; .no_char
 	lbhi	.no_char,2
 	add.w	d1,d1
 	add.w	2(a3,d1.w),d2
 	sub.w	0(a3,d1.w),d2
-;2$:			; .no_char:
  label .no_char,2
-;	dbra	d0,1$	; .loop
 	ldbra	d0,.loop,1
 
 	move.w	vwk_text_effects(a0),d0
@@ -619,15 +550,11 @@ vqt_extent:
 	move.w	font_skewing(a4),d1
 	move.w	font_height(a4),d0
 	subq.w	#1,d0
-;3$:
  label .loop2,3
 	rol.w	#1,d1
-;	bcc	4$
 	lbcc	.skip,4
 	addq.w	#1,d2
-;4$:
  label .skip,4
-;	dbra	d0,3$
 	ldbra	d0,.loop2,3
 .no_italic:
 
@@ -665,53 +592,38 @@ lib_vqt_extent:
 
 	moveq	#0,d2			; Width total
 ;	subq.w	#1,d0
-;	bra	2$
 	lbra	.no_char,2
-;1$:			; .loop:
  label .loop,1
 	move.w	(a1)+,d1
 	sub.w	d3,d1			; Negative numbers are higher
 	cmp.w	d4,d1			;  than code_high
-;	bhi	2$	; .no_char
 	lbhi	.no_char,2
 	add.w	d1,d1
 	add.w	2(a3,d1.w),d2
 	sub.w	0(a3,d1.w),d2
-;2$:			; .no_char:
  label .no_char,2
-;	dbra	d0,1$	; .loop
 	ldbra	d0,.loop,1
 
 	move.w	vwk_text_effects(a0),d0
 	btst	#0,d0
-;	beq	5$	; .no_bold
 	lbeq	.no_bold,5
 	add.w	font_thickening(a4),d2
-;5$:			; .no_bold:
  label .no_bold,5
 	btst	#4,d0
-;	beq	6$	; .no_outline
 	lbeq	.no_outline,6
 	addq.w	#2,d2
-;6$:			; .no_outline:
  label .no_outline,6
 	btst	#2,d0
-;	beq	7$	; --.no_italic
 	lbeq	.no_italic,7
 	move.w	font_skewing(a4),d1
 	move.w	font_height(a4),d0
 	subq.w	#1,d0
-;3$:
  label .loop2,3
 	rol.w	#1,d1
-;	bcc	4$
 	lbcc	.skip,4
 	addq.w	#1,d2
-;4$:
  label .skip,4
-;	dbra	d0,3$
 	ldbra	d0,.loop2,3
-;7$:			; .no_italic:
  label .no_italic,7
 
 	move.l	#0,(a2)+
@@ -795,7 +707,6 @@ lib_vqt_width:
 	neg.w	d1
 	add.w	d0,d1			; Negative numbers are higher
 	cmp.w	font_code_high(a0),d1	;  than code_high
-;	bhi	3$	; .no_char
 	lbhi	.no_char,3
 	add.w	d1,d1
 	move.w	2(a2,d1.w),d2
@@ -805,27 +716,22 @@ lib_vqt_width:
 	
 	move.w	font_flags(a0),d2
 	and.w	#$0002,d2
-;	beq	1$	; .no_offset
 	lbeq	.no_offset,1
 	move.l	font_table_horizontal(a0),a2
 	move.w	2(a2,d1.w),d2
 	sub.w	0(a2,d1.w),d2
-;1$:			; .no_offset:
  label .no_offset,1
 	move.l	(a1)+,a2
 	move.w	d2,(a2)
 	move.l	(a1),a2
 	move.w	#0,(a2)			; Right hand offset?
 	
-;2$:			; .end_vqt_width:	; .end:
  label .end,2
 	movem.l	(a7)+,d2
 	rts
 
-;3$:			; .no_char:
  label .no_char,3
 	moveq	#-1,d0
-;	bra	2$	; .end_vqt_width	; .end
 	lbra	.end,2
 
 
@@ -842,18 +748,14 @@ vst_height:
 	move.l	vwk_text_current_font(a0),a2
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
-;1$:			; .search:
  label .search,1
 	move.w	font_distance_top(a2),d1
 	cmp.w	d1,d0
-;	blo	2$	; .found
 	lblo	.found,2
 	move.l	a2,a3
 	move.l	font_extra_next_size(a2),a2
 	move.l	a2,d1
-;	bne	1$	; .search
 	lbne	.search,1
-;2$:			; .found:
  label .found,2
 	move.l	a3,vwk_text_current_font(a0)
 	movem.l	ptsout(a1),a2
@@ -886,18 +788,14 @@ lib_vst_height:
 	move.l	vwk_text_current_font(a0),a2
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
-;1$:			; .search:
  label .search,1
 	move.w	font_distance_top(a2),d1
 	cmp.w	d1,d0
-;	blo	2$	; .found
 	lblo	.found,2
 	move.l	a2,a3
 	move.l	font_extra_next_size(a2),a2
 	move.l	a2,d1
-;	bne	1$	; .search
 	lbne	.search,1
-;2$:			; .found:
  label .found,2
 	move.l	a3,vwk_text_current_font(a0)
 	move.w	font_widest_character(a3),d1
@@ -936,17 +834,13 @@ vst_point:
 	move.l	vwk_text_current_font(a0),a2
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
-;1$:			; .search:
  label .search,1
 	cmp.w	font_size(a2),d0
-;	blo	2$	; .found
 	lblo	.found,2
 	move.l	a2,a3
 	move.l	font_extra_next_size(a2),a2
 	move.l	a2,d1
-;	bne	1$	; .search
 	lbne	.search,1
-;2$:			; .found:
  label .found,2
 	move.l	a3,vwk_text_current_font(a0)
 	movem.l	intout(a1),a1-a2		; Get ptsout too
@@ -982,17 +876,13 @@ lib_vst_point:
 	move.l	vwk_text_current_font(a0),a2
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
-;1$:			; .search:
  label .search,1
 	cmp.w	font_size(a2),d0
-;	blo	2$	; .found
 	lblo	.found,2
 	move.l	a2,a3
 	move.l	font_extra_next_size(a2),a2
 	move.l	a2,d1
-;	bne	1$	; .search
 	lbne	.search,1
-;2$:			; .found:
  label .found,2
 	move.l	a3,vwk_text_current_font(a0)
 	move.w	font_widest_character(a3),d1

@@ -6,8 +6,6 @@
 * Please, see LICENSE.TXT for further information.
 *****
 
-;lattice		equ	1		; 1 - Assemble for DevPac/Lattice
-
 transparent	equ	1		; Fall through?
 lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 
@@ -146,59 +144,45 @@ lib_v_bar:
 ;	blt	3$
 	lblt	.skip1,3
 	jsr	(a2)
-;3$:
  label .skip1,3
 
 	movem.w	(a1),d1-d4		; Draw bottom/top perimeter
 	cmp.w	d2,d4
-;	beq	2$
 	lbeq	.end,2
 	move.w	d4,d2
 	bsr	clip_rect
-;	blt	4$
 	lblt	.skip2,4
 	jsr	(a2)
-;4$:
  label .skip2,4
 
 	movem.w	(a1),d1-d4		; Draw left perimeter
 	cmp.w	d2,d4			; Bug compatibility
-;	bge	5$	; .no_swap
 	lbge	.no_swap1,5
 	exg	d2,d4
-;5$:
  label .no_swap1,5
 	addq.w	#1,d2
 	subq.w	#1,d4
 	move.w	d1,d3
 	bsr	clip_rect
-;	blt	6$
 	lblt	.skip3,6
 	jsr	(a2)
-;6$:
  label .skip3,6
 
 	movem.w	(a1),d1-d4		; Draw right perimeter
 	cmp.w	d2,d4			; Bug compatibility
-;	bge	7$	; .no_swap
 	lbge	.no_swap2,7
 	exg	d2,d4
-;7$:
  label .no_swap2,7
 	cmp.w	d1,d3
-;	beq	2$
 	lbeq	.end,2
 	addq.w	#1,d2
 	subq.w	#1,d4
 	move.w	d3,d1
 	bsr	clip_rect
-;	blt	8$
 	lblt	.skip4,8
 	jsr	(a2)
-;8$:
  label .skip4,8
 
-;2$:
  label .end,2
 	movem.l	(a7)+,d2-d5
 
@@ -1430,7 +1414,6 @@ finish_up:
 ;	roxr.l	#1,d6		; This _is_ the right one!
 	move.w	d5,0(a3,d4)
 	subq.w	#2,d4
-;	bpl	3$	; .l3
 	lbpl	.loop3b,3
 
 	and.w	#$00ff,d6		; Higher palette entries aren't possible (optimize above!)
@@ -1465,7 +1448,6 @@ finish_up:
 	roxr.l	#1,d6		; This _is_ the right one!
 	move.w	d5,0(a3,d4)
 	subq.w	#2,d4
-;	bpl	3$	; .l3
 	lbpl	.loop3b,3
 
 	move.l	d6,(a4)+
