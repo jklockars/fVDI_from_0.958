@@ -1,3 +1,13 @@
+/*
+ * Assembly equ output functions
+ *
+ * $Id: outequ.c,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 #undef GIVE_UP_ON_ERROR
 
 #include "misc.h"
@@ -101,6 +111,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       out(name, pos);
       *size = 1;
       break;
+
    case _Short:
 #if 0
       printf("short %d\n", pos);
@@ -109,6 +120,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       out(name, pos);
       *size = 2;
       break;
+
    case _Int:
 #if 0
       printf("int %d\n", pos);
@@ -117,6 +129,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       out(name, pos);
       *size = 4;
       break;
+
    case _Long:
 #if 0
       printf("long %d\n", pos);
@@ -125,6 +138,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       out(name, pos);
       *size = 4;
       break;
+
    case _Structdef:
 #if 0
       printf("structdef %d\n", pos);
@@ -141,6 +155,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       dummy = list_to_equ(name, expr->info.strct.defs, pos, all_defs, size);
       *size = (*size + 1) & 0xfffe;
       break;
+
    case _Struct:
 #if 0
       printf("struct %d\n", pos);
@@ -150,6 +165,34 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       exit(-1);
 #endif
       break;
+
+   case _Uniondef:
+#if 0
+      printf("uniondef %d\n", pos);
+#endif
+      expr = type_expr->info.def.type;
+      if (expr->type != _Unionexpr) {
+         printf("Bad type (E)!\n");
+#ifdef GIVE_UP_ON_ERROR
+         exit(-1);
+#endif
+      }
+      pos = (pos + 1) & 0xfffe;
+      out(name, pos);
+      dummy = ulist_to_equ(name, expr->info.unjon.defs, pos, all_defs, size);
+      *size = (*size + 1) & 0xfffe;
+      break;
+
+   case _Union:
+#if 0
+      printf("union %d\n", pos);
+#endif
+      printf("Not yet supported (C)!\n");
+#ifdef GIVE_UP_ON_ERROR
+      exit(-1);
+#endif
+      break;
+
    case _Typedef:
 #if 0
       printf("typedef %d\n", pos);
@@ -169,6 +212,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
 #endif
       }
       break;
+
    case _Pointer:
 #if 0
       printf("pointer %d\n", pos);
@@ -177,6 +221,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
       out(name, pos);
       *size = 4;
       break;
+
    default:
       printf("Bad type (%d)!\n", type_expr->info.def.sort);
 #ifdef GIVE_UP_ON_ERROR
@@ -184,6 +229,7 @@ int expr_to_equ(Expression cur_expr, int pos, List all_defs, int *size)
 #endif
       break;
    }
+
    if (count >= 0) {             /* Used to be >, 981114 */
 #if 0
       printf("Array of %d elements a %d\n", count, *size);
@@ -223,6 +269,38 @@ int list_to_equ(char *base, List defs, int pos, List all_defs, int *size)
    return pos;
 }
 
+int ulist_to_equ(char *base, List defs, int pos, List all_defs, int *size)
+{
+   Listelement ptr;
+   Expression cur_expr, type_expr, expr;
+   int type;
+   int oldpos;
+   int maxpos;
+   int dummy;
+
+   oldpos = pos;
+   maxpos = pos;
+   push(base);
+   ptr = FIRST(defs);
+   while(ptr) {
+      cur_expr = EXPR(ptr);
+      if (cur_expr->type != _Varexpr) {
+         printf("Unsupported construction (A)!\n");
+#ifdef GIVE_UP_ON_ERROR
+         exit(-1);
+#endif
+      }
+      pos = expr_to_equ(cur_expr, pos, all_defs, &dummy);
+      if (pos > maxpos)
+         maxpos = pos;
+      pos = oldpos;
+      NEXT(ptr);
+   }
+   pop();
+   *size = maxpos - oldpos;
+   return maxpos;
+}
+
 void convert(char *name, List defs)
 {
    Listelement ptr;
@@ -231,6 +309,7 @@ void convert(char *name, List defs)
    int size;
    char *equ_name;
    int dummy;
+   int found;
 
    count = 0;
    if (equ_name = strchr(name, '=')) {
@@ -241,25 +320,48 @@ void convert(char *name, List defs)
    size = 0;
    
    ptr = FIRST(defs);
-   while(ptr) {
+   found = 0;
+   while (!found && ptr) {
       expr = EXPR(ptr);
       type = expr->type;
-      if (type == _Structexpr) {
+      switch (type) {
+      case _Structexpr:
+#if 0
          printf("Checking structexpr\n");
+#endif
          if (compare(name, expr->info.strct.name)) {
             size = list_to_equ(equ_name, expr->info.strct.defs, 0, defs, &dummy);
-            break;
+            found = 1;
          } else {
 #if 0
             printf("Mismatch: %s, %s\n", name, expr->info.strct.name->string);
 #endif
          }
-      } else if (type == _Typedefexpr) {
+         break;
+
+      case _Unionexpr:
+#if 0
+         printf("Checking unionexpr\n");
+#endif
+         if (compare(name, expr->info.unjon.name)) {
+            size = ulist_to_equ(equ_name, expr->info.unjon.defs, 0, defs, &dummy);
+            found = 1;
+         } else {
+#if 0
+            printf("Mismatch: %s, %s\n", name, expr->info.unjon.name->string);
+#endif
+         }
+         break;
+
+      case _Typedefexpr:
          if (compare(name, expr->info.var.id->info.id.name)) {
             expr = expr->info.var.type;
             if ((expr->type == _Typeexpr) && (expr->info.def.sort == _Structdef)) {
                size = list_to_equ(equ_name, expr->info.def.type->info.strct.defs, 0, defs, &dummy);
-               break;
+               found = 1;
+            } else if ((expr->type == _Typeexpr) && (expr->info.def.sort == _Uniondef)) {
+               size = ulist_to_equ(equ_name, expr->info.def.type->info.unjon.defs, 0, defs, &dummy);
+               found = 1;
             } else {
                printf("Not a struct typedef (%d)!\n", expr->type);
                exit(-1);
@@ -269,12 +371,14 @@ void convert(char *name, List defs)
             printf("Mismatch: %s, %s\n", name, expr->info.var.id->info.id.name->string);
 #endif
          }
-      } else if (type == _Varexpr) {
+	 break;
+
+      case _Varexpr:
          if (compare(name, expr->info.var.id->info.id.name)) {
             expr = expr->info.var.type;
             if ((expr->type == _Typeexpr) && (expr->info.def.sort == _Structdef)) {
                size = list_to_equ(equ_name, expr->info.def.type->info.strct.defs, 0, defs, &dummy);
-               break;
+               found = 1;
             } else {
                printf("Not a struct variable (%d)!\n", expr->type);
                exit(-1);
@@ -284,8 +388,11 @@ void convert(char *name, List defs)
             printf("Mismatch: %s, %s\n", name, expr->info.var.id->info.id.name->string);
 #endif
          }
-      } else {
+	 break;
+
+      default:
          printf("Expression type: %d\n", type);
+	 break;
       }
       NEXT(ptr);
    }

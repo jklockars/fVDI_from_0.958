@@ -1,3 +1,13 @@
+/*
+ * C structure lexical analyzer
+ *
+ * $Id: struct.lex,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 %{
 #include <strings.h>
 #include <stdlib.h>
@@ -6,7 +16,7 @@
 #include "expr.h"
 #include "list.h"
 #include "hash.h"
-#include "struct_tab.h"
+#include "struct.tab.h"
 
 #define LDEBUG	0
 #define	DBE	if (LDEBUG) ECHO
@@ -29,6 +39,7 @@ identifier	[a-zA-Z_]+[a-zA-Z0-9_]*
 "["	{ DBE; yylval.line = lineno; return '['; }
 "]"	{ DBE; yylval.line = lineno; return ']'; }
 "struct"	{ DBE; yylval.line = lineno; return STRUCT; }
+"union"	{ DBE; yylval.line = lineno; return UNION; }
 "char"	{ DBE; yylval.line = lineno; return CHAR; }
 "short"	{ DBE; yylval.line = lineno; return SHORT; }
 "int"	{ DBE; yylval.line = lineno; return INT; }

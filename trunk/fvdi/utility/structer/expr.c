@@ -1,3 +1,13 @@
+/*
+ * C structure expression creation and printing functions
+ *
+ * $Id: expr.c,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 #include "misc.h"
 #include "expr.h"
 #include "list.h"
@@ -80,6 +90,26 @@ void printstruct(Expression expr)
 {
    printf("struct %s {\n", expr->info.strct.name->string);
    printdefs(expr->info.strct.defs);
+   printf("} ");
+}
+
+
+Expression mkunion(Identifier name, List defs)
+{
+   Expression expr = new();
+
+   ET("mkunion");
+   expr->type = _Unionexpr;
+   expr->info.unjon.name = name;
+   expr->info.unjon.defs = defs;
+   return expr;
+}
+
+
+void printunion(Expression expr)
+{
+   printf("union %s {\n", expr->info.strct.name->string);
+   printdefs(expr->info.unjon.defs);
    printf("} ");
 }
 

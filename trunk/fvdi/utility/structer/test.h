@@ -1,3 +1,13 @@
+/*
+ * Test structs
+ *
+ * $Id: test.h,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 typedef struct _rect {
    int x1;
    int y1;
@@ -31,6 +41,19 @@ typedef struct _vdi {
 } vdi;
 
 vdi a;
+
+struct utest {
+   int a;
+   union {
+      Rect b;
+      int c;
+      struct {
+         int d;
+         char e;
+      } f;
+   } g;
+   vdi h;
+};
 
 //void func(void)
 //{

@@ -1,3 +1,13 @@
+/*
+ * C structure parser
+ *
+ * $Id: struct.y,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 %{
 #include "list.h"
 #include "misc.h"
@@ -23,22 +33,38 @@ List definitions;
 
 %token <line> '{'  '}'  '['  ']'
 %token <line> ','  ';'  '*'
-%token <line> TYPEDEF  STRUCT
+%token <line> TYPEDEF  STRUCT  UNION
 %token <line> CHAR  SHORT  INT  LONG
 %token <name> IDENTIFIER
 %token <num>  NUMERAL
 %token <string> STRING
 %token <line> LEXERROR
 
-%type <list>          program  deflist
-%type <expr>          def  struct  type  id  var
+%type <list>          program  pdeflist  deflist
+%type <expr>          pdef  def  struct  union  type  id  var
 
 %start program
 
 %%
 
-program :  deflist
+program :  pdeflist
               { definitions = $1; }
+;
+
+pdeflist :  
+                 { $$ = empty(_Deflist); }
+        |  pdef pdeflist
+                 { $$ = prepend($1, $2); }
+;
+
+pdef :     var ';'
+                 { $$ = $1; }
+	|  struct ';'
+                 { $$ = $1; }
+	|  union ';'
+                 { $$ = $1; }
+        |  TYPEDEF var ';'
+                 { $$ = mktypedef($2); }
 ;
 
 deflist :  
@@ -47,16 +73,20 @@ deflist :
                  { $$ = prepend($1, $2); }
 ;
 
-def :       var ';'
+def :      var ';'
                  { $$ = $1; }
-        |  TYPEDEF var ';'
-                 { $$ = mktypedef($2); }
 ;
 
 struct :   STRUCT IDENTIFIER '{' deflist '}'
                  { $$ = mkstruct($2, $4); }
         |  STRUCT '{' deflist '}'
                  { $$ = mkstruct(0, $3); }
+;
+
+union :    UNION IDENTIFIER '{' deflist '}'
+                 { $$ = mkunion($2, $4); }
+        |  UNION '{' deflist '}'
+                 { $$ = mkunion(0, $3); }
 ;
 
 type :     CHAR
@@ -69,8 +99,12 @@ type :     CHAR
                  { $$ = mktype(_Long, 0, 0); }
         |  struct
                  { $$ = mktype(_Structdef, 0, $1); }
+        |  union
+                 { $$ = mktype(_Uniondef, 0, $1); }
         |  STRUCT IDENTIFIER
                  { $$ = mktype(_Struct, $2, 0); }
+        |  UNION IDENTIFIER
+                 { $$ = mktype(_Union, $2, 0); }
         | IDENTIFIER
                  { $$ = mktype(_Typedef, $1, 0); }
         | type '*'

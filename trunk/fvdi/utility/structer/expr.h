@@ -1,11 +1,20 @@
 #ifndef _EXPR_H
 #define _EXPR_H
+/*
+ * C structure expression declarations
+ *
+ * $Id: expr.h,v 1.2 2002-05-13 01:28:11 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
 
 #include "misc.h"
 #include "list.h"
 
 enum Exprs {
-   _Idexpr, _Typedefexpr, _Structexpr, _Typeexpr, _Varexpr
+   _Idexpr, _Typedefexpr, _Structexpr, _Unionexpr, _Typeexpr, _Varexpr
    } ;
 
 struct _Expr {
@@ -28,6 +37,11 @@ struct _Expr {
          List defs;
       } strct;
 
+      struct _Union_Expr {
+         Identifier name;
+         List defs;
+      } unjon;
+
       struct _Type_Expr {
          Type sort;
          Identifier name;
@@ -42,7 +56,8 @@ extern Expression
   mkid(Identifier, int),
   mktypedef(Expression),
   mkstruct(Identifier, List),
-  mkntype(int, Identifier, Expression),
+  mkunion(Identifier, List),
+  mktype(int, Identifier, Expression),
   mkvar(Expression, Expression);
 
 extern void printdefs(List);
