@@ -1,3 +1,13 @@
+/*
+ * fVDI Bezier code
+ *
+ * $Id: bezier.c,v 1.2 2003-04-06 13:42:53 johan Exp $
+ *
+ * This is a modified version of code with an original
+ * copyright as follows.
+ * Johan Klockars, 1999
+ */
+
 /*   Description       : Fast Bezier approximation using
  *                       four control points.
  *
@@ -6,8 +16,6 @@
  *                        Algorithms for graphics & image processing,
  *                        Theo Pavlidis, Bell Labs,
  *                        Computer Science Press ISBN 0-914894-65-X.
- *
- *   Heavily modified for use in fVDI by Johan Klockars
  *
  ********************************************************************
  *       Copyright 1999, Caldera Thin Clients, Inc.                 *
@@ -27,6 +35,8 @@
  *  refer to the appropriate Digital Research Licence               *
  *  Agreement.                                                      *
  ********************************************************************/
+
+#include "fvdi.h"
 
 #define BIG_ENDIAN
 
@@ -54,8 +64,15 @@ extern	void	GEXT_DCALL(short *parmblock[5]);
 extern long allocate_block(long);
 extern void free_block(void *);
 
+extern void v_bez_accel(long vwk, short *points, long num_points, long totmoves,
+                        short *xmov, long pattern, long colour, long mode);
+extern void lib_v_pline(Virtual *, void *);
+
 #define MULT(a,b)	((long)(a) * (b))
 #define _max(x,y)		(((x) > (y)) ? (x) : (y))
+
+
+extern short line_types[];
 
 
 /* A normal ABS macro generated silly code */
@@ -146,11 +163,100 @@ struct node {
 static int xres = 100, yres = 100;
 #endif
 
+
+struct v_bez_pars {
+	short num_pts;
+	short *points;
+	char  *bezarr;
+	short *extent;
+	short *totpoints;
+	short *totmoves;
+};
+
+void CDECL
+lib_v_bez(Virtual *vwk, struct v_bez_pars *par)
+{
+	short x_used;
+	short *xpts, *xmov;
+	int depth_scale, depth_scale_min;
+	int result;
+	short *block;
+	int num_points;
+	short *points;
+	short pattern;
+	short minx, miny, maxx, maxy, k;
+	int i;
+
+	num_points = par->num_pts;
+	points = par->points;
+
+	result = -1;
+	depth_scale_min = vwk->real_address->drawing.bezier.depth_scale.min;
+	for(depth_scale = vwk->bezier.depth_scale;
+	    depth_scale <= depth_scale_min; depth_scale++) {
+		xpts = &vwk->clip.rectangle.x1;
+		result = calc_bez(par->bezarr, points, depth_scale,
+		                  num_points, num_points, &xmov, &xpts,
+		                  par->totmoves, &x_used);
+		if (result >= 0)
+			break;
+		if (!x_used) {
+			lib_v_pline(vwk, (void *)par);
+			break;
+		}
+	}
+	if (result >= 0) {
+		num_points = result;
+		points = xpts;
+		if ((vwk->line.width > 1) && (block = (short *)allocate_block(0))) {
+			wide_line(vwk, points, num_points, vwk->line.colour, block, vwk->mode);
+			free_block(block);
+		} else {
+			pattern = vwk->line.user_mask;
+			if (vwk->line.type != 7)
+				pattern = line_types[vwk->line.type - 1];
+			v_bez_accel((long)vwk + 1, points, ((long)num_points << 16) | 1,
+			            (long)*par->totmoves, xmov, (long)pattern,
+			            *(long *)&vwk->line.colour, (long)vwk->mode);
+		}
+	} else {
+		x_used = 0;
+		xpts = 0;
+		xmov = 0;
+	}
+
+	minx = maxx = *points++;
+	miny = maxy = *points++;
+	for(i = num_points - 1; i >= 0; i--) {
+		k = *points++;
+		if (k < minx)
+			minx = k;
+		else if (k > maxx)
+			maxx = k;
+		k = *points++;
+		if (k < miny)
+			miny = k;
+		else if (k > maxy)
+			maxy = k;
+	}
+
+	par->extent[0] = minx;
+	par->extent[1] = miny;
+	par->extent[2] = maxx;
+	par->extent[3] = maxy;
+	*par->totpoints = num_points;
+	*par->totmoves = x_used;
+	if (xpts)
+		free_block(xpts);
+}
+
+
 /*
  * bez_depth:  Find the bezier depth necessary for
  *             a reasonable looking curve.
  */
-int bez_depth(short *pts, short depth_scale)
+int
+bez_depth(short *pts, short depth_scale)
 {
 	short base, xdiff, ydiff, depth;
 	long bez_size;
@@ -187,7 +293,8 @@ int bez_depth(short *pts, short depth_scale)
  * The first point is already done and the last point
  * will be done for us in the drivers. -WDH
  */
-int do_bez4(short *xyin, short depth, short *xyout, short clip[])
+int
+do_bez4(short *xyin, short depth, short *xyout, short clip[])
 {
 	int count;
 	struct coords mid;  /* Used to save a temporary value */
@@ -300,6 +407,7 @@ int do_bez4(short *xyin, short depth, short *xyout, short clip[])
 	return count;
 }
 
+
 /*
  * bezier4:     Calculate a bezier curve for xyin using
  *              exactly four control points.
@@ -309,7 +417,8 @@ int do_bez4(short *xyin, short depth, short *xyout, short clip[])
  *              calculate. Must be 4, 5 or 6.
  * Output:      Bezier curve x & y coords in array xyout.
  */
-void bezier4(short *xyin, short **xyout, short depth_scale, short clip[])
+void
+bezier4(short *xyin, short **xyout, short depth_scale, short clip[])
 {
 	int depth, cnt;
 
@@ -317,6 +426,7 @@ void bezier4(short *xyin, short **xyout, short depth_scale, short clip[])
 	cnt = do_bez4(xyin, depth, *xyout, clip);  /* CJLT changed to new parameters and returned value */
 	*xyout += 2 * (cnt - 1);
 }
+
 
 /*
  * calc_bez:	Calculate Bezier curves and moves (when necessary).
@@ -337,7 +447,8 @@ void bezier4(short *xyin, short **xyout, short depth_scale, short clip[])
  *     pnt_mv_cnt  - The size of XMOV.
  *         x_used  - If Beziers or moves occured.
  */
-short calc_bez(char *marks, short *points, long flags, long maxpnt, long maxin, short **xmov, short **xpts, short *pnt_mv_cnt, short *x_used)
+short CDECL
+calc_bez(char *marks, short *points, long flags, long maxpnt, long maxin, short **xmov, short **xpts, short *pnt_mv_cnt, short *x_used)
 {
 	short maxchk, movptr, i;
 	short *pts_ptr, *last_pnt, *pts_out;
@@ -435,6 +546,7 @@ short calc_bez(char *marks, short *points, long flags, long maxpnt, long maxin, 
 	return (short)(pts_out - XPTS) >> 1;
 }
 
+
 /* v_bez */
 #if 0
 void BEZ_CALL(short *parmblock[5], short *tappbuff, unsigned short tappsize)
@@ -515,6 +627,7 @@ void BEZ_CALL(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 	CONTRL[3] = savecontrl3;
 }
 
+
 /* CONTRL[0] == 5 */
 void dummy1(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 {
@@ -543,6 +656,7 @@ void dummy1(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 			(MAX_DEPTH_SCALE - MIN_DEPTH_SCALE);
 	}
 }
+
 
 /* v_bez_con */
 /* CONTRL[0] == 11 */
@@ -596,6 +710,7 @@ void dummy2(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 	INTOUT[0] = MAX_BEZIER_DEPTH;
 }
 
+
 /* ? */
 void dummy3(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 {
@@ -614,3 +729,169 @@ void dummy3(short *parmblock[5], short *tappbuff, unsigned short tappsize)
 	}
 }
 #endif
+
+
+#if 0
+bezier
+
+  ifne 0
+	sub.w	#10,a7
+	move.l	a7,a2
+	movem.l	a0-a1,-(a7)
+	move.l	a2,-(a7)
+	move.l	18(a1),-(a7)
+	pea	2(a2)
+	move.l	a0,d0
+	add.w	#vwk_clip_rectangle,d0
+	move.l	d0,2(a2)
+	pea	6(a2)
+	moveq	#0,d0
+	move.w	0(a1),d0
+	move.l	d0,-(a7)	; marks = num_pts   ?
+	move.l	d0,-(a7)
+	move.w	vwk_bezier_depth_scale(a0),d0
+;	move.w	#0,d0
+	move.l	d0,-(a7)
+	move.l	2(a1),-(a7)
+	move.l	6(a1),-(a7)
+	bra	.bez_loop_end
+.bez_loop:
+	jsr	_calc_bez	; (ch *marks, sh *points, sh flags, sh maxpnt, sh maxin, sh **xmov, sh **xpts, sh *pnt_mv_cnt, sh *x_used)
+	tst.l	d0
+	bge	.done
+	tst.w	9*4+2*4(a7)		; xused?
+	beq	.normal_line
+	addq.w	#1,8+2(a7)
+.bez_loop_end:
+	move.l	9*4(a7),a0
+	move.l	a0,d0			; Restore clip rectangle pointer
+	add.w	#vwk_clip_rectangle,d0
+	move.l	24(a7),a2
+	move.l	d0,(a2)
+	move.l	vwk_real_address(a0),a2
+	move.w	8+2(a7),d0
+	cmp.w	wk_drawing_bezier_depth_scale_min(a2),d0
+;	cmp.w	#9,8+2(a7)
+	ble	.bez_loop
+
+	add.w	#9*4,a7		; Should we ever get here?
+	movem.l	(a7),a0-a1
+	moveq	#0,d0
+	move.w	d0,0(a7)	; No allocated memory etc
+	move.l	d0,4(a7)
+	move.l	d0,8(a7)
+	move.w	0(a1),d0
+	lea	2(a1),a0
+	bra	.finish_up
+
+.done:
+	add.w	#9*4,a7
+;	move.l	0(a7),a0
+	movem.l	0(a7),a0-a1
+	subq.l	#6,a7
+	move.w	d0,0(a7)
+
+	movem.l	d2-d6,-(a7)
+	move.w	d0,d6
+	move.l	5*4+6+2*4+2(a7),a2		; Points
+;	move.w	5*4+6+2*4+0(a7),d3		; Move point count
+	move.l	18(a1),a1
+	move.w	(a1),d3
+	move.l	5*4+6+2*4+6(a7),d4		; Move indices
+
+	move.l	vwk_line_colour(a0),d0
+	cmp.w	#1,vwk_line_width(a0)
+	bhi	.wide_bez			; Do wide lines too!!!
+
+.no_wide_bez:
+	move.w	vwk_line_user_mask(a0),d5
+	move.w	vwk_line_type(a0),d1
+	cmp.w	#7,d1
+	beq	.bez_userdef
+	lea	_line_types,a1
+	subq.w	#1,d1
+	add.w	d1,d1
+	move.w	0(a1,d1.w),d5
+.bez_userdef:
+
+	move.l	vwk_real_address(a0),a1
+	move.l	wk_r_line(a1),d1
+	move.l	d1,a1
+
+	move.l	a2,d1
+	move.w	d6,d2
+	swap	d2
+	move.w	#1,d2			; Should be 1 for move handling
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
+	addq.l	#1,a0
+	jsr	(a1)
+
+.end_bez_draw:		; .end
+	movem.l	(a7)+,d2-d6
+
+	move.w	0(a7),d0
+	addq.l	#6,a7
+	move.l	2*4+2(a7),a0
+
+.finish_up:
+	move.l	d0,a2
+	bsr	bezier_size
+	movem.l	(a7)+,a0-a1
+	move.l	10(a1),a0
+	move.l	d0,(a0)+
+	move.l	d1,(a0)
+	move.l	14(a1),a0
+	move.w	a2,(a0)
+	move.l	18(a1),a0
+	move.w	0(a7),(a0)
+	move.l	2(a7),d0
+	beq	.no_free
+	move.l	d0,-(a7)
+	bsr	_free_block
+	addq.l	#4,a7
+.no_free:
+	add.w	#10,a7
+	rts
+		
+.normal_line:
+	add.w	#9*4,a7
+	movem.l	(a7),a0-a1
+	bsr	lib_v_pline
+	movem.l	(a7),a0-a1
+	moveq	#0,d0
+	move.w	d0,2*4+0(a7)	; No allocated memory etc
+	move.l	d0,2*4+2(a7)
+	move.l	d0,2*4+6(a7)
+	move.w	0(a1),d0
+	move.l	2(a1),a0
+	bra	.finish_up
+
+.wide_bez:
+	move.l	d0,d1
+	clr.l	-(a7)
+	bsr	_allocate_block
+	addq.l	#4,a7
+	tst.l	d0
+	beq	.no_wide_bez
+
+	moveq	#0,d2
+	move.w	vwk_mode(a0),d2
+	move.l	d2,-(a7)
+
+	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
+	move.l	d1,-(a7)
+	ext.l	d6
+	move.l	d6,-(a7)
+	move.l	a2,-(a7)
+	move.l	a0,-(a7)
+	jsr	_wide_line
+	add.w	#16,a7
+
+	bsr	_free_block
+	addq.l	#8,a7
+
+	bra	.end_bez_draw
+  endc
+#endif
+
