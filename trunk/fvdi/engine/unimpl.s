@@ -43,9 +43,10 @@ transparent	equ	1		; Fall through?
 	xdef	vst_error,vst_arbt,vqt_advance,vq_devinfo,v_savecache
 	xdef	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
 	xdef	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
-	xdef	v_set_app_buff,vq_chcells,vq_exit_cur,v_enter_cur,v_curup
-	xdef	v_curdown,v_curright,v_curleft,v_curhome,v_eeos,v_eeol
-	xdef	vs_curaddress,v_curtext,v_rvon,v_rvoff,vq_curaddress
+	xdef	v_set_app_buff
+;	xdef	vq_chcells,vq_exit_cur,v_enter_cur,v_curup
+;	xdef	v_curdown,v_curright,v_curleft,v_curhome,v_eeos,v_eeol
+;	xdef	vs_curaddress,v_curtext,v_rvon,v_rvoff,vq_curaddress
 	xdef	vq_tabstatus,v_hardcopy,v_dspcur,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
 	xdef	v_rbox,v_rfbox
@@ -147,18 +148,18 @@ v_set_app_buff:
 	done_return
 
 	dc.b	0,"Terminal",0
-vq_chcells:
-vq_exit_cur:
-v_enter_cur:
-v_curup:
-v_curdown:
-v_curright:
-v_curleft:
-v_curhome:
-vs_curaddress:
-v_rvon:
-v_rvoff:
-vq_curaddress:
+;vq_chcells:
+;vq_exit_cur:
+;v_enter_cur:
+;v_curup:
+;v_curdown:
+;v_curright:
+;v_curleft:
+;v_curhome:
+;vs_curaddress:
+;v_rvon:
+;v_rvoff:
+;vq_curaddress:
 vq_tabstatus:
 v_hardcopy:
 v_dspcur:
@@ -173,9 +174,9 @@ v_bit_image:
 v_contourfill:
 v_cellarray:
 
-v_eeos:
-v_eeol:
-v_curtext:
+;v_eeos:
+;v_eeol:
+;v_curtext:
 
 v_rbox:
 v_rfbox:

@@ -31,6 +31,7 @@ math.c		(..\include\fvdi.h, ..\include\relocate.h)
 line.c		(..\include\fvdi.h, ..\include\relocate.h)
 bezier.c	(..\include\fvdi.h, ..\include\relocate.h)
 patterns.c	(..\include\fvdi.h, ..\include\relocate.h)
+escape.c	(..\include\fvdi.h, ..\include\relocate.h)
 TRAPTABL.S	(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
 PUREC.S
 PCSTDLIB.LIB       ; standard library

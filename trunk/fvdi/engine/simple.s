@@ -1,7 +1,9 @@
 *****
 * fVDI miscellaneous functions
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: simple.s,v 1.3 2002-07-01 22:22:58 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -27,12 +29,20 @@ HANDLES		equ	32		; Max number of handles
 	xref	_set_protected_l
 	xref	_old_gdos
 
+	xref	_vq_chcells,_v_exit_cur,_v_enter_cur,_v_curup,_v_curdown
+	xref	_v_curright,_v_curleft,_v_curhome,_v_eeos,_v_eeol,_vs_curaddress
+	xref	_v_curtext,_v_rvon,_v_rvoff,_vq_curaddress
+
 	xdef	v_opnwk,v_opnvwk,v_clsvwk,v_clswk
 	xdef	vs_clip,vswr_mode,vq_extnd
 	xdef	_opnvwk_values
 
 	xdef	lib_vs_clip,lib_vswr_mode
 	xdef	_lib_vs_clip
+
+	xdef	vq_chcells,v_exit_cur,v_enter_cur,v_curup,v_curdown
+	xdef	v_curright,v_curleft,v_curhome,v_eeos,v_eeol,vs_curaddress
+	xdef	v_curtext,v_rvon,v_rvoff,vq_curaddress
 
 
 	text
@@ -439,6 +449,265 @@ vq_scrninfo:
 	move.l	wk_screen_mfdb_address(a0),dev_address(a2)
 	move.w	wk_screen_wrap(a0),dev_byte_width(a2)
 
+	done_return
+
+
+	dc.b	0,"vq_chcells",0
+* vq_chcells - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_chcells:
+	uses_d1
+	movem.l	d2,-(a7)
+	move.l	intout(a1),a2
+	pea	2(a2)
+	pea	0(a2)
+	pea	(a1)
+	jsr	_vq_chcells
+	add.w	#12,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"v_exit_cur",0
+* v_exit_cur - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_exit_cur:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_exit_cur
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_enter_cur",0
+* v_enter_cur - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_enter_cur:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_enter_cur
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_curup",0
+* v_curup - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curup:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_curup
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_curdown",0
+* v_curdown - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curdown:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_curdown
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"v_curright",0
+* v_curright - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curright:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_curright
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_curleft",0
+* v_curleft - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curleft:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_curleft
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_curhome",0
+* v_curhome - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curhome:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_curhome
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"v_eeos",0
+* v_eeos - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_eeos:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_eeos
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"v_eeol",0
+* v_eeol - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_eeol:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_eeol
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"vs_curaddress",0
+* vs_curaddress - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vs_curaddress:
+	uses_d1
+	movem.l	d2,-(a7)
+	move.l	intin(a1),a2
+	move.w	2(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.w	0(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	pea	(a1)
+	jsr	_vs_curaddress
+	add.w	#12,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_curtext",0
+* v_curtext - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_curtext:
+	uses_d1
+	movem.l	d2,-(a7)
+	move.l	control(a1),a2
+	move.w	L_intin(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	intin(a1),a2
+	pea	(a2)
+	pea	(a1)
+	jsr	_v_curtext
+	add.w	#12,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"v_rvon",0
+* v_rvon - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_rvon:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_rvon
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"v_rvoff",0
+* v_rvoff - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_rvoff:
+	uses_d1
+	movem.l	d2,-(a7)
+	pea	(a1)
+	jsr	_v_rvoff
+	addq.w	#4,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,0, "vq_curaddress",0
+* vq_curaddress - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_curaddress:
+	uses_d1
+	movem.l	d2,-(a7)
+	move.l	intout(a1),a2
+	pea	2(a2)
+	pea	0(a2)
+	pea	(a1)
+	jsr	_vq_curaddress
+	add.w	#12,a7
+	movem.l	(a7)+,d2
+	used_d1
 	done_return
 
 	end

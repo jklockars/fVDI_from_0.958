@@ -1,7 +1,9 @@
 *****
 * fVDI text drawing functions
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: text.s,v 1.4 2002-07-01 22:24:40 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -31,6 +33,8 @@ transparent	equ	1		; Fall through?
 	xdef	lib_v_gtext
 
 	xdef	_default_text
+
+	xdef	_draw_text
 
 
 	text
@@ -97,6 +101,27 @@ lib_v_gtext:
 
 	move.l	(a7)+,a3
 	used_d1
+	rts
+
+
+* Currently not capable of dealing with colour at 20(a1)
+* due to driver limitations.
+_draw_text:
+	movem.l	a2-a3,-(a7)
+
+	lea	4+2*4(a7),a1
+	move.l	0(a1),a0
+	move.w	2+4(a1),d1
+	swap	d1
+	move.w	2+8(a1),d1
+	move.l	16(a1),d0
+	move.l	12(a1),a1
+	sub.l	a2,a2		; No special offset table
+	move.l	vwk_real_address(a0),a3
+	move.l	wk_r_text(a3),a3
+	jsr	(a3)
+
+	movem.l	(a7)+,a2-a3
 	rts
 
 

@@ -1,7 +1,11 @@
 *****
 * fVDI trap table
 *
-* Johan Klockars
+* $Id: traptabl.s,v 1.3 2002-07-01 22:25:28 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
+* This software is licensed under the GNU General Public License.
+* Please, see LICENSE.TXT for further information.
 *****
 
 transparent	equ	1		; Fall through?
@@ -44,7 +48,7 @@ transparent	equ	1		; Fall through?
 	xref	vst_error,vst_arbt,vqt_advance,vq_devinfo,v_savecache
 	xref	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
 	xref	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
-	xref	v_set_app_buff,vq_chcells,vq_exit_cur,v_enter_cur,v_curup
+	xref	v_set_app_buff,vq_chcells,v_exit_cur,v_enter_cur,v_curup
 	xref	v_curdown,v_curright,v_curleft,v_curhome,v_eeos,v_eeol
 	xref	vs_curaddress,v_curtext,v_rvon,v_rvoff,vq_curaddress
 	xref	vq_tabstatus,v_hardcopy,v_dspcur,v_rmcur,v_form_adv
@@ -53,6 +57,7 @@ transparent	equ	1		; Fall through?
 	xref	v_justified
 	xref	vs_fg_color,vs_bg_color,vq_fg_color,vq_bg_color
 	xref	special_5,special_11,v_bez_con
+
 
 	data
 
@@ -304,7 +309,7 @@ _default_opcode5:
 default_opcode5:
 	dc.l	special_5		; This is function code 0
 	dc.l	vq_chcells		; Should have 0,2
-	dc.l	vq_exit_cur
+	dc.l	v_exit_cur
 	dc.l	v_enter_cur
 	dc.l	v_curup
 	dc.l	v_curdown

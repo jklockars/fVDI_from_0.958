@@ -33,5 +33,6 @@ math.c		[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h,
 line.c		[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
 bezier.c	[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
 patterns.c	[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+escape.c	[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
 TRAPTABL.S	(vdi.inc, types.inc, macros.dev)
 LC.LIB

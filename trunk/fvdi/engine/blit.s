@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.4 2002-05-15 00:41:16 johan Exp $
+* $Id: blit.s,v 1.5 2002-07-01 22:24:40 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -38,6 +38,8 @@ lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 	xdef	lib_v_get_pixel
 
 	xdef	_default_fill,_default_expand,_default_blit
+
+	xdef	_fill_area
 
 
 	text
@@ -268,6 +270,32 @@ lib_vr_recfl:
 	jsr	(a1)
 .end:
 	movem.l	(a7)+,d2-d5
+	rts
+
+
+_fill_area:
+	movem.l	d2-d5/a2,-(a7)
+	lea	4+4*4(a7),a1
+	move.l	0(a1),a0
+	moveq	#0,d1
+	move.w	2+4(a1),d1
+	moveq	#0,d2
+	move.w	2+8(a1),d2
+	moveq	#0,d3
+	move.w	2+12(a1),d3
+	moveq	#0,d4
+	move.w	2+16(a1),d4
+	move.l	20(a1),d0
+	bsr	clip_rect
+	blt	.end_fill_area		; Empty rectangle?
+
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_r_fill(a2),a1
+	move.l	_pattern_ptrs,d5
+
+	jsr	(a1)
+.end_fill_area:
+	movem.l	(a7)+,d2-d5/a2
 	rts
 
 

@@ -1,7 +1,9 @@
 *****
 * fVDI text set/query functions
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: text_sq.s,v 1.3 2002-07-01 22:24:40 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -30,6 +32,8 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xdef	lib_vqt_name,lib_vqt_font_info,lib_vst_point,lib_vst_height,lib_vqt_attributes,lib_vqt_extent
 	xdef	lib_vst_load_fonts,lib_vst_unload_fonts,lib_vqt_width,lib_vqt_xfntinfo
 	xdef	_lib_vst_color,_lib_vst_font,_lib_vst_point
+
+	xdef	_get_extent
 
 
 	text
@@ -580,6 +584,9 @@ vqt_extent:
 * Todo: ?
 * In:	a1	Parameters   lib_vqt_extent(length, &string, points)
 *	a0	VDI struct
+_get_extent:
+	move.l	4(a7),a0		; vwk as parameter
+	lea	8(a7),a1
 lib_vqt_extent:
 	movem.l	d2-d4/a3-a4,-(a7)
 	move.w	(a1),d0			; Number of characters
