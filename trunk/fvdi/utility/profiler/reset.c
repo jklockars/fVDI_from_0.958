@@ -1,3 +1,13 @@
+/*
+ * VDI profiler - counter/timer reset
+ *
+ * $Id: reset.c,v 1.2 2002-05-14 01:25:10 johan Exp $
+ *
+ * Copyright 1997 & 2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -59,7 +69,7 @@ long get_cookie(char *cname)
    return value;
 }
 
-void main(void)
+int main(void)
 {
 	long tmp;
 	struct Info *info;
@@ -70,4 +80,6 @@ void main(void)
 	info = (struct Info *)tmp;
 
 	info->reset();
+
+	return 0;
 }

@@ -1,3 +1,13 @@
+/*
+ * VDI profiler - data analyzer
+ *
+ * $Id: analyzer.c,v 1.2 2002-05-14 01:25:10 johan Exp $
+ *
+ * Copyright 1997 & 2002, Johan Klockars
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ */
+
 #undef USE_FLOAT
 #undef NO_COUNTER
 #undef NO_INTERRUPT
@@ -170,22 +180,22 @@ void output(FILE *outfile, int i, long this, long so_far, long total)
 	fprintf(outfile, buf);
 }
 
-int cmp_count(const int *elem1, const int *elem2)
+int cmp_count(const void *elem1, const void *elem2)
 {
-	if (prof[*elem1].count < prof[*elem2].count)
+	if (prof[*(int*)elem1].count < prof[*(int*)elem2].count)
 		return 1;
-	else if (prof[*elem1].count > prof[*elem2].count)
+	else if (prof[*(int*)elem1].count > prof[*(int*)elem2].count)
 		return -1;
 	else
 		return 0;
 }
 
-int cmp_time(const int *elem1, const int *elem2)
+int cmp_time(const void *elem1, const void *elem2)
 {
 	long time1, time2;
 	
-	time1 = clicks(&prof[*elem1]);
-	time2 = clicks(&prof[*elem2]);
+	time1 = clicks(&prof[*(int*)elem1]);
+	time2 = clicks(&prof[*(int*)elem2]);
 
 	if (time1 < time2)
 		return 1;
@@ -195,7 +205,7 @@ int cmp_time(const int *elem1, const int *elem2)
 		return 0;
 }
 
-void main(void)
+int main(void)
 {
 	int i, n, nonzero;
 	long tmp;
@@ -281,4 +291,6 @@ void main(void)
 	Mfree(count_order);
 		
 	fclose(outfile);
+
+	return 0;
 }
