@@ -1,5 +1,14 @@
-/*
- *	Dummy routines for unimplemented stuff
+/* 
+ * Dummy routines for unimplemented stuff, by Johan Klockars.
+ *
+ * This file is an example of how to write an
+ * fVDI device driver routine in C.
+ *
+ * You are encouraged to use this file as a starting point
+ * for other accelerated features, or even for supporting
+ * other graphics modes. This file is therefore put in the
+ * public domain. It's not copyrighted or under any sort
+ * of license.
  */
 
 /* Move dummies for functions that are implemented inside the '#if 0'. */
