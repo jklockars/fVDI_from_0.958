@@ -1,0 +1,51 @@
+2002-07-01 - johan
+Added support for the VDI screen ESC functions.
+Workaround for a local label problem with the PureC assembler.
+This file added to the repository.
+
+2002-06-27 - johan
+Update to reenable PureC compilation.
+Removed engine dependency on compiler.inc.
+
+2002-06-08 - johan
+Somewhat improved debug functionality.
+	
+2002-06-07 - johan
+Fixed a bug in v_justified.
+Got file headers from January into the repository.
+
+2002-05-16 - johan
+Updated ACC to support gcc and new GEM libraries.
+
+2002-05-15 - johan
+Minor updates to draw.s, blit.s, types.inc and vdi.inc.
+
+2002-05-14 - johan
+Updated profiler to support gcc.
+
+2002-05-13 - johan
+Added union support and GPL file headers to structer.
+
+2002-05-11 - johan
+Updated readme.now and fvdi.sys.
+
+2002-01-20 - johan
+RageII and mach64 file headers added.
+
+2001-12-15 - johan
+Various file headers added and modified.
+
+2001-11-29 - johan
+ARAnyM driver implementation of polygon fill and some fixes.
+
+2001-11-18 - johan
+ARAnyM driver added.
+
+2001-11-01 - johan
+Some compilation setup corrections.
+
+2001-10-29 - johan
+Support for standalone (no other VDI used) operation added.
+
+2001-10-27 - johan
+CVS repository created.
