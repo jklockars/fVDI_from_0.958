@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.3 2002-06-10 08:32:17 johan Exp $
+ * $Id: loader.c,v 1.4 2002-06-27 09:58:22 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -17,7 +17,6 @@
       #include <tos.h>
    #endif
 #endif
-
 #include "fvdi.h"
 #include "relocate.h"
 
