@@ -1,6 +1,6 @@
 FVDI_PC.PRG
-.C	[-H -X -Y -P -I=f:\fvdi\include]
-.S	[-S -Y -I=f:\fvdi\include -I=f:\fvdi\drivers\include -I=f:\fvdi\drivers\1_plane]
+.C	[-H -X -Y -P -I=..\include]
+.S	[-D=lattice=0 -S -Y -I=..\include -I=..\drivers\include -I=..\drivers\1_plane]
 =
 FVDI.S		(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
 UNIMPL.S	(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
@@ -20,7 +20,7 @@ VDI_MISC.S	(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas)
 SUPPORT.S	(..\include\vdi.inc, ..\include\types.inc, ..\include\macros.tas) [-S -Y -3]
 SYS_CALL.S
 startup.c	(..\include\fvdi.h, ..\include\relocate.h)
-loader.c	(..\include\fvdi.h, relocate.h)
+loader.c	(..\include\fvdi.h, ..\include\relocate.h)
 fonts.c		(..\include\fvdi.h, ..\include\relocate.h)
 setup.c		(..\include\fvdi.h, ..\include\relocate.h)
 workstn.c	(..\include\fvdi.h, ..\include\relocate.h)
