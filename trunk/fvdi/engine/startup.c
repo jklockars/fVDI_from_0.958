@@ -1,7 +1,9 @@
 /*
  * fVDI startup
  *
- * Copyright 1999-2001, Johan Klockars 
+ * $Id: startup.c,v 1.4 2002-06-10 08:33:15 johan Exp $
+ *
+ * Copyright 1999-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -57,6 +59,7 @@ extern void puts(const char* text);
 #ifdef DEBUG
 #include "relocate.h"
 extern short debug;
+extern short interactive;
 extern Access *access;
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
 #endif
@@ -563,6 +566,7 @@ void vdi_debug(VDIpars *pars, char *vector)
    short display;
    char key;
    MFDB *mfdb;
+   long old_count;
 
    if (entered)
       return;
@@ -572,10 +576,11 @@ void vdi_debug(VDIpars *pars, char *vector)
    display = 0;
    if ((func == set[current]) || (func == 1984) || (func == 2001) || (func == 1969))
       display = 1;
-      
+
+   old_count = count;      
    if (display || ((debug > 2) && (--count == 0))) {
       if (vector && !*--vector) {        /* If there is a name, */
-         while(*--vector);     /*   locate it! */
+         while(*--vector);               /*   locate it! */
          vector++;
          access->funcs.puts(vector);
          buf[0] = ' ';
@@ -652,57 +657,69 @@ void vdi_debug(VDIpars *pars, char *vector)
       access->funcs.puts(buf);
       access->funcs.puts("\x0a\x0d");
 
-      key = key_wait(10);
-      switch (key) {
-      case 'a':
-         count = -1;
-         current = 0;
-         break;
-      case 'b':
-         count = -1;
-         current = 1;
-         break;
-      case 'c':
-         count = -1;
-         current = 2;
-         break;
-      case 'd':
-         count = -1;
-         current = 3;
-         break;
-      case '1':
-         count = 5;
-         break;
-      case '2':
-         count = 10;
-         break;
-      case '3':
-         count = 50;
-         break;
-      case '4':
-         count = 250;
-         break;
-      case '5':
-         count = 1000;
-         break;
-      case '6':
-         count = 5000;
-         break;
-      case '7':
-         count = 25000;
-         break;
-      case '8':
-         count = 100000L;
-         break;
-      case '9':
-         count = 1000000L;
-         break;
-      case 27:
-         count = -1;
-         break;
-      default:
-         count = 1;
-         break;
+      count = old_count;
+      if (interactive) {
+         key = key_wait(10);
+         switch (key) {
+         case 'q':
+            count = -1;
+            current = 0;
+            break;
+         case 'w':
+            count = -1;
+            current = 1;
+            break;
+         case 'e':
+            count = -1;
+            current = 2;
+            break;
+         case 'r':
+            count = -1;
+            current = 3;
+            break;
+         case 'd':
+            debug++;
+            break;
+         case 'D':
+            debug--;
+            break;
+         case 'i':
+            interactive = 0;
+            break;
+         case '1':
+            count = 5;
+            break;
+         case '2':
+            count = 10;
+            break;
+         case '3':
+            count = 50;
+            break;
+         case '4':
+            count = 250;
+            break;
+         case '5':
+            count = 1000;
+            break;
+         case '6':
+            count = 5000;
+            break;
+         case '7':
+            count = 25000;
+            break;
+         case '8':
+            count = 100000L;
+            break;
+         case '9':
+            count = 1000000L;
+            break;
+         case 27:
+            count = -1;
+            break;
+         default:
+            count = 1;
+            break;
+         }
       }
    }
    entered = 0;
