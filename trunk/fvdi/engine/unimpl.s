@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.4 2002-07-01 23:17:32 johan Exp $
+* $Id: unimpl.s,v 1.5 2002-07-03 21:31:26 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -149,7 +149,7 @@ vqt_pairkern:
 v_set_app_buff:
 	done_return
 
-	dc.b	0,"ESC",0
+	dc.b	0,0,"ESC",0
 vq_tabstatus:
 v_hardcopy:
 v_dspcur:

@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.3 2002-07-01 22:22:58 johan Exp $
+* $Id: simple.s,v 1.4 2002-07-03 21:31:26 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -692,7 +692,7 @@ v_rvoff:
 	done_return
 
 
-	dc.b	0,0, "vq_curaddress",0
+	dc.b	0,0,"vq_curaddress",0
 * vq_curaddress - Standard Trap function
 * Todo: ?
 * In:   a1      Parameter block
