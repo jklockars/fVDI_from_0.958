@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (assembly functions), by Johan Klockars
 *
-* $Id: common.s,v 1.3 2002-07-10 22:13:40 johan Exp $
+* $Id: common.s,v 1.4 2003-04-06 14:01:36 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -580,11 +580,14 @@ text:
 *---------
 * Draw the mouse
 * In:	a1	Pointer to Workstation struct
-*	d0/d1	x,y
+*	d0	x (low), old op bits (high)
+*	d1	y
 *	d2	0 (move), 1 (hide), 2 (show), Mouse* (change)
 * Call:	a1	Pointer to Workstation struct
-*	d0/d1	x,y
-*	d2	0 (move), 1 (hide), 2 (show), Mouse* (change)
+*	d0	x (low), old op bits (high)
+*	d1	y
+*	d2	0 (move shown), 1 (move hidden), 2 (hide), 3 (show), Mouse* (change)
+* Out:	d0	mouse op to try again (low), pointer delay (high)
 *---------
 _mouse:
 mouse:
