@@ -48,8 +48,8 @@ typedef struct _Funcs {
 	long CDECL (*unpack_font)(Fontheader *header, long format);
 	long CDECL (*insert_font)(Fontheader **first_font, Fontheader *new_font);
 	long CDECL (*get_size)(const char *name);
-	long CDECL (*allocate_block)(long size);
-	void CDECL (*free_block)(long address);
+	char* CDECL (*allocate_block)(long size);
+	void CDECL (*free_block)(void *address);
 	void CDECL (*cache_flush)(void);
 	long CDECL (*misc)(long func, long par, char *token);
 } Funcs;

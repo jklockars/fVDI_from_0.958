@@ -1,3 +1,9 @@
+2004-09-09 - johan
+Conversion of various functionality to C.
+New header files for functions and global variables.
+Fix for programs that use upside-down clip rectangles.
+Escape functions debugged.
+
 2003-02-05 - johan
 Support for rounded boxes. Polymarker code added.
 Bezier call code converted to C.
