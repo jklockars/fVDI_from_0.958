@@ -1,11 +1,14 @@
 /*
  * fVDI circle/ellipse/pie/arc code
  *
- * $Id: conic.c,v 1.3 2003-04-06 13:39:21 johan Exp $
+ * $Id: conic.c,v 1.4 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1999/2001-2003, Johan Klockars 
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
  *
  * This is extracted and modified from code with an
  * original copyright as follows.
- * Johan Klockars, 1999
  */
 
 /*************************************************************************
@@ -28,6 +31,9 @@
 
 
 #include "fvdi.h"
+#include "utility.h"
+#include "function.h"
+#include "globals.h"
 
 #define MAX_ARC_CT 256
 
@@ -41,23 +47,6 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
 #pragma inline d0 = SMUL_DIV(d0, d1, d2) { "c1c181c2"; }
  #endif
 #endif
-
-
-/*
- * External functions called
- */
-
-extern void c_pline(Virtual *vwk, long num_pts, long colour, short *points);
-extern void filled_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points, long mode, long interior_style);
-extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points, long mode, long interior_style);
-
-extern short Isin(short angle);
-extern short Icos(short angle);
-
-
-extern short arc_split;
-extern short arc_min;
-extern short arc_max;
 
 
 void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad,

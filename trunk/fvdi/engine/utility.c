@@ -1,57 +1,22 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.7 2002-07-10 22:03:07 johan Exp $
+ * $Id: utility.c,v 1.8 2004-10-17 17:52:55 johan Exp $
  *
- * Copyright 1997-2002, Johan Klockars 
+ * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
  
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-   #ifdef __LATTICE__
-      #include <dos.h>
-   #endif
-#endif
-
+#include "os.h"
 #include "fvdi.h"
 #include "relocate.h"
-
-#if 0
-#define disp(text) 	Cconws(text)
-#define disp_nl(text)	{ Cconws(text); Cconws("\x0a\x0d"); }
-#else
-#define disp(text) 	puts(text)
-#define disp_nl(text)	{ puts(text); puts("\x0a\x0d"); }
-#endif
-
-
-/*
- * External functions called
- */
-
-extern long set_cookie(const unsigned char *cname, long value);
-extern long fixup_font(Fontheader *font, char *buffer, long flip);
-extern long unpack_font(Fontheader *header, long format);
-extern long insert_font(Fontheader **first_font, Fontheader *new_font);
-extern long get_size(const char *name);
-extern long allocate_block(long size);
-extern void free_block(long address);
-extern void cache_flush(void);
+#include "utility.h"
+#include "globals.h"
 
 /*
  * Global variables
  */
-
-extern long basepage;
-extern short key_pressed;
-extern short debug;
-extern short memlink;
-extern short debug_out;
-
 
 Access real_access;
 Access *access = &real_access;
@@ -85,9 +50,60 @@ long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
 short mxalloc = 0;
 
+char *block_chain = 0;
+
 long ARAnyM_out = 0x71354e75L;   /* ARAnyM native printing subroutine */
 
-void puts(const char *text);
+
+/*
+ * Turn string (max four characters) into a long
+ */
+long str2long(const unsigned char *text)
+{
+   long v;
+
+   v = 0;
+   while (*text) {
+      v <<= 8;
+      v += *text++;
+   }
+
+   return v;
+}
+
+
+long get_l(long addr)
+{
+   return *(long *)addr;
+}
+
+
+/*
+ * Get a long value after switching to supervisor mode
+ */
+long get_protected_l(long addr)
+{
+   long oldstack, v;
+
+   oldstack = (long)Super(0L);
+   v = *(long *)addr;
+   Super((void *)oldstack);
+
+   return v;
+}
+
+
+/*
+ * Set a long value after switching to supervisor mode
+ */
+void set_protected_l(long addr, long value)
+{
+   long oldstack;
+
+   oldstack = (long)Super(0L);
+   *(long *)addr = value;
+   Super((void *)oldstack);
+}
 
 
 /*
@@ -95,27 +111,159 @@ void puts(const char *text);
  */
 long get_cookie(const unsigned char *cname, long super)
 {
-   long oldstack, *ptr, value, name;
+   long ptr, value, cname_l;
+   long (*get)(long addr);
 
-   name = 0;
-   while(*cname)
-      name = (name << 8) | (long)*cname++;
+   cname_l = str2long(cname);
 
-   if (!super)
-      oldstack = (long)Super(0L);
-   ptr = (long *)*(long *)0x5a0;
+   get = super ? get_l : get_protected_l;
+
+   ptr = get(0x5a0);
 
    value = -1;
    if (ptr) {
-      while ((*ptr != 0) && (*ptr != name))
-         ptr += 2;
-      if (*ptr == name)
-         value = ptr[1];
+      long v = get(ptr);
+      while (v && (v != cname_l))
+      {
+         ptr += 8;
+         v = get(ptr);
+      }
+      if (v == cname_l)
+         value = get(ptr + 4);
    }
 
-   if (!super)
-      Super((void *)oldstack);
    return value;
+}
+
+
+/*
+ * Follows an XBRA chain and removes a link if found.
+ * Returns 0 if XBRA id not found.
+ */
+int remove_xbra(long vector, const unsigned char *name)
+{
+   long link, *addr, name_l, xbra_l;
+   link = vector;
+   addr = (long *)get_protected_l(link);    /* Probably an exception vector */
+   xbra_l = str2long("XBRA");
+   name_l = str2long(name);
+
+   while ((addr[-3] == xbra_l) && (addr[-2] != name_l)) {
+      link = (long)&addr[-1];
+      addr = (long *)addr[-1];
+   }
+   if (addr[-3] != xbra_l)
+      return 0;
+
+   set_protected_l(link, addr[-1]);    /* Might well be an exception vector */
+
+   return 1;
+}
+
+
+/*
+ * Set a cookie value. Replace if there already is one.
+ * Create/expand jar if needed.
+ * Returns != 0 if an old cookie was replaced.
+ */
+int set_cookie(const unsigned char *name, long value)
+{
+   long *addr, *old_addr;
+   long name_l;
+   int count;
+
+   count = 0;
+   name_l = str2long(name);
+   addr = old_addr = (long *)get_protected_l(0x5a0);    /* _p_cookies */
+
+   if (addr) {
+      while (*addr && (*addr != name_l)) {
+         count++;
+         addr += 2;
+      }
+      if (*addr == name_l) {
+         addr[1] = value;
+         return 1;
+      }
+
+      /* Must make sure there is room for the final count!  [010109] */
+
+      if (count != addr[1] - 1) {
+         addr[2] = 0;
+         addr[3] = addr[1];
+         addr[0] = name_l;
+         addr[1] = value;
+         return 0;
+      }
+   }
+
+   addr = malloc((count + 8) * 8, 3);
+
+   copymem(old_addr, addr, count * 8);
+
+   addr[count * 2 + 0] = name_l;
+   addr[count * 2 + 1] = value;
+   addr[count * 2 + 2] = 0;
+   addr[count * 2 + 3] = count + 8;
+
+   set_protected_l(0x5a0, (long)addr);    /* _p_cookies */
+
+   return 0;
+}
+
+
+/*
+ * Initialize an internal memory pool.
+ * Returns zero on error.
+ */
+int initialize_pool(long size, long n)
+{
+   char *addr, *ptr;
+
+   if ((size <= 0) || (n <= 0))
+      return 0;
+
+   if (!(addr = malloc(size * n, 3)))
+      return 0;
+
+   block_size = size;
+   ptr = 0;
+   for(n = n - 1; n >= 0; n--) {
+      block_chain = addr;
+      *(char **)addr = ptr;
+      ptr = addr;
+      addr += size;
+   }
+
+   return 1;
+}
+
+
+/*
+ * Allocate a block from the internal memory pool.
+ */
+char *allocate_block(long size)
+{
+   char *addr;
+
+   if ((size > block_size) || !block_chain)
+      return 0;
+
+   addr = block_chain;
+   block_chain = *(char **)addr;
+   *(long *)addr = block_size;    /* Make size info available */
+
+   return addr;
+}
+
+
+/*
+ * Free a block and return it to the internal memory pool.
+ */
+void free_block(void *addr)
+{
+   *(char **)addr = block_chain;
+   block_chain = addr;
 }
 
 
@@ -306,12 +454,12 @@ void *malloc(long size, long type)
       if (debug > 2) {
          char buffer[10];
          ltoa(buffer, (long)new, 16);
-         disp("Allocation at $");
-         disp(buffer);
-         disp(", ");
+         puts("Allocation at $");
+         puts(buffer);
+         puts(", ");
          ltoa(buffer, size, 10);
-         disp(buffer);
-         disp_nl(" bytes");
+         puts(buffer);
+         puts_nl(" bytes");
       }
       if (memlink) {
          if (mblocks) {
@@ -351,8 +499,8 @@ long free(void *addr)
    if (debug > 2) {
       char buffer[10];
       ltoa(buffer, (long)addr, 16);
-      disp("Freeing at $");
-      disp_nl(buffer);
+      puts("Freeing at $");
+      puts_nl(buffer);
    }
    ret = Mfree(current);
    if (pid) {
@@ -518,9 +666,38 @@ const char *get_token(const char *ptr, char *buf, long n)
 }
 
 
+/*
+ * Returns the size of a file 
+ */
+long get_size(const char *name)
+{
+#ifdef __GNUC__
+   _DTA info;
+#else
+   DTA info;       /* Thanks to tos.h for Lattice C */
+#endif
+   long file_size;
+   int error;
+
+   Fsetdta((void *)&info);
+   error = Fsfirst(name, 1);
+
+   if (!error) {
+#ifdef __GNUC__
+      file_size = info.dta_size;
+#else
+      file_size = info.d_length;
+#endif
+   } else
+      file_size = -1;
+
+   return file_size;
+}
+
+
 int init_utility(void)
 {
-   long tmp, oldstack;
+   long tmp;
    
    check_cookies();
    
@@ -534,16 +711,14 @@ int init_utility(void)
       Mfree((void *)tmp);
    }
 
-   oldstack = (long)Super(0L);
-   tmp = *(long *)0x4f2;            /* _sysbase */
-   if (*(short *)(tmp + 2) < 0x0102)
+   tmp = get_protected_l(0x4f2);       /* _sysbase */
+   if ((get_protected_l(tmp) & 0x0000ffff) < 0x0102)
       tmp = 0;
    else {
-      tmp = *(long *)(tmp + 40);       /* p_run (ptr to current base page) */
-      if (*(long *)tmp != basepage)    /* Not what it should be? */
+      tmp = get_protected_l(tmp + 40); /* p_run (ptr to current base page) */
+      if (get_protected_l(tmp) != basepage)    /* Not what it should be? */
          tmp = 0;
    }
-   Super((void *)oldstack);
 
    if (!mint && !magic)     /* Probably a bad idea under multitasking */
       pid_addr = tmp;

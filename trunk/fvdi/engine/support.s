@@ -1,9 +1,9 @@
 *****
 * fVDI support routines
 *
-* $Id: support.s,v 1.5 2002-07-10 22:05:38 johan Exp $
+* $Id: support.s,v 1.6 2004-10-17 17:52:55 johan Exp $
 *
-* Copyright 1997-2002, Johan Klockars 
+* Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -22,21 +22,15 @@ transparent	equ	1		; Fall through?
   endc
 
 	xref	_old_wk_handle
-	xref	_malloc
 	xref	_cpu
 	xref	_stand_alone
+	xref	_allocate_block,_free_block
 
-	xdef	remove_xbra,_remove_xbra
-	xdef	set_cookie,_set_cookie
-	xdef	get_protected_l,set_protected_l
-	xdef	_get_protected_l,_set_protected_l
 	xdef	_flip_words,_flip_longs
 	xdef	redirect,redirect_d0
 	xdef	call_other,_call_other
 	xdef	_initialize_palette
-	xdef	initialize_pool,_initialize_pool
-	xdef	allocate_block,_allocate_block
-	xdef	free_block,_free_block
+	xdef	allocate_block,free_block
 	xdef	cache_flush,_cache_flush
 
 
@@ -72,168 +66,6 @@ _flip_longs:
 	move.l	d1,(a0)+
 .loopend_l:
 	dbra	d0,.loop_l
-	rts
-
-
-	dc.b	0,0,"remove_xbra",0
-* int remove_xbra(long vector, long xbra_id)
-* Follows an XBRA chain and removes a link if found
-* Returns 0 if XBRA id not found
-remove_xbra:
-_remove_xbra:
-	movem.l	a0-a1,-(a7)
-	move.l	(4+2*4)(a7),a1
-	move.l	a1,-(a7)
-	bsr	get_protected_l		; Probably an exception vector
-	addq.l	#4,a7
-	move.l	d0,a0
-	move.l	(8+2*4)(a7),d0
-.xbra_search:
-	cmp.l	#'XBRA',-12(a0)
-	bne	.xbra_not
-	cmp.l	-8(a0),d0
-	beq	.xbra_found
-	lea	-4(a0),a1
-	move.l	(a1),a0
-	bra	.xbra_search
-.xbra_found:
-	move.l	-4(a0),-(a7)
-	move.l	a1,-(a7)
-	bsr	set_protected_l		; Might well be an exception vector
-	addq.l	#8,a7
-	bra	.xbra_end
-.xbra_not:
-	moveq	#0,d0
-.xbra_end:
-	movem.l	(a7)+,a0-a1
-	rts
-
-
-	dc.b	0,"set_cookie",0
-* int set_cookie(char *name, long value)
-* Set a cookie value
-* Replace if there already is one
-* Create/expand jar if needed
-* Returns != 0 if an old cookie was replaced
-set_cookie:
-_set_cookie:
-	movem.l	d1-d3/d6-d7/a0-a2,-(a7)
-	move.l	#$5a0,-(a7)		; _p_cookies
-	bsr	get_protected_l
-	addq.l	#4,a7
-	move.l	d0,a1
-	tst.l	d0
-	beq	.full
-	move.l	d0,a0
-	moveq	#0,d0
-
-	move.l	(4+8*4)(a7),a2		; Cookie name
-	move.b	(a2)+,d2
-	lsl.w	#8,d2
-	move.b	(a2)+,d2
-	swap	d2
-	move.b	(a2)+,d2
-	lsl.w	#8,d2
-	move.b	(a2)+,d2
-	move.l	d2,d3
-.search:
-	move.l	(a0),d1
-	beq	.no_more
-	addq.w	#1,d0
-	cmp.l	d2,d1
-	beq	.end_found
-	addq.l	#8,a0
-	bra	.search
-
-.no_more:
-	move.l	4(a0),d1
-; Must make sure there is room for the final count!  [010109]
-	move.l	d1,d7
-	subq.l	#1,d7
-	cmp.l	d0,d7
-;	cmp.l	d0,d1
-	beq	.full
-	move.l	#0,8(a0)
-	move.l	d1,12(a0)
-	bra	.end_ok
-
-.full:
-	move.l	d0,d7
-	addq.l	#8,d0
-	move.l	d0,d6
-	lsl.l	#3,d0
-	move.l	d0,-(a7)
-	move.w	#$48,-(a7)
-	trap	#1
-	addq.l	#6,a7
-;	tst.l	d0
-;	beq	.end_bad
-
-	move.l	d0,-(a7)
-	move.l	#$5a0,-(a7)	; _p_cookies
-	bsr	set_protected_l
-	addq.l	#8,a7
-
-	move.l	d0,a0
-	tst.l	d7
-	beq	.no_copy
-	subq.w	#1,d7
-.copy:
-	move.l	(a1)+,(a0)+
-	move.l	(a1)+,(a0)+	
-	dbra	d7,.copy
-
-.no_copy:
-	move.l	#0,8(a0)
-	move.l	d6,12(a0)
-
-.end_ok:
-	moveq	#0,d0
-.end_found:
-	move.l	d3,(a0)			; Cookie name
-	move.l	(8+8*4)(a7),4(a0)	; Cookie value
-	movem.l	(a7)+,d1-d3/d6-d7/a0-a2
-	rts
-
-
-	dc.b	0,0,"get_protected",0
-* long get_protected_l(long *addr)
-* Get a long value from low (protected) memory
-get_protected_l:
-_get_protected_l:
-	movem.l	d1-d2/a0-a2,-(a7)
-	move.l	#0,-(a7)
-	move.w	#$20,-(a7)	; Super
-	trap	#1
-	addq.l	#6,a7
-	move.l	(4+5*4)(a7),a0
-	move.l	(a0),-(a7)
-	move.l	d0,-(a7)
-	move.w	#$20,-(a7)	; Super
-	trap	#1
-	addq.l	#6,a7
-	move.l	(a7)+,d0
-	movem.l	(a7)+,d1-d2/a0-a2
-	rts
-
-
-	dc.b	0,0,"set_protected",0
-* set_protected_l(long *addr, long value)
-* Set a long value in low (protected) memory
-set_protected_l:
-_set_protected_l:
-	movem.l	d0-d2/a0-a2,-(a7)
-	move.l	#0,-(a7)
-	move.w	#$20,-(a7)	; Super
-	trap	#1
-	addq.l	#6,a7
-	move.l	(4+6*4)(a7),a0
-	move.l	(8+6*4)(a7),(a0)
-	move.l	d0,-(a7)
-	move.w	#$20,-(a7)	; Super
-	trap	#1
-	addq.l	#6,a7
-	movem.l	(a7)+,d0-d2/a0-a2
 	rts
 
 
@@ -320,77 +152,27 @@ _initialize_palette:
 	rts
 
 
-	dc.b		0,0,"initialize_pool",0
-* initialize_pool(long size, long n)
-* Initialize an internal memory pool
-initialize_pool:
-_initialize_pool:
-	moveq	#0,d0
-	move.l	8(a7),d1
-	beq	.error
-	move.l	4(a7),d0
-;	mulu	d1,d0
-	move.l	d0,a0
-	neg.l	d0
-.mul_loop:			; Should only be a couple of loops
-	add.l	a0,d0
-	dbra	d1,.mul_loop
-	move.l	#3,-(a7)
-	move.l	d0,-(a7)
-	bsr	_malloc
-	addq.l	#8,a7
-	tst.l	d0
-	beq	.error
-	move.l	d0,a0
-	move.l	4(a7),d1
-	move.l	d1,block_size
-	move.l	8(a7),d0
-	subq.w	#1,d0
-	sub.l	a1,a1
-.block_loop:
-	move.l	a0,block_chain
-	move.l	a1,(a0)
-	move.l	a0,a1
-	add.l	d1,a0
-	dbra	d0,.block_loop
-	moveq	#1,d0
-.error:
-	rts
-
-
 	dc.b	0,"allocate_block",0
 * long allocate_block(long size)
 * Allocate a block from the internal memory pool
 allocate_block:
-_allocate_block:
-	move.l	a0,-(a7)
-	move.l	4+4(a7),d0
-	cmp.l	block_size,d0
-	bhi	.no_block
-	move.l	block_chain,d0
-	beq	.no_block
-	move.l	d0,a0
-	move.l	(a0),block_chain
-	move.l	block_size,(a0)		; Make size info available
-.allocate_end:
-	move.l	(a7)+,a0
+	movem.l	d1-d2/a0-a2,-(a7)
+	move.l	4+5*4(a7),-(a7)
+	bsr	_allocate_block
+	addq.l	#4,a7
+	movem.l	(a7)+,d1-d2/a0-a2
 	rts
-
-.no_block:
-	moveq	#0,d0
-	bra	.allocate_end
 
 
 	dc.b	0,"free_block",0
 * free_block(void *addr)
 * Free a block and return it to the internal memory pool
 free_block:
-_free_block:
-	move.l	a0,-(a7)
-	move.l	4+4(a7),a0
-	move.l	block_chain,(a0)
-	move.l	a0,block_chain
-	move.l	(a7)+,a0
+	movem.l	d0-d2/a0-a2,-(a7)
+	move.l	4+6*4(a7),-(a7)
+	bsr	_free_block
+	addq.l	#4,a7
+	movem.l	(a7)+,d0-d2/a0-a2
 	rts
 
 
@@ -422,11 +204,5 @@ _cache_flush:
 	movec	d1,cacr
 	movec	d0,cacr
 	bra	.cache_end
-
-
-	data
-
-block_size:	dc.l	10*1024
-block_chain:	ds.l	1
 
 	end

@@ -1,35 +1,17 @@
 /*
  * fVDI font load and setup
  *
- * Copyright 1997-2000, Johan Klockars 
+ * $Id: fonts.c,v 1.2 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1997-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
 
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-   #ifdef __LATTICE__
-      #include <dos.h>
-   #endif
-#endif
-
+#include "os.h"
 #include "fvdi.h"
 #include "relocate.h"
-
-
-/*
- * External functions called
- */
-
-extern void flip_words(void *address, long count);
-extern void flip_longs(void *address, long count);
-
-extern void *malloc(long size, long type);
-extern void free(void *addr);
-
-extern long get_size(const char *name);
+#include "utility.h"
 
 
 /*

@@ -1,9 +1,9 @@
 /*
  * fVDI console functions
  *
- * $Id: escape.c,v 1.1 2002-07-01 22:22:58 johan Exp $
+ * $Id: escape.c,v 1.2 2004-10-17 17:52:55 johan Exp $
  *
- * Copyright 2002, Johan Klockars 
+ * Copyright 2002-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -17,11 +17,7 @@
  */
 
 #include "fvdi.h"
-
-
-extern void fill_area(Virtual *vwk, long x1, long y1, long x2, long y2, long colour);
-extern void get_extent(Virtual *vwk, long length, short *text, short points[]);
-extern void draw_text(Virtual *vwk, long x, long y, short *text, long length, long colour);
+#include "function.h"
 
 
 static long

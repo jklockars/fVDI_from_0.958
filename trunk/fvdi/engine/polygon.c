@@ -1,17 +1,18 @@
 /*
  * fVDI polygon fill functions
  *
- * $Id: polygon.c,v 1.2 2002-07-10 22:12:25 johan Exp $
+ * $Id: polygon.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1999-2003, Johan Klockars 
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
  *
  * Based on some code found on the net,
  * but very heavily modified.
- *
- * Copyright 1999-2002, Johan Klockars 
- * This software is licensed under the GNU General Public License.
- * Please, see LICENSE.TXT for further information.
  */
 
 #include "fvdi.h"
+#include "function.h"
 
 #if 0
 #define SMUL_DIV(x,y,z)	((short)(((short)(x)*(long)((short)(y)))/(short)(z)))
@@ -23,11 +24,6 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
 #pragma inline d0 = SMUL_DIV(d0, d1, d2) { "c1c181c2"; }
  #endif
 #endif
-
-#if 0
-extern void hline(void *, int x1, int y1, int y2, int colour, short *pattern);
-#endif
-extern void fill_spans(void *, short *, long n, long colour, short *pattern, long mode, long interior_style);
 
 
 void filled_poly(Virtual *vwk, short p[][2], long n, long colour,

@@ -1,11 +1,14 @@
 /*
  * fVDI integer sin/cos/sqrt code
  *
- * $Id: math.c,v 1.2 2003-04-06 13:45:23 johan Exp $
+ * $Id: math.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1999/2001/2003, Johan Klockars 
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
  *
  * The sin/cos part is an optimized version of code with an
  * original copyright as follows.
- * Johan Klockars, 1999
  */
 
 /*************************************************************************

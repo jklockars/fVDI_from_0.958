@@ -1,29 +1,23 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.4 2002-06-27 09:58:22 johan Exp $
+ * $Id: loader.c,v 1.5 2004-10-17 17:52:55 johan Exp $
  *
- * Copyright 1997-2002, Johan Klockars 
+ * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
- 
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-   #ifdef __LATTICE__
-      #include <dos.h>
-      #include <tos.h>
-   #endif
-#endif
+
+#include "os.h" 
 #include "fvdi.h"
 #include "relocate.h"
+#include "utility.h"
+#include "function.h"
+#include "globals.h"
 
 #define BLOCKS		2		/* Default number of memory blocks to allocate for internal use */
 #define BLOCK_SIZE	10		/* Default size of those blocks, in kbyte */
 
-#define MAX(x,y)  ((x) > (y) ? (x) : (y))
 #define MAGIC     "InitMagic"
 
 #define TOKEN_SIZE  160			/* Also used for driver option lines */
@@ -32,46 +26,8 @@
 
 
 /*
- * External functions called
- */
-
-extern long unpack_font(Fontheader *header, long format);
-extern long fixup_font(Fontheader *header, char *buffer, long flip);
-extern Fontheader *load_font(const char *name);
-extern long insert_font(Fontheader **first_font, Fontheader *new_font);
-
-extern void copymem(void *s, void *d, long n);
-extern const char *next_line(const char *ptr);
-extern const char *skip_space(const char *ptr);
-extern const char *get_token(const char *ptr, char *buf, long n);
-extern long equal(const char *str1, const char *str2);
-extern void copy(const char *src, char *dest);
-extern void cat(const char *src, char *dest);
-extern long length(const char *text);
-extern long numeric(long ch);
-extern void error(const char *text1, const char *text2);
-extern void *malloc(long size, long type);
-extern void free(void *addr);
-extern void cache_flush(void);
-extern long get_protected_l(void *);
-extern long atol(const char *);
-extern Fontheader **linea_fonts(void);
-
-extern void linea_setup(Workstation *);
-
-long get_size(const char *name);
-
-/*
  * Global variables
  */
-
-extern Access real_access;
-
-extern long *pid;
-
-#if 1
-extern Workstation *screen_wk;    /* Used in tokenize() */
-#endif
 
 List *driver_list = 0;
 
@@ -99,26 +55,27 @@ short debug_out = -2;
 short interactive = 0;
 short stand_alone = 0;
 
+
 static char path[PATH_SIZE];
 
-long set_path(Virtual *vwk, const char **ptr);
-long wait_key(Virtual *vwk, const char **ptr);
-long exit_key(Virtual *vwk, const char **ptr);
-long swap_key(Virtual *vwk, const char **ptr);
-long case_key(Virtual *vwk, const char **ptr);
-long echo_text(Virtual *vwk, const char **ptr);
-long set_pid(Virtual *vwk, const char **ptr);
-long set_width(Virtual *vwk, const char **ptr);
-long set_height(Virtual *vwk, const char **ptr);
-long set_blocks(Virtual *vwk, const char **ptr);
-long set_block_size(Virtual *vwk, const char **ptr);
-long set_log_size(Virtual *vwk, const char **ptr);
-long set_arc_split(Virtual *vwk, const char **ptr);
-long set_arc_min(Virtual *vwk, const char **ptr);
-long set_arc_max(Virtual *vwk, const char **ptr);
-long load_palette(Virtual *vwk, const char **ptr);
+static long set_path(Virtual *vwk, const char **ptr);
+static long wait_key(Virtual *vwk, const char **ptr);
+static long exit_key(Virtual *vwk, const char **ptr);
+static long swap_key(Virtual *vwk, const char **ptr);
+static long case_key(Virtual *vwk, const char **ptr);
+static long echo_text(Virtual *vwk, const char **ptr);
+static long set_pid(Virtual *vwk, const char **ptr);
+static long set_width(Virtual *vwk, const char **ptr);
+static long set_height(Virtual *vwk, const char **ptr);
+static long set_blocks(Virtual *vwk, const char **ptr);
+static long set_block_size(Virtual *vwk, const char **ptr);
+static long set_log_size(Virtual *vwk, const char **ptr);
+static long set_arc_split(Virtual *vwk, const char **ptr);
+static long set_arc_min(Virtual *vwk, const char **ptr);
+static long set_arc_max(Virtual *vwk, const char **ptr);
+static long load_palette(Virtual *vwk, const char **ptr);
 
-Option options[] = {
+static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
    {"debug",      &debug,          2},  /* debug, turn on debugging aids */
    {"waitkey",    wait_key,       -1},  /* waitkey n, wait for key press for n seconds */
@@ -199,9 +156,9 @@ long wait_key(Virtual *vwk, const char **ptr)
    endtime = atol(token);
    if (endtime > 999)
       endtime = 999;
-   endtime = endtime * 200 + get_protected_l((void *)0x4ba);
+   endtime = endtime * 200 + get_protected_l(0x4ba);
    key = 0;
-   while (!key && (endtime > get_protected_l((void *)0x4ba))) {
+   while (!key && (endtime > get_protected_l(0x4ba))) {
       if (Cconis())
          key = Crawcin() & 0xff;
    }
@@ -613,35 +570,6 @@ void relocate(unsigned char *prog_addr, Prgheader *header)
       }
    }
 }      
-
-
-/*
- * Returns the size of a file 
- */
-long get_size(const char *name)
-{
-#ifdef __GNUC__
-   _DTA info;
-#else
-   DTA info;       /* Thanks to tos.h for Lattice C */
-#endif
-   long file_size;
-   int error;
-
-   Fsetdta((void *)&info);
-   error = Fsfirst(name, 1);
-
-   if (!error) {
-#ifdef __GNUC__
-      file_size = info.dta_size;
-#else
-      file_size = info.d_length;
-#endif
-   } else
-      file_size = -1;
-
-   return file_size;
-}
 
 
 /*

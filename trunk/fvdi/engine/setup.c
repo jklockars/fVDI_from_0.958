@@ -1,87 +1,29 @@
 /*
  * fVDI workstation setup functions
  *
- * Copyright 1999-2000, Johan Klockars 
+ * $Id: setup.c,v 1.2 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-   #ifdef __LATTICE__
-      #include <dos.h>
-   #endif
-#endif
 
+#include "os.h"
 #include "fvdi.h"
 #include "relocate.h"
+#include "utility.h"
+#include "function.h"
+#include "globals.h"
 
 #define HANDLES 32            /* Important things regarding this also in fvdi.s */
 #define WHITE 0
 #define BLACK 1
 #define MAX_OLD_HANDLE 16
 
-/*
- * External functions called
- */
-
-extern short appl_init(void);
-extern short appl_exit(void);
-extern short graf_handle(void);
-extern short call_v_opnwk(long handle, short *int_out, short *pts_out);
-extern short scall_v_opnwk(long handle, short *int_out, short *pts_out);
-extern short call_v_opnvwk(long handle, short *int_out, short *pts_out);
-extern short call_v_clsvwk(long handle);
-extern void vq_extnd(long handle, long info_flag, short *int_out, short *pts_out);
-extern void vq_color(long handle, long colour, long flag, short *int_out);
-extern void set_inout(short *int_in, short *pts_in, short *int_out, short *pts_out);
-extern void vdi(long handle, long func, long pts, long ints);
-extern void sub_vdi(long handle, long func, long pts, long ints);
-extern void fvdi(long handle, long func, long pts, long ints);
-extern long get_sub_call(void);
-
-extern void copymem(void *s, void *d, long n);
-extern void *malloc(long size, long type);
-extern void free(void *addr);
-
-extern void mouse_move(void);
-extern void mouse_timer(void);
-
-extern void initialize_palette(Virtual *vwk, long start, long n, short colours[][3], Colour *palette);
-
-extern void bad_or_non_fvdi_handle(void);
 
 /*
  * Global variables
  */
-
-extern short control[];
-extern short int_in[];
-extern short pts_in[];
-extern short int_out[];
-extern short pts_out[];
-
-extern Function default_functions[];
-extern void *default_opcode5[];
-extern void *default_opcode11[];
-
-extern void *default_line;
-extern void *default_text;
-extern void *default_fill;
-extern void *default_expand;
-extern void *default_blit;
-
-extern short disabled;
-extern short oldmouse;
-extern short booted;
-extern short fakeboot;
-
-extern short width;
-extern short height;
-
-extern long sub_call;
-
 
 Virtual *default_virtual = 0;
 Virtual *screen_virtual = 0;

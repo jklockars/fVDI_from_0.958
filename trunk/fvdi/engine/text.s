@@ -1,9 +1,9 @@
 *****
 * fVDI text drawing functions
 *
-* $Id: text.s,v 1.4 2002-07-01 22:24:40 johan Exp $
+* $Id: text.s,v 1.5 2004-10-17 17:52:55 johan Exp $
 *
-* Copyright 1997-2002, Johan Klockars 
+* Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -25,7 +25,7 @@ transparent	equ	1		; Fall through?
 	xref	setup_plot,tos_colour
 	xref	line_types
 	xref	lib_vqt_extent,lib_vrt_cpyfm
-	xref	_allocate_block,_free_block
+	xref	allocate_block,free_block
 	xref	text_area
 
 	xdef	v_gtext,v_ftext,v_justified
@@ -260,7 +260,7 @@ lib_v_justified:
 	movem.l	d2-d6/a3-a4,-(a7)
 
 	move.l	#4*1024,-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.lib_v_justified_end
@@ -379,7 +379,7 @@ lib_v_justified:
 	move.l	wk_r_text(a3),a3
 	jsr	(a3)
 
-	bsr	_free_block	; Address still on stack
+	bsr	free_block	; Address still on stack
 	addq.l	#4,a7
 
 .lib_v_justified_end:		; .end:
@@ -420,7 +420,7 @@ _default_text:
 
 	move.l	d0,a3
 	move.l	#0,-(a7)			; Get a memory block of any size (hopefully large)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	exg	d0,a3
@@ -694,7 +694,7 @@ _default_text:
 
 	add.l	#18+16+20+4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#4,a7
 
 	movem.l	(a7)+,d3-d7/a3-a6

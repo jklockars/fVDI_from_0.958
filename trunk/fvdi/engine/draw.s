@@ -1,9 +1,9 @@
 *****
 * fVDI drawing functions
 *
-* $Id: draw.s,v 1.5 2003-04-06 13:42:12 johan Exp $
+* $Id: draw.s,v 1.6 2004-10-17 17:52:55 johan Exp $
 *
-* Copyright 1997-2002, Johan Klockars 
+* Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -27,7 +27,7 @@ transparent	equ	1		; Fall through?
 	xref	setup_plot,tos_colour
 	xref	_line_types
 	xref	lib_vqt_extent,lib_vrt_cpyfm
-	xref	_allocate_block,_free_block
+	xref	allocate_block,free_block
 	xref	_pattern_ptrs
 	xref	_filled_poly,_filled_poly_m,_clc_arc,_wide_line,_calc_bez
 	xref	_arc_split,_arc_min,_arc_max
@@ -287,7 +287,7 @@ c_v_pline:
 .wide_line:
 	move.l	d0,d1
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.no_wide
@@ -298,7 +298,7 @@ c_v_pline:
 	move.w	vwk_mode(a0),d2
 	move.l	d2,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
+	move.l	d0,-(a7)	; For free_block below (and _wide_line call)
 	move.l	d1,-(a7)
 	moveq	#0,d0
 	move.w	0(a1),d0
@@ -308,7 +308,7 @@ c_v_pline:
 	jsr	_wide_line
 	add.w	#16,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#8,a7
 
 	move.l	(a7)+,d2
@@ -637,7 +637,7 @@ v_ellarc:
 ;	beq	.ellarc_end
 
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.ellarc_end
@@ -647,7 +647,7 @@ v_ellarc:
 	move.w	vwk_mode(a0),d5
 	move.l	d5,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
+	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
 
 ;	bsr	col_pat
 ;	move.l	d5,-(a7)
@@ -693,7 +693,7 @@ v_ellarc:
 .ellarc_finish:
 	addq.l	#2*4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	add.w	#3*4,a7
 
 .ellarc_end:
@@ -721,7 +721,7 @@ v_ellpie:
 ;	beq	.ellpie_end
 
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.ellpie_end
@@ -734,7 +734,7 @@ v_ellpie:
 	move.w	vwk_mode(a0),d5
 	move.l	d5,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
+	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
 
 	bsr	col_pat
 	move.l	d5,-(a7)
@@ -777,7 +777,7 @@ v_ellpie:
 .ellpie_finish:
 	addq.l	#2*4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	add.w	#3*4,a7
 
 .ellpie_end:
@@ -808,7 +808,7 @@ v_ellipse:
 ;	beq	.ellipse_end
 
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.ellipse_end
@@ -821,7 +821,7 @@ v_ellipse:
 	move.w	vwk_mode(a0),d5
 	move.l	d5,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
+	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
 
 	bsr	col_pat
 	move.l	d5,-(a7)
@@ -848,7 +848,7 @@ v_ellipse:
 
 	add.w	#12*4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	add.w	#3*4,a7
 
 .ellipse_end:
@@ -899,7 +899,7 @@ lib_v_rbox:
 .rb_yorder:
 
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.rbox_end
@@ -912,7 +912,7 @@ lib_v_rbox:
 	move.w	vwk_mode(a0),d5
 	move.l	d5,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
+	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
 
 	bsr	col_pat
 	move.l	d5,-(a7)
@@ -927,7 +927,7 @@ lib_v_rbox:
 
 	add.w	#8*4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	add.w	#3*4,a7
 
 .rbox_end:
@@ -975,7 +975,7 @@ lib_v_rfbox:
 .rfb_yorder:
 
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.rfbox_end
@@ -988,7 +988,7 @@ lib_v_rfbox:
 	move.w	vwk_mode(a0),d5
 	move.l	d5,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
+	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
 
 	bsr	col_pat
 	move.l	d5,-(a7)
@@ -1003,7 +1003,7 @@ lib_v_rfbox:
 
 	add.w	#8*4,a7
 
-	bsr	_free_block
+	bsr	free_block
 	add.w	#3*4,a7
 
 .rfbox_end:
@@ -1260,7 +1260,7 @@ lib_v_bez_fill:
 
 .no_accel_poly:
 	move.l	#0,-(a7)	; Get a memory block of any size (hopefully large)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.no_poly
@@ -1294,7 +1294,7 @@ lib_v_bez_fill:
 	jsr	_filled_poly_m
 	add.w	#20,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#4,a7
 	add.w	#16,a7
 .no_poly:		; .end
@@ -1350,7 +1350,7 @@ lib_v_bez_fill:
 	move.l	2(a7),d0
 	beq	.no_free_f
 	move.l	d0,-(a7)
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#4,a7
 .no_free_f:
 	add.w	#10,a7
@@ -1380,7 +1380,7 @@ lib_v_bez_fill:
 	jsr	_filled_poly
 	add.w	#28,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#4,a7
 	bra	.no_poly
 		
@@ -1400,7 +1400,7 @@ lib_v_bez_fill:
 .wide_bez_f:
 	move.l	d0,d1
 	clr.l	-(a7)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.no_wide_bez_f
@@ -1409,7 +1409,7 @@ lib_v_bez_fill:
 	move.w	vwk_mode(a0),d2
 	move.l	d2,-(a7)
 
-	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
+	move.l	d0,-(a7)	; For free_block below (and _wide_line call)
 	move.l	d1,-(a7)
 	ext.l	d6
 	move.l	d6,-(a7)
@@ -1418,7 +1418,7 @@ lib_v_bez_fill:
 	jsr	_wide_line
 	add.w	#16,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#8,a7
 
 	bra	.end_bez_draw_f
@@ -1454,7 +1454,7 @@ lib_v_fillarea:
 
  label .no_accel_poly,1
 	move.l	#0,-(a7)	; Get a memory block of any size (hopefully large)
-	bsr	_allocate_block
+	bsr	allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.end_lib_v_fillarea
@@ -1480,7 +1480,7 @@ lib_v_fillarea:
 	jsr	_filled_poly
 	add.w	#28,a7
 
-	bsr	_free_block
+	bsr	free_block
 	addq.l	#4,a7
 
 .end_lib_v_fillarea:		; .end

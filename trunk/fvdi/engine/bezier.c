@@ -1,11 +1,14 @@
 /*
  * fVDI Bezier code
  *
- * $Id: bezier.c,v 1.2 2003-04-06 13:42:53 johan Exp $
+ * $Id: bezier.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 1999-2001/2003, Johan Klockars 
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
  *
  * This is a modified version of code with an original
  * copyright as follows.
- * Johan Klockars, 1999
  */
 
 /*   Description       : Fast Bezier approximation using
@@ -37,6 +40,8 @@
  ********************************************************************/
 
 #include "fvdi.h"
+#include "utility.h"
+#include "function.h"
 
 #define BIG_ENDIAN
 
@@ -56,17 +61,6 @@
 
 #define MINVERTSIN		129
 #define MININTIN		56
-
-#if 0
-extern	void	GEXT_DCALL(short *parmblock[5]);
-#endif
-
-extern long allocate_block(long);
-extern void free_block(void *);
-
-extern void v_bez_accel(long vwk, short *points, long num_points, long totmoves,
-                        short *xmov, long pattern, long colour, long mode);
-extern void lib_v_pline(Virtual *, void *);
 
 #define MULT(a,b)	((long)(a) * (b))
 #define _max(x,y)		(((x) > (y)) ? (x) : (y))
@@ -88,7 +82,7 @@ extern short line_types[];
 #define MINMAX(type,min,max,v3,v4)	\
 {				\
 	if (min > max) {	\
-		type tmp = min;\
+		type tmp = min;	\
 		min = max;	\
 		max = tmp;	\
 	}			\

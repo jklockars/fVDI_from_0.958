@@ -1,30 +1,28 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.6 2003-04-06 13:43:30 johan Exp $
+ * $Id: startup.c,v 1.7 2004-10-17 17:52:55 johan Exp $
  *
- * Copyright 1999-2002, Johan Klockars 
+ * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
 
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-   #ifdef __LATTICE__
-      #include <dos.h>
-      #include <tos.h>
-   #endif
-#endif
-
+#include "os.h"
 #include "fvdi.h"
+#include "utility.h"
+#include "globals.h"
+#include "function.h"
 
 #define DEBUG
 
+#ifdef DEBUG
+ #include "relocate.h"
+#endif
+
 #define SYSNAME "fvdi.sys"
 
-#define VERSION	0x0961
+#define VERSION	0x0962
 #define BETA	1
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
@@ -35,95 +33,15 @@
 #define ACTIVE		1		/* fVDI installed */
 #define BOOTED		2		/* fVDI can't be removed */
 
-#if 0
- #define BLOCKS		2		/* Number of memory blocks to allocate for internal use */
- #define BLOCK_SIZE	10*1024		/* The size of those blocks */
-#endif
-
 #define MAX_NVDI_SEARCH		100	/* Words of forward search from the initial NVDI dispatcher */
 #define MAX_NVDI_DISTANCE	10000	/* Allowed distance between the two dispatchers */
 
-#if 0
-#define disp(text) 	Cconws(text)
-#define disp_nl(text)	{ Cconws(text); Cconws("\x0a\x0d"); }
-#else
-extern void puts(const char* text);
-#define disp(text) 	puts(text)
-#define disp_nl(text)	{ puts(text); puts("\x0a\x0d"); }
-#define scrdisp(text) 	Cconws(text)
-#define scrdisp_nl(text)	{ Cconws(text); Cconws("\x0a\x0d"); }
-#endif
 #define key_wait(time)	Crawcin()
-#define ABS(x)		(((x) >= 0) ? (x) : -(x))
 
-#ifdef DEBUG
-#include "relocate.h"
-extern short debug;
-extern short interactive;
-extern Access *access;
-#define MIN(x,y)	(((x) < (y)) ? (x) : (y))
-#endif
-
-/*
- * External functions called
- */
-
-extern int init_utility(void);
-extern int load_prefs(Virtual *vwk, char *sysname);
-extern Virtual *initialize_vdi(void);
-extern int initialize_pool(long size, long n);
-extern void copy_workstations(Virtual *def, long really_copy);
-extern void setup_fallback(void);
-extern long vq_gdos(void);
-extern int remove_xbra(long vector, long id);
-extern long get_cookie(const unsigned char *name, long super);
-extern int set_cookie(const unsigned char *name, long value);
-extern void shut_down(void);
-extern ltoa(char *buf, long n, unsigned long base);
-extern void copymem(void *s, void *d, long n);
-extern void *malloc(long size, long type);
-extern long free(void *addr);
-extern long free_all(void);
-extern long get_protected_l(void *addr);
-extern void set_protected_l(void *addr, long v);
-extern void error(const char *text1, const char *text2);
-extern long tokenize(const char *buffer);
 
 /*
  * Global variables
  */
-
-extern List *driver_list;
-extern short debug;
-extern short disabled;
-extern short booted;
-extern short fakeboot;
-extern short nvdifix;
-extern short xbiosfix;
-extern short singlebend;
-extern short blocks;
-extern short stand_alone;
-extern long block_size;
-extern long log_size;
-extern long pid_addr;
-extern long *pid;
-extern long trap2_address;
-extern long vdi_address;
-extern long trap14_address;
-extern long lineA_address;
-extern void *trap2_temp;
-extern void *trap14;
-extern void *lineA;
-extern void *vdi_dispatch;
-extern void *eddi_dispatch;
-extern void *init;
-extern void *data_start;
-extern void *bss_start;
-
-extern long mint;
-extern long magic;
-
-extern void* dummy_vdi;
 
 long basepage;
 char fake_bp[256];
@@ -166,23 +84,6 @@ long stack_address;
 
 
 /*
- * Turn string (max four characters) into a long
- */
-long str2long(const unsigned char *text)
-{
-	long v;
-
-	v = 0;
-	while (*text) {
-		v <<= 8;
-		v += *text++;
-	}
-
-	return v;
-}
-
-
-/*
  * Top level fVDI initialization
  */
 long startup(void)
@@ -192,7 +93,7 @@ long startup(void)
 	List *element;
 	Driver *driver;
 
-	disp_nl("");
+	puts_nl("");
 
 	if (!init_utility()) {				/* Make the utility routines ready for use */
 		error("Error while initializing utility routines.", 0);
@@ -243,11 +144,11 @@ long startup(void)
 		return 0;
 	}
 
-	if (remove_xbra(34*4, str2long("fVDI")) && debug)	/* fVDI might already be installed */
-		disp_nl("Removing previous XBRA.");
+	if (remove_xbra(34*4, "fVDI") && debug)		/* fVDI might already be installed */
+		puts_nl("Removing previous XBRA.");
 
 	if (nvdifix && nvdi_patch() && debug)
-		disp_nl("Patching NVDI dispatcher");
+		puts_nl("Patching NVDI dispatcher");
 
 #ifdef __PUREC__
 	if (booted && !fakeboot && !singlebend) {
@@ -281,32 +182,32 @@ long startup(void)
 	
 	stack_address = (long)vdi_stack;
 
-	scrdisp("fVDI v");
+	puts("fVDI v");
 	ltoa(buffer, VERmaj, 10);
-	scrdisp(buffer);
-	scrdisp(".");
+	puts(buffer);
+	puts(".");
 	ltoa(buffer, VERmin, 10);
-	scrdisp(buffer);
+	puts(buffer);
 	if (BETA)
-		scrdisp("beta");
+		puts("beta");
 	ltoa(buffer, BETA, 10);
-	scrdisp(buffer);
-	scrdisp_nl(" now installed.");
+	puts(buffer);
+	puts_nl(" now installed.");
 
 	if (debug) {
 		ltoa(buffer, (long)&init, 16);
-		disp("fVDI engine Text: $");
-		disp(buffer);
+		puts("fVDI engine Text: $");
+		puts(buffer);
 		ltoa(buffer, (long)&data_start, 16);
-		disp("   Data: $");
-		disp(buffer);
+		puts("   Data: $");
+		puts(buffer);
 		ltoa(buffer, (long)&bss_start, 16);
-		disp("   Bss: $");
-		disp_nl(buffer);
+		puts("   Bss: $");
+		puts_nl(buffer);
 		if (super->fvdi_log.active) {
 			ltoa(buffer, (long)&super->fvdi_log, 16);
-			disp("Logging at $");
-			disp_nl(buffer);
+			puts("Logging at $");
+			puts_nl(buffer);
 		}
 	}
 
@@ -317,7 +218,7 @@ long startup(void)
 	 */
 
 	if (debug)
-		disp_nl("Post install initialization of drivers");
+		puts_nl("Post install initialization of drivers");
 
 	first_vwk = 0;
 	element = driver_list;
@@ -331,11 +232,11 @@ long startup(void)
 			if (!first_vwk)
 				first_vwk = driver->default_vwk;
 			if (debug) {
-				disp(" ");
-				disp(driver->name);
+				puts(" ");
+				puts(driver->name);
 				ltoa(buffer, (long)driver->initialize, 16);
-				disp(" at $");
-				disp_nl(buffer);
+				puts(" at $");
+				puts_nl(buffer);
 			}
 			((void (*)(Virtual *))(driver->initialize))(driver->default_vwk);
 		}
@@ -349,12 +250,12 @@ long startup(void)
 
 	if (!booted) {
 		if (debug)
-			disp_nl("Copying available virtual workstations");
+			puts_nl("Copying available virtual workstations");
 		copy_workstations(first_vwk, !fakeboot);	/* f.vwk - default vwk to set up for, fall-through if fakeboot */
 	} else if (!disabled) {
 		if (!fakeboot && !stand_alone) {
 			if (debug) {
-				disp_nl("About to set up VDI fallback. Press any key.");
+				puts_nl("About to set up VDI fallback. Press any key.");
 				key_wait(10);			/* It's too late to wait for a key afterwards */
 			}
 			setup_fallback();
@@ -380,7 +281,7 @@ long startup(void)
 	set_cookie("FSMC", (long)&readable->fsmc_cookie);
 
 	if (set_cookie("fVDI", (long)&readable->cookie) && debug)
-		disp_nl("Replacing previous cookie");
+		puts_nl("Replacing previous cookie");
 
 
 	/*
@@ -416,9 +317,9 @@ long remove_fvdi(void)
 			set_cookie("EdDI", old_eddi);
 		if (old_fsmc)
 			set_cookie("FSMC", old_fsmc);
-		remove_xbra(34 * 4, str2long("fVDI"));	/* Trap #2 handler */
-		remove_xbra(46 * 4, str2long("fVDI"));	/* Trap #14 handler */
-		remove_xbra(10 * 4, str2long("fVDI"));	/* LineA handler */
+		remove_xbra(34 * 4, "fVDI");		/* Trap #2 handler */
+		remove_xbra(46 * 4, "fVDI");		/* Trap #14 handler */
+		remove_xbra(10 * 4, "fVDI");		/* LineA handler */
 		ret = free_all();
 		shut_down();
 		readable->cookie.flags = 0;
@@ -498,7 +399,7 @@ long setup_fvdi(unsigned long type, long value)
 int nvdi_patch(void)
 {
 	long xbra_v, nvdi_v;
-	long *addr, *link, *nvdi, *test;
+	long *addr, link, *nvdi, *test;
 	int i, found;
 
 	xbra_v = str2long("XBRA");
@@ -508,11 +409,11 @@ int nvdi_patch(void)
 	 * Search Trap #2 XBRA chain for NVDI
 	 */
 
-	link = (long *)0x88;
+	link = 0x88;
 	addr = (long *)get_protected_l(link);
 	while ((addr[-3] == xbra_v) && (addr[-2] != nvdi_v)) {
-		link = &addr[-1];
-		addr = (long *)*link;
+		link = (long)&addr[-1];
+		addr = *(long **)link;
 	}
 
 	if (addr[-2] != nvdi_v)
@@ -534,7 +435,11 @@ int nvdi_patch(void)
 			break;
 		}
 	}
-			
+
+	/*
+	 * If the 'real' NVDI dispatch was found, bypass the initial one.
+	 */
+		
 	if (found) {
 		set_protected_l(link, (long)test);
 		test[-1] = nvdi[-1];

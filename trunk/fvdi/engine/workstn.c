@@ -1,83 +1,20 @@
 /*
  * fVDI workstation functions
  * 
- * Copyright 2000, Johan Klockars 
+ * $Id: workstn.c,v 1.3 2004-10-17 17:52:55 johan Exp $
+ *
+ * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
 
+#include "fvdi.h"
+#include "utility.h"
+#include "function.h"
+#include "globals.h"
+
 #define NEG_PAL_N	9	/* Number of negative palette entries */
 #define HANDLES		32	/* Max number of handles */
-
-#include "fvdi.h"
-
-extern Virtual *handle[];
-extern Virtual *default_virtual;
-extern Virtual *non_fvdi_vwk;
-extern Workstation *non_fvdi_wk;
-extern Workstation *screen_wk;
-extern List *driver_list;
-extern short lineafix;
-extern short stand_alone;
-extern long old_gdos;
-
-void lib_vdi_s(void *, void *, short);
-void lib_vdi_sp(void *, void *, short, void *);
-void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
-void lib_vdi_pp(void *, void *, void *, void *);
-#ifdef __PUREC__
-extern void lib_vdi_s(void *, void *, short);
-extern void lib_vdi_sp(void *, void *, short, void *);
-extern void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
-extern void lib_vdi_pp(void *, void *, void *, void *);
-#else
-#define LIB_CALL {"224f4e92";}			/* move.l a7,a1   jsr (a2) */
-#pragma inline lib_vdi_s(a2, a0, (short)) LIB_CALL
-#pragma inline lib_vdi_sp(a2, a0, (short),) LIB_CALL
-#pragma inline lib_vdi_spppp(a2, a0, (short),,,,) LIB_CALL
-#pragma inline lib_vdi_pp(a2, a0,,) LIB_CALL
-#endif
-
-extern void link_mouse_routines(void);
-extern void *lib_vst_color;
-extern void *lib_vst_font;
-extern void *lib_vst_point;
-extern void *lib_vsl_color;
-extern void *lib_vsl_type;
-extern void *lib_vsm_color;
-extern void *lib_vsm_type;
-extern void *lib_vsf_color;
-extern void *lib_vsf_interior;
-extern void *lib_vsf_style;
-extern void *lib_vs_clip;
-extern void *lib_vr_trn_fm;
-#if 0
-extern void lib_vst_color(Virtual *, short);
-extern void lib_vst_font(Virtual *, short);
-extern void lib_vst_point(Virtual *, short, short *, short *, short *, short *);
-extern void lib_vsl_color(Virtual *, short);
-extern void lib_vsl_type(Virtual *, short);
-extern void lib_vsm_color(Virtual *, short);
-extern void lib_vsm_type(Virtual *, short);
-extern void lib_vsf_color(Virtual *, short);
-extern void lib_vsf_interior(Virtual *, short);
-extern void lib_vsf_style(Virtual *, short);
-extern void lib_vs_clip(Virtual *, short, short *);
-extern void lib_vr_trn_fm(Virtual *, MFDB *, MFDB *);
-#endif
-extern short call_other(VDIpars *, long);
-extern void opnvwk_values(Virtual *, VDIpars *);
-
-extern void copymem(void *s, void *d, long n);
-extern void setmem(void *d, long v, long n);
-extern void *malloc(long size, long type);
-extern void free(void *addr);
-#if 0
-extern void puts(char *text);
-#endif
-extern short scall_v_opnwk(long dev_id, short *int_out, short *pts_out);
-
-extern short old_wk_handle;
 
 
 void

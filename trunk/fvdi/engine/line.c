@@ -1,11 +1,14 @@
 /*
- * fVDI wide line code
+ * fVDI line code
  *
- * $Id: line.c,v 1.3 2003-04-06 13:47:33 johan Exp $
+ * $Id: line.c,v 1.4 2004-10-17 17:52:55 johan Exp $
  *
- * This is extracted and modified from code with an
+ * Copyright 1999/2001-2003, Johan Klockars 
+ * This software is licensed under the GNU General Public License.
+ * Please, see LICENSE.TXT for further information.
+ *
+ * The wide line parts are extracted and modified from code with an
  * original copyright as follows.
- * Johan Klockars, 1999
  */
 
 /*************************************************************************
@@ -27,12 +30,12 @@
 **************************************************************************/
 
 #include "fvdi.h"
+#include "function.h"
+#include "utility.h"
 
 #define MAX_L_WIDTH	32
 #define X_ASPECT 1
 #define Y_ASPECT 1
-
-#define ABS(x) ((x) >= 0 ? (x) : -(x))
 
 #define ARROWED 1
 
@@ -55,11 +58,6 @@ static signed char *marker[] = {row1, row2, row3, row4, row5, row6};
 
 extern short solid;
 
-void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points, long mode);
-
-extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern,
-                      short *points, long mode, long interior_style);
-extern short isqrt(unsigned long x);
 
 int wide_setup(Virtual *vwk, int width, short *q_circle)
 {
@@ -696,3 +694,4 @@ void do_circ(short cx, short cy)
 	}
 }
 #endif
+
