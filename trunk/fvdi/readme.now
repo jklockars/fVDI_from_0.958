@@ -18,8 +18,9 @@ team, where applicable).
 
 
 I changed the directory structure somewhat while moving this onto my PC, so
-nothing will compile quite as is. I'll try to do something about this soon
-enough, but if you need to compile anything, the differences are:
+some things will not compile quite as they are. I'm working my way through these
+problems, but it may take a while before everything builds without trouble again.
+If you need to compile something that has problems, the differences are:
 - The contents of the fvdi/engine and fvdi/include directories used to be in
   the same one. Just move them up out of those directories (to /fvdi) for now,
   to be able to compile.
@@ -35,5 +36,5 @@ in the future, but for now I think this should be OK.
 Note that none of the older versions are in the CVS repository at this time.
 
 Johan Klockars
-2001-10-27
+2001-10-29
 
