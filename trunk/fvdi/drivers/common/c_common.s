@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (C functions), by Johan Klockars
 *
-* $Id: c_common.s,v 1.4 2002-08-03 12:25:29 johan Exp $
+* $Id: c_common.s,v 1.5 2003-04-06 14:05:37 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -528,23 +528,22 @@ c_text:
 * Draw the mouse
 * c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
 * In:	a1	Pointer to Workstation struct
-*	d0/d1	x,y
-*	d2	0 (move), 1 (hide), 2 (show), Mouse* (change)
+*	d0	x (low), old op bits (high)
+*	d1	y
+*	d2	0 (move shown), 1 (move hidden), 2 (hide), 3 (show), Mouse* (change)
+* Out:	d0	mouse op to try again (low), pointer delay (high)
 *---------
 _c_mouse:
 c_mouse:
-	movem.l		d0-d2/a0-a2,-(a7)
-
 	move.l		d2,-(a7)
 	ext.l		d1
 	move.l		d1,-(a7)
-	ext.l		d0
+;	ext.l		d0
 	move.l		d0,-(a7)
 	move.l		a1,-(a7)
 	ijsr		_mouse_draw_r
 	add.w		#16,a7
 
-	movem.l		(a7)+,d0-d2/a0-a2
 	rts
 
 
