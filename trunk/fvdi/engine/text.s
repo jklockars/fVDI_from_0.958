@@ -249,6 +249,7 @@ lib_v_justified:
 	move.w	font_code_high(a3),d4
 	move.l	font_table_character(a3),a3
 
+	clr.l	(a2)+			; First character at 0,0
 	moveq	#0,d2			; Width total
 	moveq	#0,d5			; Spaces
 	lbra	.no_char,2
@@ -272,6 +273,7 @@ lib_v_justified:
 
 	move.w	10(a1),d6
 	sub.w	d2,d6
+	beq	.updated
 	ext.l	d6			; d6.l = amount to widen by (could be negative)
 
 	move.w	8(a1),d4
