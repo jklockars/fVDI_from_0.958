@@ -7,6 +7,7 @@
 
 	xdef	_Mxalloc,_Malloc,_Mfree
 	xdef	_Cconws,_Cconis,_Crawcin
+	xdef	_Bconout
 	xdef	__ulmod,__uldiv,__ldiv,__lmul
 	xdef	_Super,_Setexc
 	xdef	_Fopen,_Fread,_Fclose
@@ -89,6 +90,15 @@ _Crawcin:
 	move.w	#$07,-(a7)
 	trap	#1
 	addq.l	#2,a7
+	move.l	(a7)+,a2
+	rts
+
+_Bconout:
+	move.l	a2,-(a7)
+	move.l	8+0(a7),-(a7)
+	move.w	#3,-(a7)
+	trap	#13
+	addq.l	#6,a7
 	move.l	(a7)+,a2
 	rts
 

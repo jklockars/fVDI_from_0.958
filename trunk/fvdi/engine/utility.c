@@ -83,6 +83,9 @@ long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
 short mxalloc = 0;
 
+void puts(const char *text);
+
+
 /*
  * Returns the value of a cookie, or -1
  */

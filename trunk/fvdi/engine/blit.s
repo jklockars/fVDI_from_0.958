@@ -865,7 +865,7 @@ to_standard:
 	move.l	driver_device(a5),a5
 	move.w	dev_format(a5),d6
 	and.w	#2,d6
-	beq	.not_chunky_ts
+	beq	not_chunky_ts
 
 	move.w	d0,d7
 	mulu	d1,d7
@@ -896,7 +896,7 @@ to_standard:
 ;	dbra	d6,5$
 
 	cmp.w	#32,d2
-	bne	.not_32bit_ts
+	bne	not_32bit_ts
 	bsr	to_standard_32
 	bra	end_vr_trn_fm
 
@@ -947,7 +947,7 @@ to_standard_8:
 	move.l	a5,a4
 	ldbra	d0,.loop1b,1
 	swap	d0
-	ldbra	d0,.loop0,0
+	ldbra	d0,.loop0b,0
 
 	add.w	#16,a7
 	rts
@@ -1049,8 +1049,8 @@ to_standard_32:
 	rts
 
 
-.not_32bit_ts:
-.not_chunky_ts:
+not_32bit_ts:
+not_chunky_ts:
 	move.w	d2,d3			; Reorganize device specific
 	add.w	d3,d3			;  bitplanes into standard ones
 

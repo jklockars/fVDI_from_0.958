@@ -10,7 +10,7 @@
 
 colour_bits	equ	8
 
-	xdef		set_colours
+	xdef		_set_colours
 	xdef		get_colour,_get_colour
 
 ;	xref		_bitplane_palette_colour_mode
@@ -46,7 +46,7 @@ get_colour:
 *	d0		number of entries and start entry
 *	a1		Requested colour values (3 word/entry)
 *	a2		VDI palette array
-set_colours:
+_set_colours:
 	move.w	d0,d1
 	mulu	#colour_struct_size,d1
 	add.w	d1,a2

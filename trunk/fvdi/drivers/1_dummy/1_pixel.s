@@ -2,10 +2,10 @@
 *	Draw in single plane modes			*	
 *-------------------------------------------------------*
 
-	include		"..\..\vdi.inc"
+	include		"vdi.inc"
 
-	xdef		write_pixel
-	xdef		read_pixel
+	xdef		_write_pixel
+	xdef		_read_pixel
 
 	xref		get_colour_masks
 
@@ -20,7 +20,7 @@
 *	d1	x or table address
 *	d2	y or table length (high) and type (0 - coordinates)
 * XXX:	?
-write_pixel:
+_write_pixel:
 	move.l		a1,d3
 	bclr		#0,d3
 	bne		.unknown_write
@@ -54,7 +54,7 @@ write_pixel:
 * In:	a1	VDI struct, source MFDB
 *	d1	x
 *	d2	y
-read_pixel:
+_read_pixel:
 	bsr		addressing
 
 	move.w		d0,d3

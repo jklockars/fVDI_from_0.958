@@ -270,7 +270,11 @@ long startup(void)
 		trap14_address = (long)Setexc(46, (void *)&trap14);	/* Install an XBIOS handler */
 #endif
 
+#ifdef __PUREC__
+	lineA_address = (long)Setexc(10, (void (*)())&lineA);		/* Install a LineA handler */
+#else
 	lineA_address = (long)Setexc(10, (void *)&lineA);		/* Install a LineA handler */
+#endif
 	
 	stack_address = (long)vdi_stack;
 

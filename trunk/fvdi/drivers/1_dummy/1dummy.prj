@@ -1,15 +1,15 @@
 1dummy.sys
-.C	[-b4 -r6 -v -d0 -m0 -rs -fm -i..\..\ -i..\ -j*e]
-.S	[-d -m0 -i..\..\]
+.C	[-b4 -r6 -v -d0 -m0 -rs -fm -i..\..\include -i..\include -j*e]
+.S	[-d -m0 -i..\..\include\]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
 1_PIXEL.S
 1PLN_NOT.S
-1_SPEC.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\ -i..\ -j*e -Oloop,alias]	(../../fvdi.h,../../relocate.h,../driver.h)
-..\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\ -i..\ -j*e -Oloop,alias]	(../../fvdi.h,../../relocate.h)
-..\LINEACHK.S	(../../vdi.inc,../../types.inc,../../linea.inc)
-..\COMMON.S	(../../vdi.inc,../../types.inc)
-..\C_COMMON.S	(../../vdi.inc,../../types.inc)
-..\FALC_PAL.S	(../../vdi.inc,../../types.inc)
-..\CLIP.S	(../../vdi.inc,../../types.inc)
+1_SPEC.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include -i..\include -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h,../include/driver.h)
+..\COMMON\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include -i..\include -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h)
+..\COMMON\LINEACHK.S	(../../include/vdi.inc,../../include/types.inc,../../include/linea.inc)
+..\COMMON\COMMON.S	(../../include/vdi.inc,../../include/types.inc)
+..\COMMON\C_COMMON.S	(../../include/vdi.inc,../../include/types.inc)
+..\COMMON\FALC_PAL.S	(../../include/vdi.inc,../../include/types.inc)
+..\COMMON\CLIP.S	(../../include/vdi.inc,../../include/types.inc)
 LC.LIB
