@@ -1,9 +1,9 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.4 2002-07-03 21:31:26 johan Exp $
+* $Id: simple.s,v 1.5 2004-10-17 15:36:48 johan Exp $
 *
-* Copyright 1997-2002, Johan Klockars 
+* Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -26,7 +26,6 @@ HANDLES		equ	32		; Max number of handles
   endc
 
 	xref	_v_opnwk,_v_opnvwk,_v_clsvwk,_v_clswk
-	xref	_set_protected_l
 	xref	_old_gdos
 
 	xref	_vq_chcells,_v_exit_cur,_v_enter_cur,_v_curup,_v_curdown
@@ -135,33 +134,51 @@ vs_clip:
 	move.l	intin(a1),a2
 	move.w	(a2),vwk_clip_on(a0)
 	beq	.no_clip				; Not sure this is a good idea
+
+	uses_d1
 	move.l	ptsin(a1),a2
-;	move.l	(a2)+,vwk_clip_rectangle_x1(a0)		; left/top
-;	move.l	(a2)+,vwk_clip_rectangle_x2(a0)		; right/bottom
 	move.l	vwk_real_address(a0),a1
-	move.w	(a2)+,d0				; left
+
+	move.w	0(a2),d0
+	move.w	4(a2),d1
+	cmp.w	d0,d1
+	bge	.x_ordered
+	exg	d0,d1
+.x_ordered:
+
+	tst.w	d0				; left
 	bge	.left_ok
 	moveq	#0,d0
 .left_ok:
 	move.w	d0,vwk_clip_rectangle_x1(a0)
-	move.w	(a2)+,d0				; top
+
+	cmp.w	wk_screen_coordinates_max_x(a1),d1	; right
+	ble	.right_ok
+	move.w	wk_screen_coordinates_max_x(a1),d1
+.right_ok:
+	move.w	d1,vwk_clip_rectangle_x2(a0)
+
+	move.w	2(a2),d0
+	move.w	6(a2),d1
+	cmp.w	d0,d1
+	bge	.y_ordered
+	exg	d0,d1
+.y_ordered:
+
+	tst.w	d0				; top
 	bge	.top_ok
 	moveq	#0,d0
 .top_ok:
 	move.w	d0,vwk_clip_rectangle_y1(a0)
-	move.w	(a2)+,d0
-	cmp.w	wk_screen_coordinates_max_x(a1),d0	; right
-	ble	.right_ok
-	move.w	wk_screen_coordinates_max_x(a1),d0
-.right_ok:
-	move.w	d0,vwk_clip_rectangle_x2(a0)
-	move.w	(a2)+,d0
-	cmp.w	wk_screen_coordinates_max_y(a1),d0	; bottom
+
+	cmp.w	wk_screen_coordinates_max_y(a1),d1	; bottom
 	ble	.bottom_ok
-	move.w	wk_screen_coordinates_max_y(a1),d0
+	move.w	wk_screen_coordinates_max_y(a1),d1
 .bottom_ok:
-	move.w	d0,vwk_clip_rectangle_y2(a0)
+	move.w	d1,vwk_clip_rectangle_y2(a0)
 ;	return
+
+	used_d1
 	done_return
 
 .no_clip:
@@ -178,7 +195,7 @@ vs_clip:
 
 
 * lib_vs_clip - Standard library function
-* Todo: Should allow for min_x/y coordinates as well
+* Todo: Fix according to above!! Should allow for min_x/y coordinates as well
 * In:   a1      Parameters   lib_vs_clip(clip_flag, points)
 *       a0      VDI struct
 _lib_vs_clip:
@@ -194,6 +211,7 @@ lib_vs_clip:
 	move.w	d0,vwk_clip_rectangle_x1(a0)
 	move.w	(a2)+,d0				; top
 	lbge	.top_ok,2
+	moveq	#0,d0
  label .top_ok,2
 	move.w	d0,vwk_clip_rectangle_y1(a0)
 	move.w	(a2)+,d0
@@ -463,7 +481,7 @@ vq_chcells:
 	move.l	intout(a1),a2
 	pea	2(a2)
 	pea	0(a2)
-	pea	(a1)
+	pea	(a0)
 	jsr	_vq_chcells
 	add.w	#12,a7
 	movem.l	(a7)+,d2
@@ -479,7 +497,7 @@ vq_chcells:
 v_exit_cur:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_exit_cur
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -495,7 +513,7 @@ v_exit_cur:
 v_enter_cur:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_enter_cur
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -511,7 +529,7 @@ v_enter_cur:
 v_curup:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curup
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -527,7 +545,7 @@ v_curup:
 v_curdown:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curdown
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -543,7 +561,7 @@ v_curdown:
 v_curright:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curright
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -559,7 +577,7 @@ v_curright:
 v_curleft:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curleft
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -575,7 +593,7 @@ v_curleft:
 v_curhome:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curhome
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -591,7 +609,7 @@ v_curhome:
 v_eeos:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_eeos
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -607,7 +625,7 @@ v_eeos:
 v_eeol:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_eeol
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -630,7 +648,7 @@ vs_curaddress:
 	move.w	0(a2),d0
 	ext.l	d0
 	move.l	d0,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_vs_curaddress
 	add.w	#12,a7
 	movem.l	(a7)+,d2
@@ -652,7 +670,7 @@ v_curtext:
 	move.l	d0,-(a7)
 	move.l	intin(a1),a2
 	pea	(a2)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_curtext
 	add.w	#12,a7
 	movem.l	(a7)+,d2
@@ -668,7 +686,7 @@ v_curtext:
 v_rvon:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_rvon
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -684,7 +702,7 @@ v_rvon:
 v_rvoff:
 	uses_d1
 	movem.l	d2,-(a7)
-	pea	(a1)
+	pea	(a0)
 	jsr	_v_rvoff
 	addq.w	#4,a7
 	movem.l	(a7)+,d2
@@ -703,7 +721,7 @@ vq_curaddress:
 	move.l	intout(a1),a2
 	pea	2(a2)
 	pea	0(a2)
-	pea	(a1)
+	pea	(a0)
 	jsr	_vq_curaddress
 	add.w	#12,a7
 	movem.l	(a7)+,d2
