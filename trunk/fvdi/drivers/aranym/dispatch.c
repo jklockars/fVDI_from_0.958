@@ -111,8 +111,8 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
 {
    if ((long)mouse > 3)
       return ARAnyM((nfMOUSE, wk, x, y, &mouse->mask, &mouse->data,
-                     mouse->hotspot.x, mouse->hotspot.y,
-                     *(long *)&mouse->colour, mouse->type));
+                     (long)mouse->hotspot.x, (long)mouse->hotspot.y,
+                     *(long *)&mouse->colour, (long)mouse->type));
    else {
       /* Why is the cast needed for Lattice C? */
       return ARAnyM((nfMOUSE, wk, x, y, (long)mouse));
