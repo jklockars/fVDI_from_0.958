@@ -1,3 +1,15 @@
+2002-07-10 - johan
+Version bumped to 0.96 due to incompatibility with old drivers.
+Driver API updated to make it mostly independent of the fVDI structures.
+Some driver API conversion layer changes for generalization.
+Fix for the PureC local label problem.
+A couple of minor bug fixes.
+
+2002-07-03 - johan
+Various fixes to make the engine and drivers build properly
+with both Lattice C and PureC.
+ARAnyM driver synchronized with the one from the ARAnyM CVS.
+
 2002-07-01 - johan
 Added support for the VDI screen ESC functions.
 Workaround for a local label problem with the PureC assembler.
