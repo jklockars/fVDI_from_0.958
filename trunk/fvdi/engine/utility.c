@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.5 2002-07-01 22:29:38 johan Exp $
+ * $Id: utility.c,v 1.6 2002-07-03 21:31:58 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -85,7 +85,7 @@ long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
 short mxalloc = 0;
 
-long ARAnyM_out = 0x71354e75;   /* ARAnyM native printing subroutine */
+long ARAnyM_out = 0x71354e75L;   /* ARAnyM native printing subroutine */
 
 void puts(const char *text);
 
