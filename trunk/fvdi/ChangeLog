@@ -1,3 +1,7 @@
+2002-10-21 - johan
+ARAnyM driver NatFeat support.
+Miscellaneous minor improvements and cleanups for ARAnyM driver.
+
 2002-08-03 - johan
 Fixes to make the ARAnyM driver work with the new native API.
 A couple of minor bug fixes.
