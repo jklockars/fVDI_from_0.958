@@ -1,0 +1,39 @@
+IMPORTANT
+=========
+Please, note that not everything in this repository is necessarily GPLed at the
+moment. Most notably, the RageII stuff, which still relies on some files from
+ATI which are not under the GPL. In general, consider anything that does not
+have an explicit GPL notice to _not_ be GPLed.
+
+In many cases, even things without the notice should really have one. Until
+you've checked with me, consider them to be under a normal copyright, however,
+and thus not to be modified, used or distributed without permission.
+I'll try to get all the appropriate copyright notices in there eventually.
+
+The CVS repository is password protected at the moment and is not supposed to
+be made available, even with only read access, to the general public in its
+current form (mainly because there are things in there that are not GPLed).
+Please, keep your user name and password to yourself (or within the development
+team, where applicable).
+
+
+I changed the directory structure somewhat while moving this onto my PC, so
+nothing will compile quite as is. I'll try to do something about this soon
+enough, but if you need to compile anything, the differences are:
+- The contents of the fvdi/engine and fvdi/include directories used to be in
+  the same one. Just move them up out of those directories (to /fvdi) for now,
+  to be able to compile.
+- fvdi/utility/acc used to be simply /fvdi/acc. It probably uses some files
+  that are now in /fvdi/include and assumes them to be in /fvdi.
+- The contents of fvdi/drivers/include and fvdi/drivers/common used to be in
+  fvdi/drivers. The drivers make use of stuff from /fvdi/include and assumes it
+  to be in /fvdi.
+
+It is possible that I'll make further changes to the directory structure
+in the future, but for now I think this should be OK.
+
+Note that none of the older versions are in the CVS repository at this time.
+
+Johan Klockars
+2001-10-27
+
