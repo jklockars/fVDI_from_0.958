@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (C functions), by Johan Klockars
 *
-* $Id: c_common.s,v 1.3 2002-07-10 22:13:40 johan Exp $
+* $Id: c_common.s,v 1.4 2002-08-03 12:25:29 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -119,7 +119,7 @@ c_get_pixel:
 	dc.b		"line"
 *---------
 * Draw a colored line between 2 points
-* c_draw_line(Virtual *vwk, long x1, long y1, long x2, long y2, long pattern, long colour)
+* c_draw_line(Virtual *vwk, long x1, long y1, long x2, long y2, long pattern, long colour, long mode)
 * In:	a0	VDI struct (odd address marks table operation)
 *	d0	line colour
 *	d1	x1 or table address
