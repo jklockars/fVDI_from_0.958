@@ -1,6 +1,8 @@
 /* 
  * 16 bit palette handling routines, by Johan Klockars.
  *
+ * $Id: 16b_pal.c,v 1.3 2002-07-10 22:13:39 johan Exp $
+ *
  * This file is an example of how to write an
  * fVDI device driver routine in C.
  *

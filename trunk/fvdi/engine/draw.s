@@ -1,7 +1,7 @@
 *****
 * fVDI drawing functions
 *
-* $Id: draw.s,v 1.3 2002-05-15 00:41:16 johan Exp $
+* $Id: draw.s,v 1.4 2002-07-10 22:12:25 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -197,11 +197,13 @@ lib_v_bez:
 	move.l	wk_r_line(a1),d1
 	move.l	d1,a1
 
-	addq.l	#1,a0
 	move.l	a2,d1
 	move.w	d6,d2
 	swap	d2
 	move.w	#1,d2			; Should be 1 for move handling
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
+	addq.l	#1,a0
 	jsr	(a1)
 
 .end_bez_draw:		; .end
@@ -252,6 +254,10 @@ lib_v_bez:
 	tst.l	d0
 	beq	.no_wide_bez
 
+	moveq	#0,d2
+	move.w	vwk_mode(a0),d2
+	move.l	d2,-(a7)
+
 	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
 	move.l	d1,-(a7)
 	ext.l	d6
@@ -262,7 +268,7 @@ lib_v_bez:
 	add.w	#16,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	addq.l	#8,a7
 
 	bra	.end_bez_draw
 
@@ -334,6 +340,8 @@ c_v_pline:
 	move.l	vwk_real_address(a0),a1
 	move.l	wk_r_line(a1),d6
 	move.l	d6,a1
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
 
 	jsr	(a1)
 
@@ -364,7 +372,11 @@ c_v_pline:
 	movem.w	(a2),d1-d4
 	bsr	clip_line
 	bvs	.no_draw
+	move.l	d6,-(a7)
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
 	jsr	(a1)
+	move.l	(a7)+,d6
 .no_draw:
 	addq.l	#4,a2
 .loop_end:
@@ -372,11 +384,13 @@ c_v_pline:
 
 ;	bra	.end_v_pline
   else
-	addq.l	#1,a0
 	move.l	a2,d1
 	move.w	d6,d2
 	swap	d2
 	clr.w	d2
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
+	addq.l	#1,a0
 	jsr	(a1)
   endc
 
@@ -395,6 +409,10 @@ c_v_pline:
 
 	move.l	d2,-(a7)
 
+	moveq	#0,d2
+	move.w	vwk_mode(a0),d2
+	move.l	d2,-(a7)
+
 	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
 	move.l	d1,-(a7)
 	moveq	#0,d0
@@ -406,7 +424,7 @@ c_v_pline:
 	add.w	#16,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	addq.l	#8,a7
 
 	move.l	(a7)+,d2
 	rts
@@ -421,6 +439,7 @@ c_v_pline:
 *	d3	x2 or move point count
 *	d4	y2 or move index address
 *	d5.w	Pattern
+*	d6	Logic operation
 * Call:	a0	VDI struct, 0 (destination MFDB)
 *	d1-d2.w	Coordinates
 *	a3-a4	Set/get pixel
@@ -438,16 +457,20 @@ _default_line:
 	clr.l	-(a7)			; No MFDB => draw on screen
 	move.l	a0,-(a7)
 
-	move.w	vwk_mode(a0),-(a7)
+	move.w	d6,-(a7)
 	bsr	setup_plot		; Setup pixel plot functions (a1/a3/a4)
 	addq.l	#2,a7
-
-	move.l	a7,a0			; a0 no longer -> VDI struct!
 
 	tst.w	d7
 	bne	.multiline
 
+	bsr	clip_line
+	bvs	.skip_draw
+
+	move.l	a7,a0			; a0 no longer -> VDI struct!
+
 	bsr	.draw
+.skip_draw:
 
 	move.l	(a7),a0
 	addq.l	#8,a7
@@ -710,7 +733,6 @@ col_pat:
 	rts
 
 
-
 	dc.b	0,"v_ellarc",0
 * v_ellarc - Standard Trap function
 * Todo: ?
@@ -734,6 +756,11 @@ v_ellarc:
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.ellarc_end
+
+	clr.l	-(a7)		; Dummy interior/style since not filled
+	moveq	#0,d5
+	move.w	vwk_mode(a0),d5
+	move.l	d5,-(a7)
 
 	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
 
@@ -774,7 +801,7 @@ v_ellarc:
 	move.l	d1,-(a7)
 	move.l	#6,-(a7)	; ellarc
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points
+	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points, mode, interior_style
 
 	add.w	#40,a7
 
@@ -782,7 +809,7 @@ v_ellarc:
 	addq.l	#8,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	add.w	#12,a7
 
 .ellarc_end:
 	movem.l	(a7)+,d2-d7
@@ -814,6 +841,14 @@ v_ellpie:
 	tst.l	d0
 	beq	.ellpie_end
 
+	move.w	vwk_fill_interior(a0),d5
+	swap	d5
+	move.w	vwk_fill_style(a0),d5
+	move.l	d5,-(a7)
+	moveq	#0,d5
+	move.w	vwk_mode(a0),d5
+	move.l	d5,-(a7)
+
 	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
 
 	bsr	col_pat
@@ -826,10 +861,8 @@ v_ellpie:
 	movem.w	0(a2),d5-d6
 	move.l	d6,d7
 	sub.w	d5,d7
-;	bpl	1$		; .not_negative
 	lbpl	.not_negative,1
 	add.w	#3600,d7
-;1$:		;.not_negative:
  label .not_negative,1
 
 ;	if (xfm_mode < 2)	/* If xform != raster then flip */
@@ -852,7 +885,7 @@ v_ellpie:
 	move.l	d1,-(a7)
 	move.l	#7,-(a7)	; ellpie
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points
+	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points, mode, interior_style
 
 	add.w	#40,a7
 
@@ -860,7 +893,7 @@ v_ellpie:
 	addq.l	#8,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	add.w	#12,a7
 
 .ellpie_end:
 	movem.l	(a7)+,d2-d7
@@ -875,7 +908,7 @@ v_ellpie:
 *       a0      VDI struct
 v_ellipse:
 ;	use_special_stack
-	ifne 1
+  ifne 1
 	uses_d1
 
 	movem.l	d2-d5,-(a7)
@@ -895,17 +928,25 @@ v_ellipse:
 	tst.l	d0
 	beq	.ellipse_end
 
+	move.w	vwk_fill_interior(a0),d5
+	swap	d5
+	move.w	vwk_fill_style(a0),d5
+	move.l	d5,-(a7)
+	moveq	#0,d5
+	move.w	vwk_mode(a0),d5
+	move.l	d5,-(a7)
+
 	move.l	d0,-(a7)	; For _free_block below (and _clc_arc call)
 
 	bsr	col_pat
 	move.l	d5,-(a7)
 	move.l	d0,-(a7)
 
-	ifne 0
+  ifne 0
 	...
 ;	if (xfm_mode < 2) /* if xform != raster then flip */
 ;		yrad = yres - yrad;	
-	endc
+  endc
 
 	bsr	calc_nsteps
 	move.l	d0,-(a7)	; n_steps
@@ -918,20 +959,20 @@ v_ellipse:
 	move.l	d1,-(a7)
 	move.l	#5,-(a7)	; ellipse
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, 0, 0, 3600, n_steps, colour, pattern, points
+	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, 0, 0, 3600, n_steps, colour, pattern, points, mode, interior_style
 
 	add.w	#48,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	add.w	#12,a7
 
 .ellipse_end:
 	movem.l	(a7)+,d2-d5
 	used_d1
 	done_return
-	endc
+  endc
 
-	ifne 0
+  ifne 0
 ;	move.w	#0,d0			; Background colour
 ;	swap	d0
 	move.l	vwk_line_colour(a0),d0
@@ -1342,7 +1383,7 @@ v_ellipse:
 	addq.l	#4,a7
 
 	bra	.ellipse_end
-	endc
+  endc
 
 
 	dc.b	0,0,"v_pmarker",0
@@ -1385,7 +1426,11 @@ v_pmarker:
 ;	movem.w	(a2),d1-d4
 ;	bsr	clip_line
 ;	bvs	.no_draw
+;	move.l	d6,-(a7)
+;	moveq	#0,d6
+;	move.w	vwk_mode(a0),d6
 ;	jsr	(a1)
+;	move.l	(a7)+,d6
 ;.no_draw:
 ;	addq.l	#4,a2
 ;.loop_end:
@@ -1394,6 +1439,8 @@ v_pmarker:
 	movem.w	(a2),d1-d2	; Only a single dot for now
 	move.w	d1,d3
 	move.w	d2,d4
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
 	jsr	(a1)
 
 .end_v_pmarker:		; .end
@@ -1551,14 +1598,14 @@ lib_v_bez_fill:
 	subq.l	#6,a7
 	move.w	d0,0(a7)
 
-	movem.l	d2-d6,-(a7)
+	movem.l	d2-d7,-(a7)
 	move.w	d0,d6
-	move.l	5*4+6+2*4+2(a7),a2		; Points
-;	move.w	5*4+6+2*4+0(a7),d3		; Move point count
+	move.l	6*4+6+2*4+2(a7),a2		; Points
+;	move.w	6*4+6+2*4+0(a7),d3		; Move point count
 	move.l	18(a1),a1
 	moveq	#0,d3
 	move.w	(a1),d3
-	move.l	5*4+6+2*4+6(a7),d4		; Move indices
+	move.l	6*4+6+2*4+6(a7),d4		; Move indices
 
 	tst.w	d6
 	ble	.no_poly		; No coordinates?  (-1 in Kandinsky)
@@ -1571,7 +1618,18 @@ lib_v_bez_fill:
 	move.w	d6,d2
 	exg	d3,d4
 	bsr	col_pat		; d0 - colours, d5 - pattern
+
+	move.w	vwk_fill_interior(a0),d7
+	swap	d7
+	move.w	vwk_fill_style(a0),d7
+	move.l	d6,-(a7)
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
+
 	jsr	(a1)
+
+	move.l	(a7)+,d6
+
 	move.l	d1,a2
 	bra	.no_poly
 
@@ -1584,6 +1642,15 @@ lib_v_bez_fill:
 
 	tst.w	d3
 	beq	.no_jumps
+
+	move.w	vwk_fill_interior(a0),d7
+	swap	d7
+	move.w	vwk_fill_style(a0),d7
+	move.l	d7,-(a7)
+	moveq	#0,d7
+	move.w	vwk_mode(a0),d7
+	move.l	d7,-(a7)
+
 	move.l	d3,-(a7)
 	move.l	d4,-(a7)
 
@@ -1604,7 +1671,7 @@ lib_v_bez_fill:
 
 	bsr	_free_block
 	addq.l	#4,a7
-	addq.l	#8,a7
+	add.w	#16,a7
 .no_poly:		; .end
 
 	bra	.end_bez_draw_f		; Should check for outline
@@ -1633,10 +1700,12 @@ lib_v_bez_fill:
 	move.w	d6,d2
 	swap	d2
 	move.w	#1,d2			; Should be 1 for move handling
+	move.w	#0,d6
+	move.w	vwk_mode(a0),d6
 	jsr	(a1)
 
 .end_bez_draw_f:	; .end
-	movem.l	(a7)+,d2-d6
+	movem.l	(a7)+,d2-d7
 
 	move.w	0(a7),d0
 	addq.l	#6,a7
@@ -1663,6 +1732,14 @@ lib_v_bez_fill:
 	rts
 
 .no_jumps:
+	move.w	vwk_fill_interior(a0),d7
+	swap	d7
+	move.w	vwk_fill_style(a0),d7
+	move.l	d7,-(a7)
+	moveq	#0,d7
+	move.w	vwk_mode(a0),d7
+	move.l	d7,-(a7)
+
 	move.l	d0,-(a7)
 
 	move.l	a2,-(a7)
@@ -1676,7 +1753,7 @@ lib_v_bez_fill:
 	move.l	a2,-(a7)
 	move.l	a0,-(a7)
 	jsr	_filled_poly
-	add.w	#20,a7
+	add.w	#28,a7
 
 	bsr	_free_block
 	addq.l	#4,a7
@@ -1703,6 +1780,10 @@ lib_v_bez_fill:
 	tst.l	d0
 	beq	.no_wide_bez_f
 
+	moveq	#0,d2
+	move.w	vwk_mode(a0),d2
+	move.l	d2,-(a7)
+
 	move.l	d0,-(a7)	; For _free_block below (and _wide_line call)
 	move.l	d1,-(a7)
 	ext.l	d6
@@ -1713,7 +1794,7 @@ lib_v_bez_fill:
 	add.w	#16,a7
 
 	bsr	_free_block
-	addq.l	#4,a7
+	addq.l	#8,a7
 
 	bra	.end_bez_draw_f
 
@@ -1723,7 +1804,7 @@ lib_v_bez_fill:
 * In:	a1	Parameters  lib_v_fillarea(num_pts, points)
 *	a0	VDI struct
 lib_v_fillarea:
-	movem.l	d2-d6,-(a7)
+	movem.l	d2-d7,-(a7)
 	move.w	(a1)+,d6
 	ble	.end_lib_v_fillarea	; .end		; No coordinates?  (-1 in Kandinsky)
 
@@ -1736,15 +1817,30 @@ lib_v_fillarea:
 	moveq	#0,d3
 	moveq	#0,d4
 	bsr	col_pat		; d0 - colours, d5 - pattern
+
+	move.w	vwk_fill_interior(a0),d7
+	swap	d7
+	move.w	vwk_fill_style(a0),d7
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6
+
 	jsr	(a1)
 	bra	.end_lib_v_fillarea
- label .no_accel_poly,1
 
+ label .no_accel_poly,1
 	move.l	#0,-(a7)	; Get a memory block of any size (hopefully large)
 	bsr	_allocate_block
 	addq.l	#4,a7
 	tst.l	d0
 	beq	.end_lib_v_fillarea
+
+	move.w	vwk_fill_interior(a0),d7
+	swap	d7
+	move.w	vwk_fill_style(a0),d7
+	move.l	d7,-(a7)
+	moveq	#0,d7
+	move.w	vwk_mode(a0),d7
+	move.l	d7,-(a7)
 
 	move.l	d0,-(a7)
 
@@ -1757,18 +1853,18 @@ lib_v_fillarea:
 	move.l	(a1),-(a7)
 	move.l	a0,-(a7)
 	jsr	_filled_poly
-	add.w	#20,a7
+	add.w	#28,a7
 
 	bsr	_free_block
 	addq.l	#4,a7
 
 .end_lib_v_fillarea:		; .end
-	movem.l	(a7)+,d2-d6
+	movem.l	(a7)+,d2-d7
 	rts
 
 
 	dc.b	0,0,"fill_poly",0
-* fill_poly(Virtual *vwk, short *p, int n, int colour, short *pattern, short *points);
+* fill_poly(Virtual *vwk, short *p, int n, int colour, short *pattern, short *points, long mode, long interior_style);
 *
 _fill_poly:
 	move.l	12(a7),d1
@@ -1778,16 +1874,18 @@ _fill_poly:
 	move.l	vwk_real_address(a0),a1
 	move.l	wk_r_fillpoly(a1),d0
 	beq	.do_c_poly
-	movem.l	d2-d6,-(a7)
+	movem.l	d2-d7,-(a7)
 	move.l	d1,d2
-	move.l	5*4+8(a7),d1
+	move.l	6*4+8(a7),d1
 	move.l	d0,a1
 	moveq	#0,d3
 	moveq	#0,d4
-	move.l	5*4+16(a7),d0
-	move.l	5*4+20(a7),d5
+	move.l	6*4+16(a7),d0
+	move.l	6*4+20(a7),d5
+	move.l	6*4+28(a7),d6
+	move.l	6*4+32(a7),d7
 	jsr	(a1)
-	movem.l	(a7)+,d2-d6
+	movem.l	(a7)+,d2-d7
 
 .end_fill_poly:		; .end
 	rts
@@ -1797,7 +1895,7 @@ _fill_poly:
 
 
 	dc.b	0,0,"hline",0
-* hline(Virtual *vwk, int x1, int y1, int y2, int colour, short *pattern)
+* hline(Virtual *vwk, long x1, long y1, long y2, long colour, short *pattern, long mode, long interior_style)
 *
 _hline:
 	movem.l	d2-d7/a2-a6,-(a7)
@@ -1817,6 +1915,9 @@ _hline:
 
 	move.l	11*4+4+20(a7),d5
 
+	move.l	11*4+4+24(a7),d6
+	move.l	11*4+4+28(a7),d7
+
 	jsr	(a1)
 
 .end:
@@ -1825,7 +1926,7 @@ _hline:
 
 
 	dc.b	0,"fill_spans",0
-* fill_spans(Virtual *vwk, short *spans, int n, int colour, short *pattern)
+* fill_spans(Virtual *vwk, short *spans, long n, long colour, short *pattern, long mode, long interior_style)
 *
 _fill_spans:
 	movem.l	d2-d7/a2-a6,-(a7)
@@ -1844,6 +1945,9 @@ _fill_spans:
 	move.l	wk_r_fill(a2),a1
 
 	move.l	11*4+4+16(a7),d5
+
+	move.l	11*4+4+20(a7),d6
+	move.l	11*4+4+24(a7),d7
 
 	jsr	(a1)
 

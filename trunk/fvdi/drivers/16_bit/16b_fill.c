@@ -1,6 +1,8 @@
 /* 
  * A 16 bit graphics fill routine, by Johan Klockars.
  *
+ * $Id: 16b_fill.c,v 1.2 2002-07-10 22:13:39 johan Exp $
+ *
  * This file is an example of how to write an
  * fVDI device driver routine in C.
  *
@@ -474,12 +476,13 @@ static void revtransp(short *addr, short *addr_fast, int line_add, short *patter
 #define BOTH
 #endif
 
-long CDECL c_fill_area(Virtual *vwk, long x, long y, long w, long h, short *pattern, long colour)
+long CDECL c_fill_area(Virtual *vwk, long x, long y, long w, long h,
+                       short *pattern, long colour, long mode, long interior_style)
 {
 	Workstation *wk;
 	short *addr, *addr_fast;
 	short foreground, background;
-  	int mode, line_add;
+  	int line_add;
 	long pos;
 	short *table;
 
@@ -500,8 +503,6 @@ long CDECL c_fill_area(Virtual *vwk, long x, long y, long w, long h, short *patt
 	pos = (short)y * (long)wk->screen.wrap + x * 2;
 	addr = wk->screen.mfdb.address;
 	line_add = (wk->screen.wrap - w * 2) >> 1;
-
-	mode = vwk->mode;
 
 #ifdef BOTH
 	if (addr_fast = wk->screen.shadow.address) {

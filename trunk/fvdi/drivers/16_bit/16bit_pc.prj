@@ -1,11 +1,11 @@
 16BIT_PC.SYS
-.C	[-X -Y -P -I=f:\fvdi\include -I=f:\fvdi\drivers\include]
-.S	[-Dlattice=0 -S -Y -I=f:\fvdi\include]
+.C	[-X -Y -P -I=..\..\include -I=..\include]
+.S	[-Dmc68000=1 -Dlattice=0 -S -Y -I=..\..\include]
 .L
 =
 ..\COMMON\PUREC.S
 ..\COMMON\INIT.C	(..\..\include\fvdi.h,..\..\include\relocate.h)
-..\COMMON\COLOURS.C	(..\..\include\fvdi.h,..\..\include\relocate.h)
+..\COMMON\COLOURS.C
 ..\COMMON\LINEACHK.S	(..\..\include\vdi.inc,..\..\include\types.inc,..\include\linea.inc)
 ..\COMMON\CLIP.S	(..\..\include\vdi.inc,..\..\include\types.inc)
 ..\COMMON\COMMON.S	(..\..\include\vdi.inc,..\..\include\types.inc)
@@ -16,9 +16,5 @@
 16B_EXP.C	(..\..\include\fvdi.h)
 16B_LINE.C	(..\..\include\fvdi.h)
 16B_SCR.C	(..\..\include\fvdi.h)
-16B_NOT.C	(..\..\include\fvdi.h)
 16B_PAL.C	(..\..\include\fvdi.h)
-;16B_SCR.S	(..\..\include\vdi.inc,..\..\include\types.inc)
-;16B_NOT.S
-;16B_PAL.S	(..\..\include\vdi.inc,..\..\include\types.inc)
 PCSTDLIB.LIB       ; standard library

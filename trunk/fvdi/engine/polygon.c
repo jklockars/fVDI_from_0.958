@@ -1,9 +1,12 @@
 /*
  * fVDI polygon fill functions
+ *
+ * $Id: polygon.c,v 1.2 2002-07-10 22:12:25 johan Exp $
+ *
  * Based on some code found on the net,
  * but very heavily modified.
  *
- * Copyright 1999-2000, Johan Klockars 
+ * Copyright 1999-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -24,10 +27,11 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
 #if 0
 extern void hline(void *, int x1, int y1, int y2, int colour, short *pattern);
 #endif
-extern void fill_spans(void *, short *, long n, long colour, short *pattern);
+extern void fill_spans(void *, short *, long n, long colour, short *pattern, long mode, long interior_style);
 
 
-void filled_poly(Virtual *vwk, short p[][2], long n, long colour, short *pattern, short *points)
+void filled_poly(Virtual *vwk, short p[][2], long n, long colour,
+                 short *pattern, short *points, long mode, long interior_style)
 {
 	int i, j;
 	short tmp, y;
@@ -113,7 +117,7 @@ void filled_poly(Virtual *vwk, short p[][2], long n, long colour, short *pattern
 		}
 
 		if (spans > 1000) {			/* Should really check against size of points array! */
-			fill_spans(vwk, &points[n], spans, colour, pattern);
+			fill_spans(vwk, &points[n], spans, colour, pattern, mode, interior_style);
 			spans = 0;
 			coords = &points[n];
 		}
@@ -136,11 +140,12 @@ void filled_poly(Virtual *vwk, short p[][2], long n, long colour, short *pattern
 		}
 	}
 	if (spans)
-		fill_spans(vwk, &points[n], spans, colour, pattern);
+		fill_spans(vwk, &points[n], spans, colour, pattern, mode, interior_style);
 }
 
 #if 0
-void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *pattern, short *points, short index[], long moves)
+void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *pattern,
+                   short *points, short index[], long moves, long mode, long interior_style)
 {
 	short movepnt, pos;
 
@@ -161,7 +166,8 @@ void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *patte
 		filled_poly(vwk, &p[pos], n - pos, colour, pattern, points);
 }
 #else
-void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *pattern, short *points, short index[], long moves)
+void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *pattern,
+                   short *points, short index[], long moves, long mode, long interior_style)
 {
 	int i, j;
 	short tmp, y;
@@ -287,7 +293,7 @@ void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *patte
 		}
 
 		if (spans > 1000) {			/* Should really check against size of points array! */
-			fill_spans(vwk, &points[n], spans, colour, pattern);
+			fill_spans(vwk, &points[n], spans, colour, pattern, mode, interior_style);
 			spans = 0;
 			coords = &points[n];
 		}
@@ -310,6 +316,6 @@ void filled_poly_m(Virtual *vwk, short p[][2], long n, long colour, short *patte
 		}
 	}
 	if (spans)
-		fill_spans(vwk, &points[n], spans, colour, pattern);
+		fill_spans(vwk, &points[n], spans, colour, pattern, mode, interior_style);
 }
 #endif

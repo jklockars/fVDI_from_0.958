@@ -1,7 +1,9 @@
 /*
  * fVDI device driver specific setup
  *
- * Copyright 1998-2000, Johan Klockars 
+ * $Id: 1_spec.c,v 1.2 2002-07-10 22:13:40 johan Exp $
+ *
+ * Copyright 1998-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -36,6 +38,30 @@ char driver_name[] = "Monochrome (shadow)";
 
 extern Driver *me;
 extern Access *access;
+
+extern void *write_pixel;
+extern void *read_pixel;
+extern void *line_draw;
+extern void *expand_area;
+extern void *fill_area;
+extern void *blit_area;
+extern void *text_area;
+extern void *mouse_draw;
+extern void *set_colours;
+extern void *get_colour;
+
+void *write_pixel_r = &write_pixel;
+void *read_pixel_r  = &read_pixel;
+void *line_draw_r   = &line_draw;
+void *expand_area_r = &expand_area;
+void *fill_area_r   = &fill_area;
+void *fill_poly_r   = 0;
+void *blit_area_r   = &blit_area;
+void *text_area_r   = &text_area;
+void *mouse_draw_r  = &mouse_draw;
+void *set_colours_r = &set_colours;
+void *get_colours_r = 0;
+void *get_colour_r  = &get_colour;
 
 long wk_extend = 0;
 

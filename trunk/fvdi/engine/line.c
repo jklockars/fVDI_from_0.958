@@ -1,6 +1,8 @@
 /*
  * fVDI wide line code
  *
+ * $Id: line.c,v 1.2 2002-07-10 22:12:25 johan Exp $
+ *
  * This is extracted and modified from code with an
  * original copyright as follows.
  * Johan Klockars, 1999
@@ -44,9 +46,10 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
 
 extern short solid;
 
-void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points);
+void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points, long mode);
 
-extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points);
+extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern,
+                      short *points, long mode, long interior_style);
 extern short isqrt(unsigned long x);
 
 int wide_setup(Virtual *vwk, int width, short *q_circle)
@@ -210,7 +213,7 @@ void perp_off(int *vx, int *vy, short *q_circle, int num_qc_lines)
 }
 
 
-void wide_line(Virtual *vwk, short *pts, long numpts, long colour, short *points)
+void wide_line(Virtual *vwk, short *pts, long numpts, long colour, short *points, long mode)
 {
 	int i, j, k;
 	int wx1, wy1, wx2, wy2, vx, vy;
@@ -241,7 +244,7 @@ void wide_line(Virtual *vwk, short *pts, long numpts, long colour, short *points
 
 	/* If the ends are arrowed, output them. */
 	if ((vwk->line.ends.beginning | vwk->line.ends.end) & ARROWED)
-		do_arrow(vwk, pts, numpts, colour, points);
+		do_arrow(vwk, pts, numpts, colour, points, mode);
 
 	/* Initialize the starting point for the loop. */
 	j = 0;
@@ -301,7 +304,7 @@ void wide_line(Virtual *vwk, short *pts, long numpts, long colour, short *points
 		points[5] = wy2 - vy;
 		points[6] = wx2 + vx;
 		points[7] = wy2 + vy;
-		fill_poly(vwk, points, 4, colour, &solid, &points[8]);
+		fill_poly(vwk, points, 4, colour, &solid, &points[8], mode, 0x00010000L);
 
 #if 0
 		/* If the terminal point of the line segment is an internal joint,
@@ -336,7 +339,7 @@ v_pline()
 	if (line_width == 1) {
 		pline();
 		if ((line_beg | line_end ) & ARROWED)
-			do_arrow(vwk, pts, numpts, colour, points);
+			do_arrow(vwk, pts, numpts, colour, points, mode);
 	} else
 		wline();
 	if (pln_sts == 1)
@@ -490,7 +493,7 @@ short code(short x, short y)
 #endif
 
 
-void arrow(Virtual *vwk, short *xy, short inc, int numpts, int colour, short *points)
+void arrow(Virtual *vwk, short *xy, short inc, int numpts, int colour, short *points, long mode)
 {
 	short i, arrow_len, arrow_wid, line_len;
 	short *xybeg;
@@ -568,7 +571,7 @@ void arrow(Virtual *vwk, short *xy, short inc, int numpts, int colour, short *po
 	points[3] = *(xy + 1) - base_y - ht_y;
 	points[4] = *xy;
 	points[5] = *(xy + 1);
-	fill_poly(vwk, points, 3, colour, &solid, &points[6]);
+	fill_poly(vwk, points, 3, colour, &solid, &points[6], mode, 0x00010000L);
 
 	/* Adjust the end point and all points skipped. */
 	*xy -= ht_x;
@@ -580,7 +583,7 @@ void arrow(Virtual *vwk, short *xy, short inc, int numpts, int colour, short *po
 }
 
 
-void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points)
+void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points, long mode)
 {
 	short x_start, y_start, new_x_start, new_y_start;
 
@@ -592,7 +595,7 @@ void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points)
 	new_y_start = y_start = pts[1];
 
 	if (vwk->line.ends.beginning & ARROWED) {
-		arrow(vwk, &pts[0], 2, numpts, colour, points);
+		arrow(vwk, &pts[0], 2, numpts, colour, points, mode);
 		new_x_start = pts[0];
 		new_y_start = pts[1];
 	}
@@ -600,7 +603,7 @@ void do_arrow(Virtual *vwk, short *pts, int numpts, int colour, short *points)
 	if (vwk->line.ends.end & ARROWED) {
 		pts[0] = x_start;
 		pts[1] = y_start;
-		arrow(vwk, &pts[2 * numpts - 2], -2, numpts, colour, points);
+		arrow(vwk, &pts[2 * numpts - 2], -2, numpts, colour, points, mode);
 		pts[0] = new_x_start;
 		pts[1] = new_y_start;
 	}

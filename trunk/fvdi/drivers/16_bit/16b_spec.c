@@ -1,6 +1,8 @@
 /* 
  * A 16 bit mode specification/initialization file, by Johan Klockars.
  *
+ * $Id: 16b_spec.c,v 1.4 2002-07-10 22:13:39 johan Exp $
+ *
  * This file is an example of how to write an
  * fVDI device driver routine in C.
  *
@@ -55,6 +57,28 @@ extern void CDECL c_initialize_palette(Virtual *vwk, long start, long entries, s
 extern void *c_set_colours;		/* Just to check if the routine is available */
 
 extern long tokenize(const char *ptr);
+
+extern void *c_write_pixel;
+extern void *c_read_pixel;
+extern void *c_line_draw;
+extern void *c_expand_area;
+extern void *c_fill_area;
+extern void *c_blit_area;
+extern void *c_set_colours;
+extern void *c_get_colour;
+
+void *write_pixel_r = &c_write_pixel;
+void *read_pixel_r  = &c_read_pixel;
+void *line_draw_r   = &c_line_draw;
+void *expand_area_r = &c_expand_area;
+void *fill_area_r   = &c_fill_area;
+void *fill_poly_r   = 0;
+void *blit_area_r   = &c_blit_area;
+void *text_area_r   = 0;
+void *mouse_draw_r  = 0;
+void *set_colours_r = &c_set_colours;
+void *get_colours_r = 0;
+void *get_colour_r  = &c_get_colour;
 
 long wk_extend = 0;
 

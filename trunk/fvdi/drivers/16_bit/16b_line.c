@@ -677,12 +677,13 @@ static void revtransp_p(short *addr, short *addr_fast, long pattern, int count,
 #define BOTH
 #endif
 
-long CDECL c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2, long pattern, long colour)
+long CDECL c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2,
+                       long pattern, long colour, long mode)
 {
 	Workstation *wk;
 	short *addr, *addr_fast;
 	short foreground, background;
-  	int mode, line_add;
+  	int line_add;
 	long pos;
 	int x_step, y_step;
 	int dx, dy;
@@ -704,8 +705,6 @@ long CDECL c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2, long pa
 	pos = (short)y1 * (long)wk->screen.wrap + x1 * 2;
 	addr = wk->screen.mfdb.address;
 	line_add = wk->screen.wrap >> 1;
-
-	mode = vwk->mode;
 
 
 	x_step = 1;

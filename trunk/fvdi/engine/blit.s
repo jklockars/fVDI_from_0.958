@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.5 2002-07-01 22:24:40 johan Exp $
+* $Id: blit.s,v 1.6 2002-07-10 22:12:25 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -134,18 +134,19 @@ lib_v_bar:
 	tst.w	vwk_fill_perimeter(a0)
 	beq	.bar_end	; 1$ .end
 .no_fill:
-	movem.l	d2-d5,-(a7)
-;	move.w	#0,d0			; Background colour
-;	swap	d0
-	move.l	vwk_fill_colour(a0),d0
+	movem.l	d2-d7,-(a7)
 	move.l	vwk_real_address(a0),a2
 	move.l	wk_r_fill(a2),a2
 	move.l	_pattern_ptrs,d5
 
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6		; Mode
+	move.l	#$00010000,d7		; Solid
+
 	movem.w	(a1),d1-d4		; Draw top/bottom perimeter
 	move.w	d2,d4
+	move.l	vwk_fill_colour(a0),d0
 	bsr	clip_rect
-;	blt	3$
 	lblt	.skip1,3
 	jsr	(a2)
  label .skip1,3
@@ -154,6 +155,7 @@ lib_v_bar:
 	cmp.w	d2,d4
 	lbeq	.end,2
 	move.w	d4,d2
+	move.l	vwk_fill_colour(a0),d0
 	bsr	clip_rect
 	lblt	.skip2,4
 	jsr	(a2)
@@ -167,6 +169,7 @@ lib_v_bar:
 	addq.w	#1,d2
 	subq.w	#1,d4
 	move.w	d1,d3
+	move.l	vwk_fill_colour(a0),d0
 	bsr	clip_rect
 	lblt	.skip3,6
 	jsr	(a2)
@@ -182,13 +185,14 @@ lib_v_bar:
 	addq.w	#1,d2
 	subq.w	#1,d4
 	move.w	d3,d1
+	move.l	vwk_fill_colour(a0),d0
 	bsr	clip_rect
 	lblt	.skip4,8
 	jsr	(a2)
  label .skip4,8
 
  label .end,2
-	movem.l	(a7)+,d2-d5
+	movem.l	(a7)+,d2-d7
 
 .bar_end:	; 1$:
 	rts
@@ -216,7 +220,7 @@ lib_vr_recfl:
 ;	swap	d0
 	move.l	vwk_fill_colour(a0),d0
 
-	movem.l	d2-d5,-(a7)
+	movem.l	d2-d7,-(a7)
 ;	movem.w	(a1),d1-d4		; Get rectangle coordinates
 	moveq	#0,d1			; Need clear upper word for
 	move.w	(a1)+,d1		;  compatibility with current
@@ -243,6 +247,10 @@ lib_vr_recfl:
 
 	move.w	vwk_fill_interior(a0),d5
 
+	moveq	#0,d7
+	move.w	d5,d7
+	swap	d7			; Interior/0 (style set below, if any)
+
 	tst.w	d5
 	bne	.solid
 	swap	d0			; Hollow, so background colour
@@ -261,20 +269,26 @@ lib_vr_recfl:
 	and.w	#$08,d5			; Check former bit 1 (interior 2 or 3)
 	beq	.got_pattern
 	move.w	vwk_fill_style(a0),d5
+
+	move.w	d5,d7			; Interior/Style
+
 	subq.w	#1,d5
 	lsl.w	#5,d5			; Add style index
 	add.w	d5,a2
 .got_pattern:
 	move.l	a2,d5
 
+	moveq	#0,d6
+	move.w	vwk_mode(a0),d6		; Mode
+
 	jsr	(a1)
 .end:
-	movem.l	(a7)+,d2-d5
+	movem.l	(a7)+,d2-d7
 	rts
 
 
 _fill_area:
-	movem.l	d2-d5/a2,-(a7)
+	movem.l	d2-d7/a2,-(a7)
 	lea	4+4*4(a7),a1
 	move.l	0(a1),a0
 	moveq	#0,d1
@@ -293,9 +307,12 @@ _fill_area:
 	move.l	wk_r_fill(a2),a1
 	move.l	_pattern_ptrs,d5
 
+	moveq	#1,d6			; Replace mode
+	move.l	#$00010000,d7		; Solid
+
 	jsr	(a1)
 .end_fill_area:
-	movem.l	(a7)+,d2-d5/a2
+	movem.l	(a7)+,d2-d7/a2
 	rts
 
 
@@ -307,6 +324,8 @@ _fill_area:
 *	d2	y1   - " -     or table length (high) and type (0 - y/x1/x2 spans)
 *	d3-d4.w	x2,y2 destination
 *	d5	Pointer to pattern
+*	d6	Mode
+*	d7	Interior/style
 * Call:	a0	VDI struct, 0 (destination MFDB)
 *	d0	Colours
 *	d1-d2.w	Start coordinates
@@ -321,16 +340,21 @@ _default_fill:
 
 	move.l	d5,a2
 
-	cmp.w	#1,vwk_mode(a0)		; Not replace?
+	cmp.w	#1,d6			; Not replace?
 	bne	.pattern
 
 	move.l	a2,a1
 	moveq	#8-1,d5
+	move.l	d6,-(a7)
 .check_pattern:
 	move.l	(a1)+,d6		; All ones?
 	addq.l	#1,d6
 	dbne	d5,.check_pattern
-	bne	.pattern
+	beq	.no_pattern
+	move.l	(a7)+,d6
+	bra	.pattern
+.no_pattern:
+	move.l	(a7)+,d6
 	moveq	#-1,d5
 
 	move.l	vwk_real_address(a0),a1
@@ -375,6 +399,7 @@ _default_fill:
 * Call:	a0	VDI struct, 0 (destination MFDB)
 *	d0	Colour values
 *	d1-d2.w	Coordinates
+*	d6	Mode
 *	a3-a4	Set/get pixel
 .pattern:
 	movem.l	a3-a4,-(a7)
@@ -383,7 +408,7 @@ _default_fill:
 	move.l	wk_r_get_colour(a1),a1	; Index to real colour
 	jsr	(a1)
 
-	move.w	vwk_mode(a0),-(a7)
+	move.w	d6,-(a7)
 	bsr	setup_plot
 	addq.l	#2,a7
 
@@ -490,7 +515,7 @@ lib_vrt_cpyfm:
 	swap	d0
 	cmp.w	wk_screen_palette_size(a2),d0
 	blo	.okb
-	move.w	#BLACK,d0
+	move.w	#WHITE,d0
 .okb:
 	swap	d0
 

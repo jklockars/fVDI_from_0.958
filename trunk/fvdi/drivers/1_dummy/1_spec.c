@@ -29,6 +29,24 @@ char driver_name[] = "Monochrome";
 extern Driver *me;
 extern Access *access;
 
+extern void *write_pixel;
+extern void *read_pixel;
+extern void *set_colours;
+extern void *get_colour;
+
+void *write_pixel_r = &write_pixel;
+void *read_pixel_r  = &read_pixel;
+void *line_draw_r   = 0;
+void *expand_area_r = 0;
+void *fill_area_r   = 0;
+void *fill_poly_r   = 0;
+void *blit_area_r   = 0;
+void *text_area_r   = 0;
+void *mouse_draw_r  = 0;
+void *set_colours_r = &set_colours;
+void *get_colours_r = 0;
+void *get_colour_r  = &get_colour;
+
 long wk_extend = 0;
 
 short accel_s = A_SET_PAL | A_GET_COL | A_SET_PIX | A_GET_PIX;

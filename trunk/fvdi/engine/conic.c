@@ -1,6 +1,8 @@
 /*
  * fVDI circle/ellipse/pie/arc code
  *
+ * $Id: conic.c,v 1.2 2002-07-10 22:12:25 johan Exp $
+ *
  * This is extracted and modified from code with an
  * original copyright as follows.
  * Johan Klockars, 1999
@@ -46,14 +48,16 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
  */
 
 extern void c_pline(Virtual *vwk, long num_pts, long colour, short *points);
-extern void filled_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points);
-extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points);
+extern void filled_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points, long mode, long interior_style);
+extern void fill_poly(Virtual *vwk, short *p, long n, long colour, short *pattern, short *points, long mode, long interior_style);
 
 extern short Isin(short angle);
 extern short Icos(short angle);
 
 
-void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad, long beg_ang, long end_ang, long del_ang, long n_steps, long colour, short *pattern, short *points)
+void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad,
+             long beg_ang, long end_ang, long del_ang, long n_steps, long colour,
+             short *pattern, short *points, long mode, long interior_style)
 {
 	short i, j, start, angle;
 	
@@ -91,9 +95,9 @@ void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad
 		c_pline(vwk, n_steps + 1, colour, points - (n_steps + 1) * 2);
 	else {
 #if 0
-		filled_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points);
+		filled_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points, mode, interior_style);
 #else
-		fill_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points);
+		fill_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points, mode, interior_style);
 #endif
 		if (vwk->fill.perimeter)
 			c_pline(vwk, n_steps + 1, colour, points - (n_steps + 1) * 2);
