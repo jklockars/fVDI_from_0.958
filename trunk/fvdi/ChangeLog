@@ -1,3 +1,7 @@
+2004-10-24 - johan
+A couple of 16 vs 32 bit fixes. GNU build now works almost 100%!
+Added support for workstation close.
+	
 2004-10-17 - johan
 Finally, support for the GNU suite!
 
