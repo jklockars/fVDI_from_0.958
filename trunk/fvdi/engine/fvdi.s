@@ -1,8 +1,8 @@
 *****
-* fVDI v0.95, 020701
+* fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.3 2002-07-01 22:27:18 johan Exp $
+* $Id: fvdi.s,v 1.4 2002-07-10 22:07:23 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -400,23 +400,23 @@ large_handle:
 bad_handle:				; The handle definitely was bad
 	move.w	function(a1),d0		; d0 - function number
 	cmp.w	#1,d0			; Check for the functions which are OK
-	beq	opnwk_ok		;  without a handle
+	beq	.opnwk_ok		;  without a handle
 	cmp.w	#100,d0
-	beq	opnvwk_ok
+	beq	.opnvwk_ok
 .bad_call:
 	return				; Should probably return an error instead
 
-opnwk_ok:				; Fake handle/vwk when necessary
+.opnwk_ok:				; Fake handle/vwk when necessary
 	tst.w	_fakeboot
 	bne	.really_ok
 	tst.w	_booted
-	bne	first_opnwk
+	bne	.first_opnwk
 .really_ok:
-opnvwk_ok:
+.opnvwk_ok:
 	moveq	#1,d0			; Set handle to first workstation
 	bra	handle_ok
 
-first_opnwk:				; Special treatment for the first opened
+.first_opnwk:				; Special treatment for the first opened
 	move.l	_default_virtual,a0	;  wk when booted
 	bra	vwk_ok
 
