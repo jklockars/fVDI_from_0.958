@@ -1,7 +1,9 @@
 /*
  * fVDI utility functions
  *
- * Copyright 1997-2000, Johan Klockars 
+ * $Id: utility.c,v 1.3 2002-06-10 08:33:00 johan Exp $
+ *
+ * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -48,7 +50,7 @@ extern long basepage;
 extern short key_pressed;
 extern short debug;
 extern short memlink;
-extern short serial_out;
+extern short debug_out;
 
 
 Access real_access;
@@ -82,6 +84,8 @@ long magic = 0;
 long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
 short mxalloc = 0;
+
+long ARAnyM_out = 0x71354e75;   /* ARAnyM native printing subroutine */
 
 void puts(const char *text);
 
@@ -391,11 +395,13 @@ long free_all(void)
 
 void puts(const char *text)
 {
-   if (!serial_out)
+   if (debug_out == -2)
       Cconws(text);
+   else if (debug_out == -1)
+      (void (*)(char *))(ARAnyM_out)(text);
    else
       while (*text)
-         Bconout(1, *text++);
+         Bconout(debug_out, *text++);
 }
 
 
