@@ -1,12 +1,13 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.4 2002-06-27 09:57:51 johan Exp $
+ * $Id: utility.c,v 1.5 2002-07-01 22:29:38 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
+ 
 #ifdef __PUREC__
    #include <tos.h>
 #else
@@ -397,7 +398,7 @@ void puts(const char *text)
    if (debug_out == -2)
       Cconws(text);
    else if (debug_out == -1)
-      ((void (*)(const char *))ARAnyM_out)(text);
+      ((void (*)(const char *))&ARAnyM_out)(text);
    else
       while (*text)
          Bconout(debug_out, *text++);
