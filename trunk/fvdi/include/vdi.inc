@@ -1,8 +1,10 @@
 *****
 * fVDI VDI declarations, by Johan Klockars
 *
+* $Id: vdi.inc,v 1.3 2002-05-15 00:41:16 johan Exp $
+*
 * This file is put in the public domain.
-* It's not copyrighted or under any sort of license.
+* It is not copyrighted or under any sort of license.
 *****
 
 	include	"compiler.inc"
@@ -11,7 +13,7 @@ CHUNKY		equ	1
 TRUE_COLOUR	equ	2
 
 BLACK 		equ	1
-EFFECTS		equ	%00111111
+EFFECTS		equ	$3f		; %00111111
 
 only_fvdi	equ	1
 

@@ -1,7 +1,9 @@
 *****
 * fVDI blit type functions
 *
-* Copyright 1997-2000, Johan Klockars 
+* $Id: blit.s,v 1.4 2002-05-15 00:41:16 johan Exp $
+*
+* Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
@@ -254,7 +256,7 @@ lib_vr_recfl:
 	add.w	d5,d5
 	lea	_pattern_ptrs,a2
 	move.l	0(a2,d5.w),a2
-	and.w	#%1000,d5		; Check former bit 1 (interior 2 or 3)
+	and.w	#$08,d5			; Check former bit 1 (interior 2 or 3)
 	beq	.got_pattern
 	move.w	vwk_fill_style(a0),d5
 	subq.w	#1,d5
