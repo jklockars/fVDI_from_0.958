@@ -1,6 +1,8 @@
 *****
 * fVDI colour functions
 *
+* $Id: colours.s,v 1.3 2003-04-06 13:46:32 johan Exp $
+*
 * Copyright 1997-2000, Johan Klockars 
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
@@ -279,25 +281,27 @@ vq_color:
 	move.l	vwk_real_address(a0),a1
 	cmp.w	#1,d2			; Hardware CLUT? (used to test look_up_table)
 	bne	.colour_ok		; No VDI->TOS conversion for true colour
-	move.w	wk_screen_palette_size(a1),d2
-	cmp.b	#16,d0
+	cmp.w	#16,d0
 	blo	.lookup			; 0-15
-	cmp.b	#255,d0
+	cmp.w	#255,d0
 	bne	.colour_ok		; 16-254
 	moveq	#15,d0
 	bra	.colour_ok
-.is_max:
-	subq.b	#1,d2
-	move.b	d2,d0
-	bra	.colour_ok
 .lookup:
-	cmp.b	#1,d0
-	beq	.is_max			; Value for VDI colour 1 differs
-	and.w	#$000f,d0
 	move.l	a2,d2
 	lea	tos_colours,a2
 	move.b	0(a2,d0),d0
 	move.l	d2,a2
+  ifne 1
+	bpl	.colour_ok	; Value for VDI colour 1 differs (marked -1)
+	move.w	wk_screen_palette_size(a1),d0
+	subq.w	#1,d0
+  endc
+  ifne 0
+	move.w	wk_screen_palette_size(a1),d2
+	subq.w	#1,d2
+	and.w	d2,d0		; Takes care of VDI colour 1 -> pal_size-1
+  endc
 .colour_ok:
 	
 	mulu	#colour_struct_size,d0
@@ -512,7 +516,7 @@ lib_vs_color:
 	data
 
 tos_colours:
-	dc.b	0,15,1,2,4,6,3,5,7,8,9,10,12,14,11,13
+	dc.b	0,-1,1,2,4,6,3,5,7,8,9,10,12,14,11,13
 
 fg_offset:
 	dc.w	vwk_text_colour_foreground,vwk_fill_colour_foreground,vwk_line_colour_foreground
