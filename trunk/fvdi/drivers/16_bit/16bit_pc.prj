@@ -1,6 +1,6 @@
 16BIT_PC.SYS
 .C	[-X -Y -P -I=f:\fvdi\include -I=f:\fvdi\drivers\include]
-.S	[-S -Y -I=f:\fvdi\include]
+.S	[-Dlattice=0 -S -Y -I=f:\fvdi\include]
 .L
 =
 ..\COMMON\PUREC.S
