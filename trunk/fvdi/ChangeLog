@@ -1,3 +1,8 @@
+2003-02-05 - johan
+Support for rounded boxes. Polymarker code added.
+Bezier call code converted to C.
+Miscellaneous improvements, cleanups and bug fixes.
+
 2003-01-21 - standa <opichals@seznam.cz>
 ARAnyM driver NatFeat calls dispatch casts added in c_mouse_draw
 call.
