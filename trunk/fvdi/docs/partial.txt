@@ -1,0 +1,23 @@
+This file mentions a few things that are not completely implemented in
+the current version of fVDI. Don't expect this to be an exhaustive list,
+but there's no point in reporting anything that's covered below as a bug.
+
+Drivers
+ Both bitplane ones
+  Only horizontal and vertical lines can use XOR mode.
+  No line patterns are supported.
+  The mouse shape will wrap around from the right to the left edge.
+ Monochrome
+  Normal text clipping to the right is not done correctly.
+ 16 colour
+  Text, icons, and patterned fills are black and white only.
+
+Engine
+ No text scaling is done.
+ Thick lines don't get any circles in the corners.
+ Polygon peripheries aren't drawn.
+ The only marker that's supported is single pixel.
+ v_opnbm doesn't work.
+
+Johan Klockars  (rand@cd.chalmers.se)
+000220

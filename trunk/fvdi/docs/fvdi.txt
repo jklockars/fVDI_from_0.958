@@ -1,0 +1,91 @@
+fVDI v0.95
+==========
+
+This is finally a new real release version of fVDI!
+It should deal well with most normal programs, including the desktop.
+
+Drivers are included for two and sixteen colour bitplane modes as well
+as for the Eclipse/RageII in 8/16/32 bit mode (hardware accelerated).
+Some monochrome graphics cards will likely work as well.
+
+
+Installing fVDI
+---------------
+fVDI can nowadays usually (there are some problems with resolution extension
+programs, such as Videlity) be run from the AUTO folder if the correct
+options are set. If you have NVDI too, you can make NVDI use fVDI for the
+actual screen output by making sure that NVDI runs last. This will be slower,
+but you'll be able to use NVDI's outline fonts and printer drivers (if you
+don't need the outline fonts, NVDI can run before fVDI and then there will be
+no speed penalty for screen output).
+It's also possible to start fVDI from the desktop by simply double clicking
+FVDI.PRG, but then you have to comment out the 'booted' option in FVDI.SYS.
+
+The FVDI.SYS file must be set up correctly (see comments in the file).
+If no 'PATH=' line is used in FVDI.SYS, fonts and drivers are assumed
+to be in a directory called GEMSYS at the same place as FVDI.SYS itself.
+FVDI.SYS is searched for first in the current directory, then on C:\ and
+finally A:\.
+
+The shortest possible FVDI.SYS contains only a driver initialization line:
+   01r 1plane.sys
+This only works when staring fVDI from the desktop and the driver mentioned
+must be located in a subdirectory called GEMSYS, inside the current one.
+
+
+If you have a computer with some kind of FastRAM (an AB040 for example)
+you might want to append the word 'shadow' after the device driver
+name in FVDI.SYS (only for the normal Atari mode drivers). fVDI will then
+do all screen reads from a FastRAM buffer instead, which might improve
+performance (depending on the difference in memory access time and the
+processor speed).
+
+
+Uninstalling fVDI
+-----------------
+If you started fVDI manually, just run REMOVE.PRG. It's a very bad
+idea to do this if there are more virtual workstations opened than
+when fVDI was first started. That is, make sure the system is in
+the same state as when you clicked fVDI.
+Don't try to uninstall a booted fVDI!
+
+
+The fVDI ACC
+------------
+This is currently not useful for anything but the Eclipse/RageII driver.
+
+
+Modifying default modes
+-----------------------
+To create your own set of default RageII modes, use DEFAULTS.TTP.
+Given only a driver name (complete path), it will report the modes set.
+Append a digit (0-9) and only that mode will be reported.
+If a new mode string is given after the digit, the specified mode will
+be updated.
+                 defaults driver [[n] [mode]]
+
+
+Help wanted!
+------------
+If you want to help out in any way whatsoever, please contact me.
+
+Are you interested in actually working on fVDI?
+Perhaps you have some old graphics code that might be of use?
+How about just testing software with fVDI?
+
+
+Screen output
+-------------
+When it comes to drawing primitives, only a few NVDI specific things are
+implemented.
+Compared to the normal VDI, the main missing things are arrowed
+lines, flood fill, rounded boxes and the 'VT52' functions.
+Note that a function being supported only means that it will do
+_something_. There could be limitations.
+
+I'm very interested in hearing about which of the missing or
+incomplete functions are the most important to you.
+
+
+Johan Klockars  (rand@cd.chalmers.se)
+000220

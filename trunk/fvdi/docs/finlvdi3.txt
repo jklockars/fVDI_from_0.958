@@ -1,0 +1,231 @@
+The Fenix VDI (document v0.99, 971111)
+=============
+As compatible as possible with modern VDIs, but with new extensions.
+No worse performance wise than any competing VDI.
+Layered design to make porting to new hardware easy.
+As flexible and portable as possible.
+Implemented as a shared library, but still compatible with old software.
+
+
+Design
+------
+All accesses to the VDI are made in the current process' context. This
+means that the VDI must be fully reentrant and that semaphore type locking
+must be used for shared resources.
+Applications as well as internal routines should be able to send a bunch
+of drawing commands as one block. The main benefit appears when accelerated
+hardware which buffers commands are used. Internally this would for example
+be used when blitting text.
+Any VDI function, at any level, should be exchangeable for a direct one in
+a specific device driver.
+The VDI is used to emulate LineA calls.
+Input/output as well as synchronizatino between different VDI workstations
+is handled by a separate server that is common for both the VDI and the AES.
+
+Calling
+The standard C bindings for VDI calls make much more sense than the way
+those actually take place (filling an array with the parameters and
+function number to use). Non-Fenix-aware programs will, however, use
+the old method which must therefore still be supported.
+For calls where it can provide a noticeable performance increase, the
+library should have native support for both methods, but otherwise it
+will suffice to convert to the new format.
+Whichever format is used, multiple commands can be sent at once by
+providing pointers to properly setup 'stack frames', kept on a linked list.
+The suggested new calling convention is described in the 'implementation
+thoughts' section below.
+
+Device drivers
+The VDI is built up of a number of layers which can, but are not
+required to, rely on lower level ones. There are also some things that
+stand completely outside they layered structure, such as set/query,
+workstation control, printer/meta-file control, input and vector redirection.
+
+For new hardware its _enough_ to write the 'primitive' routines below.
+  All more complex routines can be built from these.
+The 'acceleration' layer _should_ always have a native implementation.
+  Without this layer things will be very slow, but they'll still work.
+  The operations here are often accelerated by graphics hardware.
+
+Layer 0, primitive
+  Get pixel, set pixel.
+  Set graphics mode, set palette colours.
+  Hardware initialization/shutdown/control.
+Layer 1, accelerated
+  Line drawing, blitting (copy/expand/fill).
+Layer 2, standard
+  Arc drawing, bitmap text drawing.
+Layer 3, specialized
+  Filled shape (other than box) drawing.
+  Screen escape functions.
+  Outline font drawing.
+
+
+Development schedule
+--------------------
+Step one
+The things here are needed before anything useful at all can be done.
+For some software, this might actually be enough for normal operation.
+Unless otherwise noted (due to existing code), this step is monochrome
+only. That includes plane-skipping mono, though.
+Given that quite a bit of code already exists, it should be possible to
+finish this during November.
+
+Query  - Only enough to make sure programs don't give up.
+Set    - At least colour.
+Setup  - The most necessary workstation stuff.
+Input  - Only simple mouse and keyboard read.
+Pixel  - (Get and set) Any colour, no mode.
+  Simple changes to existing line routines for set, but get is new.
+Line   - Any colour, no mode/pattern/width/style.
+  Can be implemented via pixel. Routines exist for all bitplane modes.
+Fill   - (Rectangle) Any colour, no mode/pattern/outline.
+  Can be implemented via pixel or line.
+  Since there are line routines, this can be considered finished.
+Blit   - At least mono, no modes.
+  Can be implemented via pixel.
+  Some of these things are already done.
+Expand - (This is the single to multiplane copy.
+  Can be implemented via pixel.
+  This is not useful without the modes, but it should be easy enough.
+Text   - At least monochrome, one font, no modes, no effects.
+  Can be implemented via pixel or expand.
+  Some routines exist already.
+
+Step two
+When this step is completed, it should be possible to use graphics cards
+to some degree.
+
+Implement the things from step one for 16 bit true colour modes.
+Quite a bit o code should exist here already as well.
+
+Step three
+This is supposed to make the VDI really useful for most purposes.
+Most of this is relatively straightforward, but since it's not as
+'interesting' as step one, I don't think we can count on it being
+finished before the end of January. 
+
+Implement the rest of the workstation stuff, including off screen bitmaps.
+Make everything work in all graphics modes (bitplane, and chunky 8/24/32).
+Implement remaining (non-complex) query/set.
+Make all drawing modes operational.
+Implement standard<->device format transformation.
+Implement the most important text effects.
+Implement box outline and hollow fill.
+Add support for markers.
+Add the screen escape stuff.
+Add the vector redirection stuff.
+
+Step four
+When this step is completed, all standard VDI screen output should work!
+I won't hazard a guess as to when that might happen, though.
+
+Add patterns for fills and lines.
+Implement the remaining text effects.
+Implement line width and styles.
+Implement the remaining graphics primitives (circles etc).
+Implement polygon fill.
+Implement the remaining input stuff.
+Implement the printer and meta file stuff.
+
+Step five
+Perhaps this can be done in parallel. I have no idea about how long it might
+take, though.
+
+Add outline font support.
+Add whatever else is new in NVDI.
+
+
+New ideas
+---------
+These are not given in any specific order.
+
+Set pixel
+  A low overhead function that can be used for quick porting to new hardware.
+Plane skipping
+  Ignoring some image planes for efficiency reasons.
+Dual source raster operations
+  The current VDI often need to do separate mask and draw passes. These
+  could be combined as they are on the Amiga if two sources are used.
+Pattern alignment
+  Current VDIs always align fill patterns to the top left of the output
+  area. It would be nice to be more flexible about this.
+Chunky MFDB format
+  The standard format for VDI rasters is bitplane based. This is a very
+  bad idea with modern graphics hardware.
+Selectable background colour
+  Current VDIs can only draw in one colour. The background is always pen 0.
+  Especially for text it would be useful to be able to draw in for
+  example blue on grey in one step.
+Character width setting
+  Fonts are normally designed to be scaled proportionally, but it would
+  be nice if this could be circumvented.
+Text antialiasing
+  This is simple enough to do if there are enough colours available and
+  it can look a lot better than standard text output.
+Correct clipping
+  All current VDIs are braindead when it comes to clipping lines. This
+  is very obvious when a 'bouncing lines' program is running in a window
+  and you move another over it.
+  There would probably not be any incompatibilities if this was fixed.
+Image drawing in any graphics mode
+  The current standard->device format transformation is only supposed to
+  skip planes when there are too many.
+  It would be nice if images could be dithered to the current palette.
+Colour dithering
+  It's not really nice to just drop bits when too few are available.
+  This is a similar problem to the one above, but the idea here is that
+  anything, for example fills, should be possible in dithered colour.
+Virtual screen support
+  A new call is needed to reinitialize a workstation.
+  Also, the VDI has to make sure that it's drawing in the correct mode.
+
+Implementation thoughts
+-----------------------
+Just a collection of random thoughts.
+
+New internal bitmap font format
+  Fonts should not be stored internally in the standard format, since
+  this is very inefficient. Instead, make sure each character starts on
+  a byte (or even word) boundary and that all the lines follow each
+  other directly.
+Optimized text output
+  Do all simple things directly to the screen memory.
+  More complex things should be done to a monochrome buffer and blitted.
+Quick despatch
+  Optimize despatcher for quick functions. Probably mostly useful for
+  GEMBench testing, but it wouldn't hurt the slower functions anyway.
+Vector font support
+  Code fot Truetype and PostScript font rendering is available, but
+  Speedo is unfortunately proprietary. Perhaps via NVDI?
+Accelerated hardware
+  XFree86 has code that can be used.
+VDI function calling
+  Both single and blocked calls are supported and are done as follows:
+    Call to a single VDI function:
+      Push parameters (or place them somewhere) in standard C VDI call order
+      Set a1 to point to the parameters
+      Set a0 to point to the workstation structure
+      Do whatever might be necessary to get the shared lib function address
+      Call the function
+
+    Blocked call:
+      Set next_call to NULL.
+      For all calls
+        'Push' parameters (see above)
+        'Push' workstation structure address
+        Get function address (see above) and 'push' that as well
+        'Push' next_call
+        Set next_call to current 'stack' address
+      Call the 'block execution' function
+
+    The 'block execution' function would then:
+      Get link and if it's not NULL
+        Get function address
+        Get strucutre address for a0
+        Point a1 to the parameters
+        Call the function
+        Follow the link
+      else
+        return
+

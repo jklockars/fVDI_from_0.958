@@ -1,0 +1,32 @@
+I'm interested in any bug reports or comments on the drivers.
+
+The drivers may currently have problems with virtual screen modes.
+fVDI has only been reasonably well tested under TOS on a Falcon+AB040.
+
+
+1plane.sys
+Should work in normal Atari monochrome modes and on some graphics cards.
+Accelerates everything currently supported by fVDI except filled polygons.
+
+4plane.sys
+Should work in any normal Atari 16 colour mode.
+Also accelerates everything except filled polygons.
+All normal blits are done in solid mode and there's only black and white
+text, mono-expand blits and patterned fills. Solid fills are OK.
+
+16bit.sys  (Not included with v0.95)
+Works in Falcon true colour mode and possibly on some graphics cards.
+Accelerates the most important things. Almost the entire driver is written
+in relatively unoptimized C, however, so the speed is not nearly what it
+could be for some functions.
+
+rage.sys
+Only works on the Eclipse/RageII.
+Accelerates (in hardware) everything except fonts of other widths than
+6/8 pixels. Screen->RAM blits can be cached (which will be very fast, but
+not compatible with all software), turned on (only with pcibios) or turned
+off (which will be fast but has obvious problems).
+The same driver deals with 8, 16 and 32 bit graphics modes.
+
+Johan Klockars  (rand@cd.chalmers.se)
+000220

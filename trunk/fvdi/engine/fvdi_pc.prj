@@ -1,0 +1,36 @@
+FVDI_PC.PRG
+.C	[-H -X -Y -P]
+.S	[-S -Y]
+=
+FVDI.S		(vdi.inc, types.inc, macros.dev)
+UNIMPL.S	(vdi.inc, types.inc, macros.dev)
+SIMPLE.S	(vdi.inc, types.inc, macros.dev)
+COLOURS.S	(vdi.inc, types.inc, macros.dev)
+MOUSE.S		(vdi.inc, types.inc, macros.dev)
+LINE_SQ.S	(vdi.inc, types.inc, macros.dev)
+MARK_SQ.S	(vdi.inc, types.inc, macros.dev)
+FILL_SQ.S	(vdi.inc, types.inc, macros.dev)
+TEXT_SQ.S	(vdi.inc, types.inc, macros.dev)
+DRAW.S		(vdi.inc, types.inc, macros.dev)
+TEXT.S		(vdi.inc, types.inc, macros.dev)
+TEXTRNDR.S	(vdi.inc, types.inc, macros.dev)
+EXPAND.S	(vdi.inc, types.inc, macros.dev)
+BLIT.S		(vdi.inc, types.inc, macros.dev)
+VDI_MISC.S	(vdi.inc, types.inc, macros.dev)
+SUPPORT.S	(vdi.inc, types.inc, macros.dev) [-S -Y -3]
+SYS_CALL.S
+startup.c	(fvdi.h, relocate.h)
+loader.c	(fvdi.h, relocate.h)
+fonts.c		(fvdi.h, relocate.h)
+setup.c		(fvdi.h, relocate.h)
+workstn.c	(fvdi.h, relocate.h)
+utility.c	(fvdi.h, relocate.h)
+polygon.c	(fvdi.h, relocate.h)
+conic.c		(fvdi.h, relocate.h)
+math.c		(fvdi.h, relocate.h)
+line.c		(fvdi.h, relocate.h)
+bezier.c	(fvdi.h, relocate.h)
+patterns.c	(fvdi.h, relocate.h)
+TRAPTABL.S	(vdi.inc, types.inc, macros.dev)
+PUREC.S
+PCSTDLIB.LIB       ; standard library

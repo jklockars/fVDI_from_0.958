@@ -1,0 +1,12 @@
+Please, read the FVDI.TXT file for information on how to setup fVDI.
+It is generally _not_ possible to run fVDI without copying some files
+to other locations and modifying FVDI.SYS.
+
+Note that I've not really put much effort into updating the included
+documentation. There may also be some errors.
+
+If you have any problems, questions etc, don't hesitate to email.
+
+
+Johan Klockars  (rand@cd.chalmers.se)
+000213

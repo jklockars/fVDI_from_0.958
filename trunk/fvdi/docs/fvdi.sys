@@ -1,0 +1,77 @@
+# This is the path to fonts and drivers.
+PATH = C:\GEMSYS
+
+# Comment out this one to use the (unstable) built in mouse support.
+# When using the original mouse routines, the cursor will currently
+# not always be removed properly. This, unfortunately, doesn't look
+# too good. Proper mouse support is being worked on.
+oldmouse
+
+# If fVDI is to be started from the AUTO folder, uncomment the following.
+#booted
+
+# To test the boot code without actually rebooting the system, it can
+# be useful to uncomment the following. With this enabled, no previous
+# virtual workstations will be copied by fVDI. They will actually continue
+# to be handled by the old VDI
+#fakeboot
+
+# For testing purposes it can be useful to make fVDI available in
+# parallel with the normal VDI. See the documentation for information.
+#disable
+
+# Common driver initialization options (any driver can add to these):
+# accelerate xxxxxx
+#     Any soft- or hardware accelerations can be turned off using the
+#     'accelerate xxxxxx' option. For any 'x' that is replaced by a '-' or
+#     a '0', the corresponding accelerated function will be turned off.
+#     Acceleration possibilities (in order):
+#        line expand fill blit text mouse
+# oldmouse
+#     Well, IIRC, this switch is actually needed here too.
+
+# The standard software accelerated drivers all recognize
+# shadow
+#     Use a separate buffer of the screen in RAM. This is not useful
+#     unless you have a really fast processor ('040) and RAM that can
+#     be accessed much faster than the screen.
+
+# The Eclipse/RageII driver recognizes
+# mode n
+#     Set graphics a specific graphics mode. Currently:
+#     0 - 640x480     1 - 800x600     2 - 1024x768     3 - 1152x864
+# doblit
+#     Tell the driver to use the fall-back mechanism for the not yet
+#     implemented screen->RAM blits.
+#     This will cause fVDI to do the operation pixel by pixel which,
+#     while it works, is _very_ slow.
+
+# fVDI should be able to deal with any standard fonts.
+# Just list what you have below the driver definition.
+# Currently you _have_ to specify a system font, which you do by
+# adding an 's' before the font filename.
+# It's a very good idea to have a system font in the same sizes as
+# the normal GEM one, but it's not necessary.
+
+#01r 1plane.sys accelerate xxxxx-
+01r 4plane.sys accelerate xxxxx-
+#01r 16bit.sys accelerate xxxxx-
+#01r rage16.sys mode 2 accelerate xxxxxx
+s MONACO08.FNT
+s MONACO09.FNT
+s MONACO10.FNT
+s MONACO20.FNT
+BLUE10.FNT
+CONNECT.FNT
+CONNLIGH.FNT
+EDMS01.FNT
+EDMS03.FNT
+EDMS06.FNT
+EDMS07.FNT
+EDMS08.FNT
+EDMS09.FNT
+EDMS10.FNT
+EDMS12.FNT
+EDMS15.FNT
+EDSW09.FNT
+EDSW10.FNT

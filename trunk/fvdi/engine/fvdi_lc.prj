@@ -1,0 +1,36 @@
+FVDI_LC.PRG
+.C	[-b4 -r6 -v -d1 -m0 -rs -fm -j*e]
+.S	[-d -m0]
+.L	[DRISYM TTMALLOC TTLOAD ADDSYM]
+=
+FVDI.S		(vdi.inc, types.inc, macros.dev)
+UNIMPL.S	(vdi.inc, types.inc, macros.dev)
+SIMPLE.S	(vdi.inc, types.inc, macros.dev)
+COLOURS.S	(vdi.inc, types.inc, macros.dev)
+MOUSE.S		(vdi.inc, types.inc, macros.dev)
+LINE_SQ.S	(vdi.inc, types.inc, macros.dev)
+MARK_SQ.S	(vdi.inc, types.inc, macros.dev)
+FILL_SQ.S	(vdi.inc, types.inc, macros.dev)
+TEXT_SQ.S	(vdi.inc, types.inc, macros.dev)
+DRAW.S		(vdi.inc, types.inc, macros.dev)
+TEXT.S		(vdi.inc, types.inc, macros.dev)
+TEXTRNDR.S	(vdi.inc, types.inc, macros.dev)
+BLIT.S		(vdi.inc, types.inc, macros.dev)
+VDI_MISC.S	(vdi.inc, types.inc, macros.dev)
+SUPPORT.S	[-ma]	(vdi.inc, types.inc, macros.dev)
+SYS_CALL.S
+expand.o
+startup.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+loader.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+fonts.c		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+setup.c		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+workstn.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+utility.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+polygon.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+conic.c		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+math.c		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+line.c		[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+bezier.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+patterns.c	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
+TRAPTABL.S	(vdi.inc, types.inc, macros.dev)
+LC.LIB

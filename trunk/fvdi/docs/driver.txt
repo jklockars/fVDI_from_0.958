@@ -1,0 +1,509 @@
+fVDI driver implementation documentation
+000709, Johan Klockars
+	
+This is getting closer to a useful state.
+In any case, it definitely beats reading the sources.  ;-)
+
+
+Important headers
+=================
+For C code
+fvdi.h      - All the various fVDI structures
+driver.h   - #define's and structures for driver initialization
+relocate.h - Various things related to the relocation of drivers.
+
+For assembly code
+types.inc   - Automatically generated from fvdi.h
+vdi.inc     - Some other VDI related equ's.
+
+
+Parameters
+==========
+For each function, the various input parameters are specified.
+Note that there are currently separate calling methods for functions
+implemented in C and assembly.
+C functions get their parameters on the stack as 32 bit numbers, with
+the first parameter right above the return address (at a7+4 that is).
+For assembly routines, the specific register contents are given in the
+function descriptions.
+
+Return values should always be passed as 32 bit numbers in register d0.
+This is what all C compilers do by default.
+
+
+Function modes
+==============
+When a function has several modes, the VDI struct address passed in will
+be even for the standard mode, and odd for the special ones. The specific
+special mode is then decided by looking at one of the other parameters
+(see the function description).
+
+The normal mode should usually be implemented (if any is), but the
+driver API conversion layer can convert from a special mode automatically
+if a negative value is returned.
+Note that currently it is not possible to back down once this has been
+done. The API conversion layer will assume that nothing more can fail,
+and will not attempt any fallbacks.
+
+A return value of 0 means that the routine can't deal with the requested
+operation at all, and that the fallback should be used instead.
+For example, a text function might not be able to deal with effects.
+
+Finally, a positive return value means that no more attempt should be
+made to perform the operation (it does not necessarily mean that the
+operation has been done as requested, or even at all).
+
+
+API conversion layer`
+====================
+The final engine->driver API has not been decided yet, so for the time
+being there is an extra layer (currently in the driver (see the generic
+file common.s and c_common.s) that does some necessary conversion.
+
+This mean that there is no point in checking what values the fVDI engine
+sends to the driver. Instead, look at what is sent on by the conversion
+layer (which is all that's mentioned in this document).
+
+
+MFDBs
+=====
+It is important to remember that the buffer address in an MFDB could
+(or really _should_) be set to 0 when the buffer in question is the
+screen. Some programs use the XBIOS to fetch the 'real' screen address,
+however (see 'xbiosfix'), and put that there instead. Also, to simplify
+internal operations, fVDI will set the actual MFDB pointer to zero to
+signify the screen.
+In all of the cases mentioned, the function should fetch the necessary
+buffer dimensions, etc, from the workstation struct.
+
+In C, this might look something like:
+   if (!src || !src->address || (src->address == wk->screen.mfdb.address)) {
+      /* From the screen  -  use wk->screen... */
+      ...
+   } else {
+      /* From off-screen buffer  -  use src->... */
+      ...
+   }
+
+
+Driver functions
+================
+There are various functions a driver can implement to speed up drawing
+operations under fVDI, and some that it _must_ implement.
+All operations _can_ be performed using only the required functions, since
+fVDI will automatically fall back to a simpler way of doing things. This can
+easily become _very_ slow, however.
+
+The order of the functions under each heading is intended to give some kind
+of indication as to the prefered order of implementation, but do not take
+this as gospel.
+
+
+Required functions
+------------------
+All drivers must implement these.
+There is no fallback possible.
+
+
+Set a coloured pixel
+
+c_write_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour)
+* write_pixel
+* In:	a1	VDI struct, destination MFDB
+*	d0	colour
+*	d1	x or table address
+*	d2	y or table length (high) and type (low)
+* XXX:	?
+
+This function has two modes:
+- single pixel
+- table based multi pixel (special mode 0 (low word of 'y'))
+
+Note that a1 does not point to the VDI struct, but to a place in memory
+where the VDI struct pointer can be found. Four bytes beyond that address
+is a pointer to the destination MFDB.
+
+As usual, only the first one is necessary, and a return with d0 = -1
+signifies that a special mode should be broken down to the basic one.
+
+Since an MFDB is passed, the destination is not necessarily the screen.
+
+
+Get a coloured pixel
+
+c_read_pixel(Virtual *vwk, MFDB *mfdb, long x, long y)
+* read_pixel
+* In:	a1	VDI struct, source MFDB
+*	d1	x
+*	d2	y
+
+Only one mode here.
+
+Note that a1 does not point to the VDI struct, but to a place in memory
+where the VDI struct pointer can be found. Four bytes beyond that address
+is a pointer to the destination MFDB.
+
+Since an MFDB is passed, the source is not necessarily the screen.
+
+
+Set palette colours
+
+c_set_colours(Virtual *vwk, long start, long entries, short requested[3][], Colour palette[])
+* set_colours
+* In:	a0	VDI struct
+*	d0	number of entries, start entry
+*	a1	requested colour values (3 word/entry)
+*	a2	colour palette
+
+...
+
+
+'Wanted' functions
+------------------
+While fVDI can make do without these, it will be very slow.
+Note that the fallback mechanism can be used for uncommon operations
+without sacrificing speed for common ones. At least during development,
+it is also possible to simply ignore some things, such as a request for
+colour, patterns, or a specific effect.
+
+
+Draw the mouse
+
+c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
+* mouse_draw
+* In:	a1	Pointer to Workstation struct
+*	d0/d1	x,y
+*	d2	0 (move), 1 (hide), 2 (show), Mouse* (change)
+
+Unlike all the other functions, this does not receive a pointer to a VDI
+struct, but rather one to the screen's workstation struct. This is
+because the mouse handling concerns the screen as a whole (and the
+routine is also called from inside interrupt routines).
+
+The Mouse structure pointer doubles as a mode variable. If it is a small
+number, the mouse's state is supposed to change somehow, while a large
+number is a pointer to a new mouse shape.
+
+This is currently not a required function, but it probably should be.
+The fallback handling is not done in the usual way, and to make it
+at least somewhat usable, the mouse pointer is reduced to 4x4 pixels.
+
+
+Expand a monochrome area to a coloured one
+
+c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
+                            MFDB *dst, long dst_x, long dst_y,
+                            long w, long h, long operation, long colour)
+* expand_area
+* In:	a1	VDI struct, destination MFDB, VDI struct, source MFDB
+*	d0	height and width to move (high and low word)
+*	d1-d2	source coordinates
+*	d3-d4	destination coordinates
+*	d6	background and foreground colour
+*	d7	logic operation
+
+Only one mode here.
+
+Note that a1 does not point to the VDI struct, but to a place in memory
+where the VDI struct pointer can be found. Four bytes beyond that address
+is a pointer to the destination MFDB, and then comes a VDI struct
+pointer again (the same) and a pointer to the source MFDB.
+
+Since MFDBs are passed, the screen is not necessarily involved.
+
+A return with 0 gives a fallback (normally pixel by pixel drawing by
+the fVDI engine).
+
+
+Fill a coloured area using a monochrome pattern
+
+c_fill_area(Virtual *vwk, long x, long y, long w, long h,
+                          short *pattern, long colour)
+* fill_area
+* In:	a1	VDI struct
+*	d0	height and width to fill (high and low word)
+*	d1	x or table address
+*	d2	y or table length (high) and type (low)
+*	d3	pattern address
+*	d4	colour
+
+This function has two modes:
+- single block to fill
+- table based y/x1/x2 spans to fill (special mode 0 (low word of 'y'))
+
+As usual, only the first one is necessary, and a return with d0 = -1
+signifies that a special mode should be broken down to the basic one.
+
+An immediate return with 0 gives a fallback (normally line based drawing
+by the fVDI engine for solid fills, otherwise pixel by pixel).
+A negative return will break down the special mode into separate calls,
+with no more fallback possible.
+
+
+Blit an area
+
+c_blit_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
+                          MFDB *dst, long dst_x, long dst_y,
+                          long w, long h, long operation)
+* blit_area
+* In:	a1	VDI struct, destination MFDB, VDI struct, source MFDB
+*	d0	height and width to move (high and low word)
+*	d1-d2	source coordinates
+*	d3-d4	destination coordinates
+*	d5	logic operation
+
+Only one mode here.
+
+Note that a1 does not point to the VDI struct, but to a place in memory
+where the VDI struct pointer can be found. Four bytes beyond that address
+is a pointer to the destination MFDB, and then comes a VDI struct
+pointer again (the same) and a pointer to the source MFDB.
+
+Since MFDBs are passed, the screen is not necessarily involved.
+
+A return with 0 gives a fallback (normally pixel by pixel drawing by the
+fVDI engine).
+
+
+Draw a coloured line between two points
+
+c_draw_line(Virtual *vwk, long x1, long y1, long x2, long y2,
+                          long pattern, long colour)
+* draw_line
+* In:	a1	VDI struct
+*	d0	logic operation
+*	d1	x1 or table address
+*	d2	y1 or table length (high) and type (low)
+*	d3	x2 or move point count
+*	d4	y2 or move index address
+*	d5	pattern
+*	d6	colour
+
+This function has three modes:
+- single line
+- table based coordinate pairs (special mode 0 (low word of 'y1'))
+- table based coordinate pairs+moves (special mode 1)
+
+As usual, only the first one is necessary, and a return with d0 = -1
+signifies that a special mode should be broken down to the basic one.
+
+An immediate return with 0 gives a fallback (normally pixel by pixel
+drawing by the fVDI engine).
+A negative return will break down the special modes into separate calls,
+with no more fallback possible.
+
+
+'Spare time' functions
+----------------------
+Do not spend time here unless you have got nothing better to do.
+Without hardware support there is little point, but if such hardware is
+available it can sometimes make a huge difference.
+
+
+Draw coloured text
+
+c_text_area(Virtual *vwk, short *text, long length,
+                          long dst_x, long dst_y, short *offsets)
+* text_area
+* In:	a1	VDI struct
+*	a2	offset table or zero
+*	d0	string length
+*	d3-d4	destination coordinates
+*	a4	string address
+
+Only one mode here.
+
+A return with 0 gives a fallback (normally using an efficient monochrome
+text renderer in the fVDI engine that uses mono expand for display).
+
+
+Fill a coloured polygon using a monochrome pattern
+
+c_fill_polygon(Virtual *vwk, short points[], long n, short index[],
+               long moves, short *pattern, long colour)
+* fill_polygon
+* In:	a1	VDI struct
+*	d0	number of points and indices (high and low word)
+*	d1	points address
+*	d2	index address
+*	d3	pattern address
+*	d4	colour
+
+Only one mode here.
+
+A return with 0 gives a fallback (normally using a reasonable polygon
+routine in the fVDI engine that uses spans for filling).
+
+
+The SPEC file
+=============
+Apart from the required variables and functions mention below, this file
+may contain whatever else is needed for proper initialization. There is
+of course nothing that hinders the use of more files, though.
+
+Required variables
+------------------
+These must be present, since they are used during initialization.
+
+Mode *graphics_mode
+  Must point to a proper Mode struct:
+  bpp     The number of bits per pixel
+  flags   Various information (OR together the appropriate ones)
+            CHECK_PREVIOUS - Ask fVDI to look at the previous graphics mode
+            CHUNKY         - Pixels are chunky
+            TRUE_COLOUR    - Pixel value is colour value (no palette)
+  bits    A poperly set up MBits structure:
+            red, green, blue,  Pointers to arrays containing the number of
+            alpa, genlock,       of bits and the corresponding bit numbers
+            unused               (the latter only for true colour modes)
+  code -  Driver dependent value
+  format  Type of graphics mode
+            0 - interleaved
+            2 - packed pixels
+  clut    Type of colour look up table
+            1 - hardware
+            2 - software
+  org     Pixel bit organization (OR together the appropriate ones)
+            0x01 - usual bit order
+            0x80 - Intel byte order
+
+char driver_name[]
+  Should contain a name for the driver.
+
+short accel_s
+short accel_c
+  All acceleration functions implemented in assembly and C, respectively,
+  must be mentioned here using (OR together the appropriate ones)
+    A_MOUSE, A_TEXT, A_BLIT, A_FILL, A_FILLPOLY, A_EXPAND, A_LINE,
+    A_SET_PAL, A_GET_COL, A_SET_PIX, A_GET_PIX
+
+long wk_extend
+  Set this to the number of extra bytes you want allocated for the
+  driver's workstation structure.
+
+
+Required functions
+------------------
+These must be present, since they are used during initialization or at
+some later point. Depending on the particular driver, they may not always
+do much.
+
+void check_token(char *token, const char **ptr)
+  Used to check any non-standard driver options from FVDI.SYS.
+  The provided token should be checked (normally using 'equal') and any
+  needed extra information fetched (using 'skip_space' and 'get_token').
+  For numeric arguments, 'atol' is useful, and 'misc' can also be of help.
+  If any extra reads are donem *ptr must be updated accordingly.
+
+void initialize(Virtual *vwk)
+  This is called after all drivers have been loaded and should perform any
+  extra initialization that might need to be done.
+  The supplied virtual workstations is the driver's default one. This, and
+  its acompanying workstation, has already been set up with some reasonable
+  default values (and the data from 'graphics_mode' has been taken into
+  account). Normally, only screen specific values in the workstation should
+  need to be modified at this point.
+  Some potentially useful functions are 'get_cookie', 'misc', and 'puts'.
+
+long setup(long type, long value)
+  Used for on the fly driver property modifications.
+
+Virtual *opnwk(Virtual *vwk)
+  Has not been used yet and shouldn't be until further notice.
+
+void clswk(Virtual *vwk)
+  Has not been used yet and shouldn't be until further notice.
+
+
+Utility functions provided by the fVDI engine
+=============================================
+If possible, use these rather than rolling your own.
+Do not call OS functions directly from the driver unless it is absolutely
+necessary, and you are _very_ sure you know what you are doing.
+
+void (*copymem)(void *s, void *d, int n);
+  Copies n bytes from s to d.
+
+const char *next_line(const char *ptr);
+  Skips to next line.
+  Usage:  ptr = next_line(ptr);
+
+const char *skip_space(const char *ptr);
+  Skips past white space.
+  Usage:  ptr = skip_space(ptr);
+
+const char *get_token(const char *ptr, char *buf, int n);
+  Fetches the next token.
+  A token is the text from ptr up until the next white space, unless
+  the first character is a ", in which case another such ends the token.
+  No more than n characters are fetched.
+  Usage:  ptr = get_token(ptr, buf, n);
+
+int equal(const char *str1, const char *str2);
+  Returns 1 if the strings are equal (case independent).
+
+int length(const char *text);
+  Returns the length of a string.
+
+void copy(const char *src, char *dest);
+  Copies the string src to dest.
+
+void cat(const char *src, char *dest);
+  Adds the string src to the end of dest.
+
+int numeric(char ch);
+  Check if ch is a digit.
+
+long atol(const char *text);
+  Convert text to a long.
+
+void error(const char *text1, const char *text2);
+  Write an error message.
+
+void *malloc(long size, int type);
+  Allocates size bytes of memory. If Mxalloc is available this will be
+  used and the type will be as specified.
+
+long free(void *addr);
+  Releases previously allocated memory.
+
+void puts(char *text);
+  Displays a text.
+
+void ltoa(char *buf, long n, unsigned int base);
+  Convert a number to a string using the specified base.
+
+long get_cookie(const unsigned char *cname, int super);
+  Get the value of the named cookie. Set super to 1 if called from
+  supervisor mode.
+
+int set_cookie(const unsigned char *cname, long value);
+  Set the named cookie to the specified value.
+  New cookie space will be allocated if necessary.
+
+int fixup_font(Fontheader *font, char *buffer, int flip);
+...
+
+int unpack_font(Fontheader *header, int format);
+...
+
+int insert_font(Fontheader **first_font, Fontheader *new_font);
+...
+
+long get_size(const char *name);
+  Returns the size of the named file.
+
+long allocate_block(long size);
+  Allocates an fVDI internal memory block.
+
+void free_block(long address);
+  Releases a block allocated by 'allocate_block'.
+
+void cache_flush(void);
+  Flushes the processor caches.
+
+int misc(int func, int par, char *token);
+  Miscellaneous functions. Currently defined are
+  0 - returns the key pressed during startup (or the default one)
+  1 - returns the debug setting
+

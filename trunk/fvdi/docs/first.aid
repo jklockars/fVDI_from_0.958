@@ -1,0 +1,23 @@
+I've been able to run this version of fVDI under MiNT with memory protection
+on, but there are some problems if it's started before MiNT in this case.
+To run fVDI after MiNT you can for example put it as an 'exec' item in your
+MINT.CNF file.
+If there are still problems, you might want to change the flags so that
+fVDI is less protected by default.
+
+GEM programs aren't supposed to access the screen directly, but unfortunately
+that's not too uncommon (for example among drawing programs). The `xbiosfix`
+and 'lineafix' options will often eliminate the problems, but they could
+potentially cause other things to fail. In general it seems to be a good
+idea to leave them activated.
+(This is mainly affects the Eclipse/RageII.)
+
+Some programs use bad methods to figure out how true colour pixel values
+are actually stored on screen. fVDI supports the vq_scrninfo call from NVDI,
+which is one very good way of checking this. Plotting pixels and reading them
+back with vro_cpyfm should also work (preferably one pixel at a time at the
+top left corner). Do _not_ read from the screen directly!
+(This only affects the Eclipse/RageII.)
+
+Johan Klockars  (rand@cd.chalmers.se)
+000213

@@ -1,0 +1,53 @@
+1plane.sys
+  Monochrome device driver.
+4plane.sys
+  16 colour bitplane device driver.
+defaults.ttp
+  RageII mode setup program.
+err_rprt.prg
+  Test program. Don't use this unless asked to!
+files.txt
+  What you're reading.
+first.aid
+  Some trouble-shooting help.
+fvdi.acc
+  fVDI setup ACC. Currently only useful with an Eclipse/RageII.
+fvdi.prg
+  The fVDI engine.
+fvdi.sys
+  fVDI configuration file.
+fvdi.txt
+  fVDI installation information.
+fvdiacc.rsc
+  Resources for the ACC.
+gembench.txt
+  Eclipse/RageII benchmarks.
+irq_dis.prg
+  Test program. Don't use this unless asked to!
+partial.txt
+  Some information on the limitations of certain functions.
+pcibios.prg
+  Eclipse PCI setup and handling program.
+rage.sys
+  Eclipse/RageII device driver.
+readme
+  Some information about the drivers.
+readme.1st
+  Read this one first!
+recolour.prg
+  Reinitializes the VDI palette in case something goes wrong.
+remove.prg
+  Uninstalls a manually started fVDI.
+tkrom4f.prg
+  Special version of the AB040 Toolkit for use with the PCI BIOS.
+unimpl.s
+  The actual source file that deals with unimplemented VDI functions.
+vdibench.prg
+  A half-finished VDI benchmark program by Magnus Kollberg and myself.
+vdibench.prg
+  Resources for the above.
+vdibtst.txt
+  Eclipse/RageII benchmarks.
+
+Johan Klockars  (rand@cd.chalmers.se)
+000213
