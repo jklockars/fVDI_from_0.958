@@ -1,30 +1,14 @@
 *-------------------------------------------------------*
-*	Mono->mono (MFDB) operations			*
-*	Uses almost exactly the same code as		*
-*	the monochrome driver (see 'outside' notes)	*
-*							*
-*	This file currently can't be assembled by	*
-*	Lattice C, since it includes files that use	*
-*	DevPac type local lables.			*
+*	Draw in single plane modes			*	
 *-------------------------------------------------------*
-*
-* Copyright 1997-2000, Johan Klockars 
-* This software is licensed under the GNU General Public License.
-* Please, see LICENSE.TXT for further information.
-*****
-
-both		set	0	; Not applicable outside driver
+both		set	1	; Write in both FastRAM and on screen
 longs		equ	1
 get		equ	1
 mul		equ	1	; Multiply rather than use table
 shift		equ	1
 
-	include		"vdi.inc"
-  ifne lattice
-	include		"pixelmac.dev"
-  else
-	include		"pixelmac.tas"
-  endc
+	include		"..\pixelmac.dev"
+	include		"..\..\vdi.inc"
 
 	xdef		expand_area,_expand_area
 
@@ -42,8 +26,7 @@ shift		equ	1
   endc
 
 
-	text
-
+	dc.b	0,0,"expand_area",0
 * In:	a1	VDI struct, destination MFDB, VDI struct, source MFDB
 *	d0	height and width to move (high and low word)
 *	d1-d2	source coordinates
@@ -52,17 +35,9 @@ shift		equ	1
 *	d7	logic operation
 _expand_area:
 expand_area:
-  ifne 0
 	exg		d0,d6
 	bsr		get_colour
 	exg		d0,d6
-  else
-	neg.w		d6			; Appropriate outside driver
-	swap		d6
-	neg.w		d6
-	swap		d6
-;	not.l		d6
-  endc
 	move.l		d6,-(a7)		; Colours to stack
 	lsl.w		#3,d7
 	lea		mode_table,a0
@@ -156,34 +131,34 @@ normal:
 	move.l		(a1),a1
 	move.l		vwk_real_address(a1),a1
 
-	ifne	mul
+  ifne mul
 	move.l		wk_screen_mfdb_address(a1),a0
-	endc
+  endc
 
 xnormal:
-	ifne	mul
+  ifne mul
 	move.w		wk_screen_wrap(a1),d5	; d5 - wraps (source dest)
 	mulu.w		d5,d4
 	add.l		d4,a0
-;	 ifne	both
+;  ifne both
 ;	move.l		wk_screen_shadow_address(a1),a4
 ;	add.l		d4,a4
-;	 endc
-	endc
-	ifeq	mul
+;  endc
+  endc
+  ifeq mul
 	lea		row(pc),a0
 	move.l		(a0,d4.w*4),a0
-	endc
+  endc
 
 	exg		a0,a1			; Workstation used below
 
-	ifne	both
+  ifne both
 ;	move.l		wk_screen_shadow_address(a0),a4
 	move.l		wk_screen_shadow_address(a0),d7
 	beq		no_shadow
 	move.l		d7,a4
 	add.l		d4,a4
-	endc
+  endc
 
 	move.w		d3,d4
 	and.w		#$0f,d3			; d3 - first bit number in dest MFDB
@@ -191,9 +166,9 @@ xnormal:
 	lsr.w		#4,d4
 	lsl.w		#1,d4
 	add.w		d4,a1			; a1 - start address in dest MFDB
-	ifne	both
+  ifne both
 	add.w		d4,a4			; a4 - start address in shadow
-	endc					; d4 scratch
+  endc						; d4 scratch
 
 	move.l		d2,a0
 
@@ -269,7 +244,7 @@ mrevtransp:
 
 	bra		mfdb_left_revtransp
 
-	ifne	both
+  ifne both
 replace:
 	lsr.w		#4,d0
 	beq		shadow_single
@@ -309,7 +284,7 @@ revtransp:
 	blt		shadow_right_revtransp
 
 	bra		shadow_left_revtransp
-	endc
+  endc
   ifeq both
 replace:					; Dummy routines
 transparent:
@@ -332,10 +307,10 @@ both	set	0
 
 ; Shadow mode, if asked for
 both	set	oldboth
-  ifne both
+	ifne	both
 shadow	set	1
 	include		"1_expand.inc"
-  endc
+	endc
 
 
 	data

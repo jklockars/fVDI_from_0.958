@@ -95,6 +95,7 @@ short arc_min = 16;       /* Minimum number of lines in an ellipse */
 short arc_max = 256;      /* Maximum */
 short no_vex = 0;
 short serial_out = 0;
+short stand_alone = 0;
 
 static char path[PATH_SIZE];
 
@@ -148,7 +149,8 @@ Option options[] = {
    {"arcmin",     set_arc_min,    -1},  /* arcmin n, minimum number of line to use in an ellipse */
    {"arcmax",     set_arc_max,    -1},  /* arcmax n, maximum number of lines to use in an ellipse */
    {"palette",    load_palette,   -1},  /* palette filename, loads the palette (3*short per colour) specified */
-   {"serialout",  &serial_out,     1}   /* serialout, send all debug (and similar) output to serial port */
+   {"serialout",  &serial_out,     1},  /* serialout, send all debug (and similar) output to serial port */
+   {"standalone", &stand_alone,    1}   /* standalone, forces fVDI to refrain from relying on an underlying VDI */
 };
 
 

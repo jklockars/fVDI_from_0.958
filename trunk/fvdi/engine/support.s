@@ -22,6 +22,7 @@ transparent	equ	1		; Fall through?
 	xref	_old_wk_handle
 	xref	_malloc
 	xref	_cpu
+	xref	_stand_alone
 
 	xdef	remove_xbra,_remove_xbra
 	xdef	set_cookie,_set_cookie
@@ -248,7 +249,10 @@ redirect_d0:
 	move.l	a1,d1			; That's where the VDI wants it
 	return
 .call:
+	tst.w	_stand_alone
+	bne	.no_redirect
 	bsr	call_other
+.no_redirect:
 	real_return
 
 

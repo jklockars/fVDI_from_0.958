@@ -22,7 +22,7 @@
 
 #define SYSNAME "fvdi.sys"
 
-#define VERSION	0x0958
+#define VERSION	0x0959
 #define BETA	1
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
@@ -97,7 +97,9 @@ extern short booted;
 extern short fakeboot;
 extern short nvdifix;
 extern short xbiosfix;
+extern short singlebend;
 extern short blocks;
+extern short stand_alone;
 extern long block_size;
 extern long log_size;
 extern long pid_addr;
@@ -117,6 +119,8 @@ extern void *bss_start;
 
 extern long mint;
 extern long magic;
+
+extern void* dummy_vdi;
 
 long basepage;
 char fake_bp[256];
@@ -243,7 +247,7 @@ long startup(void)
 		disp_nl("Patching NVDI dispatcher");
 
 #ifdef __PUREC__
-	if (booted && !fakeboot) {
+	if (booted && !fakeboot && !singlebend) {
 		trap2_address = (long)Setexc(34, (void (*)())&trap2_temp);	/* Install a temporary trap handler if real boot (really necessary?) */
 	} else {
 		vdi_address = (long)Setexc(34, (void (*)())&vdi_dispatch);	/*   otherwise the dispatcher directly */
@@ -254,7 +258,7 @@ long startup(void)
 #endif
 		trap14_address = (long)Setexc(46, (void (*)())&trap14);	/* Install an XBIOS handler */
 #else
-	if (booted && !fakeboot) {
+	if (booted && !fakeboot && !singlebend) {
 		trap2_address = (long)Setexc(34, (void *)&trap2_temp);	/* Install a temporary trap handler if real boot (really necessary?) */
 	} else {
 		vdi_address = (long)Setexc(34, (void *)&vdi_dispatch);	/*   otherwise the dispatcher directly */
@@ -339,7 +343,7 @@ long startup(void)
 			disp_nl("Copying available virtual workstations");
 		copy_workstations(first_vwk, !fakeboot);	/* f.vwk - default vwk to set up for, fall-through if fakeboot */
 	} else if (!disabled) {
-		if (!fakeboot) {
+		if (!fakeboot && !stand_alone) {
 			if (debug) {
 				disp_nl("About to set up VDI fallback. Press any key.");
 				key_wait(10);			/* It's too late to wait for a key afterwards */
@@ -348,7 +352,8 @@ long startup(void)
 			readable->cookie.flags |= BOOTED;
 		}
 	}
-	old_gdos = vq_gdos();
+	if (!stand_alone)
+		old_gdos = vq_gdos();
 	if (!disabled) {
 		*(short *)((long)&vdi_dispatch + 2) = 0x0073;	/* Finally make fVDI take normal VDI calls */
 		readable->cookie.flags |= ACTIVE;

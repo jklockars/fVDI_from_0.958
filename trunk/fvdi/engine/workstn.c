@@ -18,6 +18,7 @@ extern Workstation *non_fvdi_wk;
 extern Workstation *screen_wk;
 extern List *driver_list;
 extern short lineafix;
+extern short stand_alone;
 extern long old_gdos;
 
 void lib_vdi_s(void *, void *, short);
@@ -340,7 +341,7 @@ void v_opnwk(VDIpars *pars)
 	}
 
 	/* Experimenting, 001217/010109 */
-	if (!old_wk_handle) {
+	if (!old_wk_handle && !stand_alone) {
 		short intout[45], ptsout[12];
 		old_wk_handle = scall_v_opnwk(1, intout, ptsout);
 	}
@@ -387,7 +388,7 @@ void v_opnwk(VDIpars *pars)
 	linea_setup(wk);
 #endif
 
-	if (wk->mouse.type)		/* Old mouse? */
+	if (wk->mouse.type && !stand_alone)	/* Old mouse? */
 		link_mouse_routines();
 
 #if 0

@@ -1,29 +1,34 @@
-	ifb	stack
+  ifb	stack
 	xref	stack_address
 	xref	vdi_stack
-	endc
+  endc
 
 special_stack	set	0
 SPECIAL_STACK_SIZE	equ	512
 
-	ifnb	xbra_chain
+  ifnb	xbra_chain
 	xref	vdi_address
-	endc
+  endc
+
+  ifnb	_stand_alone
+	xref	_stand_alone
+  endc
+
 
 	macro	save_regs
 	movem.l	a1-a2,-(a7)
 	endm
 
 	macro	uses_d1
-	if	transparent
+  if	transparent
 	move.l	d1,-(a7)
-	endc
+  endc
 	endm
 
 	macro	used_d1
-	if	transparent
+  if	transparent
 	move.l	(a7)+,d1
-	endc
+  endc
 	endm
 
 	macro	restore_regs
@@ -31,37 +36,42 @@ SPECIAL_STACK_SIZE	equ	512
 	endm
 
 	macro	return
-	ifne	special_stack
+	local	do_rte
+  ifne	special_stack
 	move.l	(a7)+,a7
 	add.l	#SPECIAL_STACK_SIZE,stack_address
 special_stack	set	0
-	endc
+  endc
 	restore_regs
-	if transparent
+  if transparent
+	tst.w	_stand_alone
+	bne	do_rte
 	moveq	#$73,d0
 	move.l	vdi_address(pc),-(a7)
 	rts
-	else
+do_rte:
 	rte
-	endc
+  else
+	rte
+  endc
 	endm
 
 	macro	real_return
-	ifne	special_stack
+  ifne	special_stack
 	move.l	(a7)+,a7
 	add.l	#SPECIAL_STACK_SIZE,stack_address
 special_stack	set	0
-	endc
+  endc
 	restore_regs
 	rte
 	endm
 
 	macro	done_return
-	ifne	only_fvdi
+  ifne	only_fvdi
 	real_return
-	else
+  else
 	return
-	endc
+  endc
 	endm
 
 	macro	use_special_stack
