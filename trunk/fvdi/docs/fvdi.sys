@@ -1,5 +1,5 @@
 # fVDI configuration
-# $Id: fvdi.sys,v 1.3 2002-06-10 08:29:07 johan Exp $
+# $Id: fvdi.sys,v 1.4 2003-04-06 13:35:38 johan Exp $
 
 
 # ----- Standard setup -----
@@ -220,6 +220,17 @@ nomemlink
 # aesbuf n
 #     Let fVDI know about the AES's background buffer.
 #     This is not needed if the fVDI ACC is installed.
+# debug
+#     Turn on debugging aids.
+# scrninfo fb
+#     Force vq_scrninfo to return information regarding the actual
+#     frame buffer layout rather than that used for VDI blits.
+# notoram
+#     Skip any blits from screen to ram.
+# clrbltidx
+#     Resets the count of cached areas.
+# experiment
+#     Test a few things.
 
 
 # fVDI should be able to deal with any standard fonts.
