@@ -103,20 +103,20 @@ return\@:
 	.macro	ijsr indirect
   .if mc68000 == 1
 	pea	\@
-	move.l	indirect,-(a7)
+	move.l	\indirect,-(a7)
 	rts
 \@:
   .else
-	jsr	([indirect])
+	jsr	([\indirect])
   .endif
 	.endm
 
 	.macro	ijmp indirect
   .ifne mc68000 == 1
-	move.l	indirect,-(a7)
+	move.l	\indirect,-(a7)
 	rts
   .else
-	jmp	([indirect])
+	jmp	([\indirect])
   .endif
 	.endm
 
