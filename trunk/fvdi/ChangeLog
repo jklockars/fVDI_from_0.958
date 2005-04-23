@@ -1,3 +1,37 @@
+2005-04-23 - johan
+ARAnyM driver synchronized with the ARAnyM CVS repository (relevant
+changes have been added to this file).
+ARAnyM driver now builds using gcc!
+Fix for a bug concerning negative mouse x-coordinates in the ARAnyM driver.
+Updated ARAnyM debug printf usage.
+Bug fixes and conversions to C for arcs and rounded boxes.
+fVDI engine version bumped to 0.964beta.
+
+2005-03-20 - standa
+For the ARAnyM driver:
+ Ensure the wk->screen.pixel.* values are setup from the actual fvdi.sys
+ values in any setup_wk() call.
+ The problem was that the setup_wk() used to selfmodify the value based
+ on the ones got from common driver init() method. The method setup_wk()
+ is called twice however before the openvk().
+
+2005-01-24 - standa
+For the ARAnyM driver:
+ openwk() and closewk() added to the NF api -> boot bug fixed.
+ Large cleanup in the m68k part.
+
+2005-01-20 - standa
+For the ARAnyM driver:
+ Some warning cleanup.
+ Uneffective assumenf and noshadow features removed.
+ Bitplane modes are now marked as bitplane.
+ Fixing some issue with palette setting. The palette is system wide (not
+ per virtual workstation).
+
+2004-11-01 - pmandin
+For the ARAnyM driver:
+ Moved some code around, for the host resolution to be read.
+
 2004-10-24 - johan
 A couple of 16 vs 32 bit fixes. GNU build now works almost 100%!
 Added support for workstation close.
@@ -5,11 +39,19 @@ Added support for workstation close.
 2004-10-17 - johan
 Finally, support for the GNU suite!
 
+2004-09-24 - pmandin
+For the ARAnyM driver:
+ Added functions to read screen size really set by the host.
+
 2004-09-09 - johan
 Conversion of various functionality to C.
 New header files for functions and global variables.
 Fix for programs that use upside-down clip rectangles.
 Escape functions debugged.
+
+2004-01-05 - standa
+For the ARAnyM driver:
+ Palette handling reworked. Old non-NF dispatch removed.
 
 2003-02-05 - johan
 Support for rounded boxes. Polymarker code added.
