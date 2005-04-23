@@ -1,7 +1,7 @@
 *****
 * fVDI drawing functions
 *
-* $Id: draw.s,v 1.7 2004-10-17 21:44:11 johan Exp $
+* $Id: draw.s,v 1.8 2005-04-23 19:03:56 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -21,7 +21,7 @@ transparent	equ	1		; Fall through?
 	xref	lib_vqt_extent,lib_vrt_cpyfm
 	xref	allocate_block,free_block
 	xref	_pattern_ptrs
-	xref	_filled_poly,_filled_poly_m,_clc_arc,_wide_line,_calc_bez
+	xref	_filled_poly,_filled_poly_m,_ellipsearc,_wide_line,_calc_bez
 	xref	_arc_split,_arc_min,_arc_max
 	xref	_lib_v_bez,_rounded_box
 
@@ -543,35 +543,6 @@ v_pie:
 	bra	v_ellpie
 
 
-* calc_nsteps
-* In:	d3	x-radius
-*	d4	y-radius
-* Out:	d0	Number of steps
-calc_nsteps:
-	moveq	#0,d0
-	move.w	d3,d0
-	cmp.w	d3,d4
-	bls	.x_large
-	move.w	d4,d0
-.x_large:
-;	lsr.w	#2,d0
-;	cmp.w	#16,d0
-	mulu	_arc_split,d0
-	clr.w	d0
-	swap	d0
-	cmp.w	_arc_min,d0
-	bcc	.not_small
-;	moveq	#16,d0
-	move.w	_arc_min,d0
-.not_small:
-;	cmp.w	#max_arc_count,d0
-	cmp.w	_arc_max,d0
-	bls	.not_large
-;	move.w	#max_arc_count,d0
-	move.w	_arc_max,d0
-.not_large:
-	rts
-
 * col_pat
 * In:	a0	VDI struct
 * Out:	d0	Colours
@@ -617,79 +588,29 @@ col_pat:
 *       a0      VDI struct
 v_ellarc:
 	uses_d1
+	move.l	d2,-(a7)
 
-	movem.l	d2-d7,-(a7)
-	move.l	ptsin(a1),a2
+	moveq	#0,d0
 	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	movem.w	0(a2),d1-d4
-;	tst.w	d3
-;	beq	.ellarc_end
-
-	clr.l	-(a7)
-	bsr	allocate_block
-	addq.l	#4,a7
-	tst.l	d0
-	beq	.ellarc_end
-
-	clr.l	-(a7)		; Dummy interior/style since not filled
-	moveq	#0,d5
-	move.w	vwk_mode(a0),d5
-	move.l	d5,-(a7)
-
-	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
-
-;	bsr	col_pat
-;	move.l	d5,-(a7)
-;	move.l	d0,-(a7)
-	clr.l	-(a7)		; No pattern!
-	move.l	vwk_line_colour(a0),d0
+	move.l	intin(a1),a2
+	movem.w	0(a2),d0-d1	; Angles
+	move.l	d1,-(a7)
 	move.l	d0,-(a7)
 
-	moveq	#0,d5
-	moveq	#0,d6
-	move.l	intin(a1),a2
-	movem.w	0(a2),d5-d6
-	move.l	d6,d7
-	sub.w	d5,d7
-	bpl	.not_negative
-	add.w	#3600,d7
-.not_negative:
-
-;	if (xfm_mode < 2)	/* If xform != raster then flip */
-;		yrad = yres - yrad;
-
-	bsr	calc_nsteps
-
-	mulu	d7,d0
-	divu	#3600,d0
-	ext.l	d0
-	beq	.ellarc_finish
-
-	move.l	d0,-(a7)	; n_steps
-	move.l	d7,-(a7)
-	move.l	d6,-(a7)
-	move.l	d5,-(a7)
-	move.l	d4,-(a7)
-	move.l	d3,-(a7)
-	move.l	d2,-(a7)
+	move.l	ptsin(a1),a2
+	movem.w	4(a2),d0-d1	; Radii
 	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+	movem.w	0(a2),d0-d1	; Center
+	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+
 	move.l	#6,-(a7)	; ellarc
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points, mode, interior_style
+	jsr	_ellipsearc	; vwk, gdp, xc, yc, xrad, yrad, b_ang, e_ang
+	add.w	#8*4,a7
 
-	add.w	#10*4,a7
-
-.ellarc_finish:
-	addq.l	#2*4,a7
-
-	bsr	free_block
-	add.w	#3*4,a7
-
-.ellarc_end:
-	movem.l	(a7)+,d2-d7
+	move.l	(a7)+,d2
 	used_d1
 	done_return
 
@@ -701,79 +622,29 @@ v_ellarc:
 *       a0      VDI struct
 v_ellpie:
 	uses_d1
+	move.l	d2,-(a7)
 
-	movem.l	d2-d7,-(a7)
-	move.l	ptsin(a1),a2
+	moveq	#0,d0
 	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	movem.w	0(a2),d1-d4
-;	tst.w	d3
-;	beq	.ellpie_end
-
-	clr.l	-(a7)
-	bsr	allocate_block
-	addq.l	#4,a7
-	tst.l	d0
-	beq	.ellpie_end
-
-	move.w	vwk_fill_interior(a0),d5
-	swap	d5
-	move.w	vwk_fill_style(a0),d5
-	move.l	d5,-(a7)
-	moveq	#0,d5
-	move.w	vwk_mode(a0),d5
-	move.l	d5,-(a7)
-
-	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
-
-	bsr	col_pat
-	move.l	d5,-(a7)
+	move.l	intin(a1),a2
+	movem.w	0(a2),d0-d1	; Angles
+	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+	
+	move.l	ptsin(a1),a2
+	movem.w	4(a2),d0-d1	; Radii
+	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+	movem.w	0(a2),d0-d1	; Center
+	move.l	d1,-(a7)
 	move.l	d0,-(a7)
 
-	moveq	#0,d5
-	moveq	#0,d6
-	move.l	intin(a1),a2
-	movem.w	0(a2),d5-d6
-	move.l	d6,d7
-	sub.w	d5,d7
-	lbpl	.not_negative,1
-	add.w	#3600,d7
- label .not_negative,1
-
-;	if (xfm_mode < 2)	/* If xform != raster then flip */
-;		yrad = yres - yrad;
-
-	bsr	calc_nsteps
-
-	mulu	d7,d0
-	divu	#3600,d0
-	ext.l	d0
-	beq	.ellpie_finish
-
-	move.l	d0,-(a7)	; n_steps
-	move.l	d7,-(a7)
-	move.l	d6,-(a7)
-	move.l	d5,-(a7)
-	move.l	d4,-(a7)
-	move.l	d3,-(a7)
-	move.l	d2,-(a7)
-	move.l	d1,-(a7)
 	move.l	#7,-(a7)	; ellpie
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, colour, pattern, points, mode, interior_style
+	jsr	_ellipsearc	; vwk, gdp, xc, yc, xrad, yrad, b_ang, e_ang
+	add.w	#8*4,a7
 
-	add.w	#10*4,a7
-
-.ellpie_finish:
-	addq.l	#2*4,a7
-
-	bsr	free_block
-	add.w	#3*4,a7
-
-.ellpie_end:
-	movem.l	(a7)+,d2-d7
+	move.l	(a7)+,d2
 	used_d1
 	done_return
 
@@ -785,70 +656,30 @@ v_ellpie:
 *       a0      VDI struct
 v_ellipse:
 ;	use_special_stack
-  ifne 1
 	uses_d1
-
-	movem.l	d2-d5,-(a7)
-	move.l	ptsin(a1),a2
-
-	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	movem.w	0(a2),d1-d4
-;	tst.w	d3				; Not sure this should be here
-;	beq	.ellipse_end
-
-	clr.l	-(a7)
-	bsr	allocate_block
-	addq.l	#4,a7
-	tst.l	d0
-	beq	.ellipse_end
-
-	move.w	vwk_fill_interior(a0),d5
-	swap	d5
-	move.w	vwk_fill_style(a0),d5
-	move.l	d5,-(a7)
-	moveq	#0,d5
-	move.w	vwk_mode(a0),d5
-	move.l	d5,-(a7)
-
-	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
-
-	bsr	col_pat
-	move.l	d5,-(a7)
-	move.l	d0,-(a7)
-
-  ifne 0
-	...
-;	if (xfm_mode < 2) /* if xform != raster then flip */
-;		yrad = yres - yrad;	
-  endc
-
-	bsr	calc_nsteps
-	move.l	d0,-(a7)	; n_steps
-	move.l	#3600,-(a7)
-	move.l	#0,-(a7)
-	move.l	#0,-(a7)
-	move.l	d4,-(a7)
-	move.l	d3,-(a7)
 	move.l	d2,-(a7)
+
+	clr.l	-(a7)		; Dummy angles
+	clr.l	-(a7)
+
+	moveq	#0,d0
+	moveq	#0,d1
+	move.l	ptsin(a1),a2
+	movem.w	4(a2),d0-d1	; Radii
 	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+	movem.w	0(a2),d0-d1	; Center
+	move.l	d1,-(a7)
+	move.l	d0,-(a7)
+	
 	move.l	#5,-(a7)	; ellipse
 	move.l	a0,-(a7)
-	jsr	_clc_arc	; vwk, gdb_code, xc, yc, xrad, yrad, 0, 0, 3600, n_steps, colour, pattern, points, mode, interior_style
+	jsr	_ellipsearc	; vwk, gdp, xc, yc, xrad, yrad, b_ang, e_ang
+	add.w	#8*4,a7
 
-	add.w	#12*4,a7
-
-	bsr	free_block
-	add.w	#3*4,a7
-
-.ellipse_end:
-	movem.l	(a7)+,d2-d5
+	move.l	(a7)+,d2
 	used_d1
 	done_return
-  endc
-; Removed old code
 
 
 	dc.b	0,"v_rbox",0
@@ -858,12 +689,15 @@ v_ellipse:
 *       a0      VDI struct
 v_rbox:
 	uses_d1
-	subq.l	#4,a7
-	move.l	ptsin(a1),0(a7)		; Edges
+	move.l	d2,-(a7)
 
-	move.l	a7,a1
-	bsr	lib_v_rbox
-	addq.l	#4,a7
+	move.l	ptsin(a1),-(a7)	; Edges
+	move.l	#8,-(a7)	; rbox
+	move.l	a0,-(a7)
+	jsr	_rounded_box	; vwk, gdb_code, points
+	add.w	#3*4,a7
+
+	move.l	(a7)+,d2	
 	used_d1
 	done_return			; Should be real_return
 
@@ -872,58 +706,15 @@ v_rbox:
 * In:	a1	Parameters  lib_v_rbox(points)
 *	a0	VDI struct
 lib_v_rbox:
-	movem.l	d2-d5,-(a7)
-
-	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	move.l	0(a1),a1
-	movem.w	0(a1),d1-d4
-
-	cmp.w	d1,d3
-	bge	.rb_xorder
-	exg	d1,d3
-.rb_xorder:
-	cmp.w	d2,d4
-	bge	.rb_yorder
-	exg	d2,d4
-.rb_yorder:
-
-	clr.l	-(a7)
-	bsr	allocate_block
-	addq.l	#4,a7
-	tst.l	d0
-	beq	.rbox_end
-
-	move.w	vwk_fill_interior(a0),d5
-	swap	d5
-	move.w	vwk_fill_style(a0),d5
-	move.l	d5,-(a7)
-	moveq	#0,d5
-	move.w	vwk_mode(a0),d5
-	move.l	d5,-(a7)
-
-	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
-
-	bsr	col_pat
-	move.l	d5,-(a7)
-	move.l	d0,-(a7)
-	move.l	d4,-(a7)
-	move.l	d3,-(a7)
 	move.l	d2,-(a7)
-	move.l	d1,-(a7)
+
+	move.l	0(a1),-(a7)	; Edges
 	move.l	#8,-(a7)	; rbox
 	move.l	a0,-(a7)
-	jsr	_rounded_box	; vwk, gdb_code, x1, y1, x2, y2, colour, pattern, points, mode, interior_style
-
-	add.w	#8*4,a7
-
-	bsr	free_block
+	jsr	_rounded_box	; vwk, gdb_code, points
 	add.w	#3*4,a7
 
-.rbox_end:
-	movem.l	(a7)+,d2-d5
+	move.l	(a7)+,d2
 	rts
 
 
@@ -934,12 +725,15 @@ lib_v_rbox:
 *       a0      VDI struct
 v_rfbox:
 	uses_d1
-	subq.l	#4,a7
-	move.l	ptsin(a1),0(a7)		; Edges
+	move.l	d2,-(a7)
 
-	move.l	a7,a1
-	bsr	lib_v_rfbox
-	addq.l	#4,a7
+	move.l	ptsin(a1),-(a7)	; Edges
+	move.l	#9,-(a7)	; rfbox
+	move.l	a0,-(a7)
+	jsr	_rounded_box	; vwk, gdb_code, points
+	add.w	#3*4,a7
+
+	move.l	(a7)+,d2	
 	used_d1
 	done_return			; Should be real_return
 
@@ -948,58 +742,15 @@ v_rfbox:
 * In:	a1	Parameters  lib_v_rfbox(points)
 *	a0	VDI struct
 lib_v_rfbox:
-	movem.l	d2-d5,-(a7)
-
-	moveq	#0,d1
-	moveq	#0,d2
-	moveq	#0,d3
-	moveq	#0,d4
-	move.l	0(a1),a1
-	movem.w	0(a1),d1-d4
-
-	cmp.w	d1,d3
-	bge	.rfb_xorder
-	exg	d1,d3
-.rfb_xorder:
-	cmp.w	d2,d4
-	bge	.rfb_yorder
-	exg	d2,d4
-.rfb_yorder:
-
-	clr.l	-(a7)
-	bsr	allocate_block
-	addq.l	#4,a7
-	tst.l	d0
-	beq	.rfbox_end
-
-	move.w	vwk_fill_interior(a0),d5
-	swap	d5
-	move.w	vwk_fill_style(a0),d5
-	move.l	d5,-(a7)
-	moveq	#0,d5
-	move.w	vwk_mode(a0),d5
-	move.l	d5,-(a7)
-
-	move.l	d0,-(a7)	; For free_block below (and _clc_arc call)
-
-	bsr	col_pat
-	move.l	d5,-(a7)
-	move.l	d0,-(a7)
-	move.l	d4,-(a7)
-	move.l	d3,-(a7)
 	move.l	d2,-(a7)
-	move.l	d1,-(a7)
-	move.l	#9,-(a7)	; rbox
+
+	move.l	0(a1),-(a7)	; Edges
+	move.l	#9,-(a7)	; rfbox
 	move.l	a0,-(a7)
-	jsr	_rounded_box	; vwk, gdb_code, x1, y1, x2, y2, colour, pattern, points, mode, interior_style
-
-	add.w	#8*4,a7
-
-	bsr	free_block
+	jsr	_rounded_box	; vwk, gdb_code, points
 	add.w	#3*4,a7
 
-.rfbox_end:
-	movem.l	(a7)+,d2-d5
+	move.l	(a7)+,d2
 	rts
 
 
