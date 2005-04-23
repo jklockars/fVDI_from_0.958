@@ -1,7 +1,7 @@
 *****
 * Single plane text drawing
 *
-* $Id: 1_text.s,v 1.2 2002-07-03 21:43:25 johan Exp $
+* $Id: 1_text.s,v 1.3 2005-04-23 18:57:52 johan Exp $
 *
 * Copyright 1998-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -17,7 +17,7 @@ shift		equ	1
 only_16		equ	1
 
 
-	include		"pixelmac.dev"
+	include		"pixelmac.inc"
 	include		"vdi.inc"
 
 	xdef		text_area,_text_area

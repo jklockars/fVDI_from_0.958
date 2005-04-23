@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (C functions), by Johan Klockars
 *
-* $Id: c_common.s,v 1.5 2003-04-06 14:05:37 johan Exp $
+* $Id: c_common.s,v 1.6 2005-04-23 18:53:17 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -13,12 +13,7 @@
 *****
 
 	include		"vdi.inc"
-
-  ifne lattice
-	include		"macros.dev"
-  else
-	include		"macros.tas"
-  endc
+	include		"macros.inc"
 
 	xdef		_c_line
 	xdef		_c_set_pixel

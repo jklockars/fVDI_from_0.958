@@ -1,7 +1,7 @@
 *****
 * Single plane pixel get/set
 *
-* $Id: 1_pixel.s,v 1.2 2002-07-03 21:43:25 johan Exp $
+* $Id: 1_pixel.s,v 1.3 2005-04-23 18:57:52 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -14,7 +14,7 @@ get		equ	1
 mul		equ	1	; Multiply rather than use table
 shift		equ	1
 
-	include		"pixelmac.dev"
+	include		"pixelmac.inc"
 	include		"vdi.inc"
 
 	xdef		_write_pixel

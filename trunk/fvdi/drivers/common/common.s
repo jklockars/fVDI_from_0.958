@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (assembly functions), by Johan Klockars
 *
-* $Id: common.s,v 1.4 2003-04-06 14:01:36 johan Exp $
+* $Id: common.s,v 1.5 2005-04-23 18:53:17 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -16,12 +16,7 @@ both		equ	1	; Write in both FastRAM and on screen
 upto8		equ	0	; Handle 8 bit drawing
 
 	include		"vdi.inc"
-
-  ifne lattice
-	include		"macros.dev"
-  else
-	include		"macros.tas"
-  endc
+	include		"macros.inc"
 
 	xdef		_line
 	xdef		_set_pixel

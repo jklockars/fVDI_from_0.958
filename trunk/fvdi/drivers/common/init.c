@@ -1,7 +1,7 @@
 /*
  * fVDI generic device driver initialization, by Johan Klockars
  *
- * $Id: init.c,v 1.5 2003-04-06 14:07:10 johan Exp $
+ * $Id: init.c,v 1.6 2005-04-23 18:53:17 johan Exp $
  *
  * Since it would be difficult to do without this file when
  * writing new device drivers, and to make it possible for
@@ -16,12 +16,7 @@
  * and such are added to the fVDI kernel.
  */
 
-#ifdef __PUREC__
-   #include <tos.h>
-#else
-   #include <osbind.h>
-#endif
-
+#include "os.h"
 #include "fvdi.h"
 #include "relocate.h"
 #include "driver.h"
@@ -144,7 +139,7 @@ long tokenize(const char *ptr)
 			ptr = access->funcs.get_token(ptr, token, 80);
 			accelerate = 0;
 			tmp = token;
-			while (ch = *tmp++) {	/* Figure out what things should be accelerated */
+			while ((ch = *tmp++)) {	/* Figure out what things should be accelerated */
 				accelerate <<= 1;
 				if ((ch != '0') && (ch != '-'))
 					accelerate++;
@@ -434,7 +429,7 @@ long CDECL init(Access *_access, Driver *driver, Virtual *vwk, char *opts)
 			else if (accel_c & A_MOUSE)
 				wk->r.mouse = &c_mouse;
 		} else {
-			if (wk->mouse.extra_info = access->funcs.malloc((16 * 16 + 2 ) * sizeof(short), 3))
+			if ((wk->mouse.extra_info = access->funcs.malloc((16 * 16 + 2 ) * sizeof(short), 3)))
 				wk->mouse.type = 1;
 		}
 	}
