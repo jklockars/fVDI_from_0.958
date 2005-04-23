@@ -3,21 +3,20 @@
 #include "driver.h"
 
 
-extern long CDECL c_get_videoramaddress(void); /* STanda */
-extern void CDECL c_set_resolution(long width, long height, long depth, long freq); /* STanda */
-extern int nf_initialize(long cookie);
+int nf_initialize(void);
 
+long CDECL c_get_videoramaddress(void);
+void CDECL c_set_resolution(long width, long height, long depth, long freq);
+long CDECL c_get_width(void);
+long CDECL c_get_height(void);
+void CDECL c_openwk(Virtual *vwk);
+void CDECL c_closewk(Virtual *vwk);
+
+/* color bit organization */
+char none[] = {0};
 char r_8[] = {8};
 char g_8[] = {8};
 char b_8[] = {8};
-char r_15[] = {5, 2, 3, 4, 5, 6};
-char g_15[] = {5, 13, 14, 15, 0, 1};
-char b_15[] = {5, 8, 9, 10, 11, 12};
-char u_15[] = {1, 7};
-char r_15f[] = {5, 10, 11, 12, 13, 14};
-char g_15f[] = {5, 5, 6, 7, 8, 9};
-char b_15f[] = {5, 0, 1, 2, 3, 4};
-char u_15f[] = {1, 15};
 char r_16[] = {5, 3, 4, 5, 6, 7};
 char g_16[] = {6, 13, 14, 15, 0, 1, 2};
 char b_16[] = {5, 8, 9, 10, 11, 12};
@@ -27,36 +26,73 @@ char b_16f[] = {5, 0, 1, 2, 3, 4};
 char r_32[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
 char g_32[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
 char b_32[] = {8,  0,  1,  2,  3,  4,  5,  6,  7};
-char u_32[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
 char r_32f[] = {8,  8,  9, 10, 11, 12, 13, 14, 15};
 char g_32f[] = {8, 16, 17, 18, 19, 20, 21, 22, 23};
 char b_32f[] = {8, 24, 25, 26, 27, 28, 29, 30, 31};
-char u_32f[] = {8, 0, 1, 2, 3, 4, 5, 6, 7};
-char none[] = {0};
 
-Mode mode[] = /* FIXME: big and little endian differences. */
-	{
-	 { 1, CHECK_PREVIOUS,                        {  r_8,   g_8,   b_8, none, none, none},  0, 2, 2, 1},
-	 { 2, CHECK_PREVIOUS,                        {  r_8,   g_8,   b_8, none, none, none},  0, 2, 2, 1},
-	 { 4, CHECK_PREVIOUS,                        {  r_8,   g_8,   b_8, none, none, none},  0, 2, 2, 1},
-	 { 8, CHUNKY | CHECK_PREVIOUS,               {  r_8,   g_8,   b_8, none, none, none},  0, 2, 2, 1},
-	 {15, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_15f, g_15f, b_15f, none, none, u_15f}, 0, 2, 2, 1},
-	 {16, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_16f, g_16f, b_16f, none, none, none},  0, 2, 2, 1},
-	 {24, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32f, g_32f, b_32f, none, none, none},  0, 2, 2, 1},
-	 {32, CHUNKY | CHECK_PREVIOUS | TRUE_COLOUR, {r_32f, g_32f, b_32f, none, none, u_32f}, 0, 2, 2, 1}};
+/**
+ * Mode *graphics_mode
+ *
+ * bpp     The number of bits per pixel
+ *
+ * flags   Various information (OR together the appropriate ones)
+ *           CHECK_PREVIOUS - Ask fVDI to look at the previous graphics mode
+ *                            set by the ROM VDI (I suppose.. *standa*)
+ *           CHUNKY         - Pixels are chunky
+ *           TRUE_COLOUR    - Pixel value is colour value (no palette)
+ *
+ * bits    Poperly set up MBits structure:
+ *           red, green, blue,  - Pointers to arrays containing the number of
+ *           alpa, genlock,       of bits and the corresponding bit numbers
+ *           unused               (the latter only for true colour modes)
+ *
+ * code    Driver dependent value
+ *
+ * format  Type of graphics mode
+ *           0 - interleaved
+ *           2 - packed pixels
+ *
+ * clut    Type of colour look up table
+ *           1 - hardware
+ *           2 - software
+ *
+ * org     Pixel bit organization (OR together the appropriate ones)
+ *           0x01 - usual bit order
+ *           0x80 - Intel byte order
+ **/
+Mode mode[7] = /* FIXME: big and little endian differences. */
+{
+	                   /* ... 0, interleaved, hardware clut, usual bit order */
+	{ 1, CHECK_PREVIOUS, {r_8,   g_8,   b_8,    none, none, none}, 0, 0, 1, 1},
+	{ 2, CHECK_PREVIOUS, {r_8,   g_8,   b_8,    none, none, none}, 0, 0, 1, 1},
+	{ 4, CHECK_PREVIOUS, {r_8,   g_8,   b_8,    none, none, none}, 0, 0, 1, 1},
+	{ 8, CHECK_PREVIOUS, {r_8,   g_8,   b_8,    none, none, none}, 0, 0, 1, 1},
+
+	          /* ... 0, packed pixels, software clut (none), usual bit order */
+	{16, CHECK_PREVIOUS | CHUNKY | TRUE_COLOUR,
+                              {r_16f, g_16f, b_16f, none, none, none}, 0, 2, 2, 1},
+	{24, CHECK_PREVIOUS | CHUNKY | TRUE_COLOUR,
+                              {r_32f, g_32f, b_32f, none, none, none}, 0, 2, 2, 1},
+	{32, CHECK_PREVIOUS | CHUNKY | TRUE_COLOUR,
+                              {r_32,  g_32,  b_32,  none, none, none}, 0, 2, 2, 1}
+};
 
 extern Device device;
 
-char driver_name[] = "NatFeat/ARAnyM 2002-10-31 (xx bit, shadow)";
+char driver_name[] = "NatFeat/ARAnyM 2005-01-24 (xx bit)";
 
 struct {
-	short used;		/* Whether the mode option was used or not. */
+	short used; /* Whether the mode option was used or not. */
 	short width;
 	short height;
 	short bpp;
 	short freq;
 } resolution = {0, 640, 480, 16, 85};
 
+struct {
+	short width;
+	short height;
+} pixel;
 
 extern Driver *me;
 extern Access *access;
@@ -73,12 +109,9 @@ long wk_extend = 0;
 short accel_s = 0;
 short accel_c = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_EXPAND | A_FILLPOLY | A_SET_PAL | A_GET_COL;
 
-Mode *graphics_mode = &mode[5];		/* Default to 16 bit mode */
+Mode *graphics_mode = &mode[1];
 
 short debug = 0;
-
-short shadow = 1;
-short nf_check = 1;
 
 extern void *c_write_pixel;
 extern void *c_read_pixel;
@@ -88,9 +121,9 @@ extern void *c_fill_area;
 extern void *c_fill_polygon;
 extern void *c_blit_area;
 extern void *c_mouse_draw;
-extern void *c_set_colours_8, *c_set_colours_15, *c_set_colours_16, *c_set_colours_32;
-extern void *c_get_colours_8, *c_get_colours_15, *c_get_colours_16, *c_get_colours_32;
-extern void *c_get_colour_8, *c_get_colour_15, *c_get_colour_16, *c_get_colour_32;
+extern void *c_set_colours_8, *c_set_colours_16, *c_set_colours_32;
+extern void *c_get_colours_8, *c_get_colours_16, *c_get_colours_32;
+extern void *c_get_colour_8, *c_get_colour_16, *c_get_colour_32;
 
 void *write_pixel_r = &c_write_pixel;
 void *read_pixel_r  = &c_read_pixel;
@@ -105,26 +138,12 @@ void *set_colours_r = &c_set_colours_16;
 void *get_colours_r = &c_get_colours_16;
 void *get_colour_r  = &c_get_colour_16;
 
-
-#if 0
-short cache_img = 0;
-short cache_from_screen = 0;
-#endif
-
 long set_mode(const char **ptr);
 long set_scrninfo(const char **ptr);
 
 
 Option options[] = {
-#if 0
-	{"aesbuf",     set_aesbuf,        -1},  /* aesbuf address, set AES background buffer address */
-	{"screen",     set_screen,        -1},  /* screen address, set old screen address */
-	{"imgcache",   &cache_img,         1},  /* imgcache, turn on caching of images blitted to the screen */
-	{"screencache",&cache_from_screen, 1},  /* screencache, turn on caching of images blitted from the screen */
-#endif
 	{"mode",       set_mode,          -1},  /* mode WIDTHxHEIGHTxDEPTH@FREQ */
-	{"noshadow",   &shadow,            0},  /* noshadow, do not use a RAM buffer */
-	{"assumenf",   &nf_check,          0},  /* assumenf, do not look for __NF cookie */
 	{"scrninfo",   set_scrninfo,      -1},  /* scrninfo fb, make vq_scrninfo return values regarding actual fb layout */
 	{"debug",      &debug,             2}   /* debug, turn on debugging aids */
 };
@@ -167,30 +186,32 @@ long set_mode(const char **ptr)
 	tokenptr = get_num(tokenptr, &resolution.freq);
 
 	resolution.used = 1;
-
-	for(i = 0; i < sizeof(mode) / sizeof(*mode); i++) {
-		if (mode[i].bpp == resolution.bpp) {
-			graphics_mode = &mode[i];
-			break;
-		}
+	
+	switch (resolution.bpp) {
+	case 1:
+		graphics_mode = &mode[0];
+		driver_name[28] = '1';
+		break;
+	case 2:
+		graphics_mode = &mode[1];
+		driver_name[28] = '2';
+		break;
+	case 4:
+		graphics_mode = &mode[2];
+		driver_name[28] = '4';
+		break;
+	case 8:
+		driver_name[28] = '8';
+	case 16:
+	case 24:
+	case 32:
+		graphics_mode = &mode[resolution.bpp / 8 + 2];
+		break;
+	default:
+		resolution.bpp = 16;		/* Default as 16 bit */
 	}
-	resolution.bpp = graphics_mode->bpp;
 
 	switch (resolution.bpp) {
-	case 8:
-		set_colours_r = &c_set_colours_8;
-		get_colours_r = &c_get_colours_8;
-		get_colour_r  = &c_get_colour_8;
-		driver_name[27] = '8';
-		driver_name[28] = ' ';
-		break;
-	case 15:
-		set_colours_r = &c_set_colours_15;
-		get_colours_r = &c_get_colours_15;
-		get_colour_r  = &c_get_colour_15;
-		driver_name[27] = '1';
-		driver_name[28] = '5';
-		break;
 	case 16:
 		set_colours_r = &c_set_colours_16;
 		get_colours_r = &c_get_colours_16;
@@ -199,12 +220,6 @@ long set_mode(const char **ptr)
 		driver_name[28] = '6';
 		break;
 	case 24:
-		set_colours_r = &c_set_colours_32;
-		get_colours_r = &c_get_colours_32;
-		get_colour_r  = &c_get_colour_32;
-		driver_name[27] = '2';
-		driver_name[28] = '4';
-		break;
 	case 32:
 		set_colours_r = &c_set_colours_32;
 		get_colours_r = &c_get_colours_32;
@@ -212,38 +227,20 @@ long set_mode(const char **ptr)
 		driver_name[27] = '3';
 		driver_name[28] = '2';
 		break;
+	/* indexed color modes */
+	default:
+		set_colours_r = &c_set_colours_8;
+		get_colours_r = &c_get_colours_8;
+		get_colour_r  = &c_get_colour_8;
+		driver_name[27] = ' ';
+		break;
 	}
 
 	return 1;
 }
 
 
-#if 0
-long set_aesbuf(const char **ptr)
-{
-	char token[80];
-
-	if (!(*ptr = access->funcs.skip_space(*ptr)))
-		;		/* *********** Error, somehow */
-	*ptr = access->funcs.get_token(*ptr, token, 80);
-	aes_buffer = access->funcs.atol(token);
-
-	return 1;
-}
-
-long set_screen(const char **ptr)
-{
-	char token[80];
-
-	if (!(*ptr = access->funcs.skip_space(*ptr)))
-		;		/* *********** Error, somehow */
-	*ptr = access->funcs.get_token(*ptr, token, 80);
-	old_screen = access->funcs.atol(token);
-
-	return 1;
-}
-#endif
-
+void setup_scrninfo(Device *device, Mode *graphics_mode); /* from init.c */
 
 long set_scrninfo(const char** ptr)
 {
@@ -254,43 +251,31 @@ long set_scrninfo(const char** ptr)
 	*ptr = access->funcs.get_token(*ptr, token, 80);
 
 	if (access->funcs.equal(token, "fb")) {
-		mode[4].bits.red = r_15;
-		mode[4].bits.green = g_15;
-		mode[4].bits.blue = b_15;
-		mode[4].bits.unused = u_15;
+		mode[4].bits.red = r_16;
+		mode[4].bits.green = g_16;
+		mode[4].bits.blue = b_16;
 		mode[4].org = 0x81;
-		mode[5].bits.red = r_16;
-		mode[5].bits.green = g_16;
-		mode[5].bits.blue = b_16;
+		mode[5].bits.red = r_32;
+		mode[5].bits.green = g_32;
+		mode[5].bits.blue = b_32;
 		mode[5].org = 0x81;
 		mode[6].bits.red = r_32;
 		mode[6].bits.green = g_32;
 		mode[6].bits.blue = b_32;
 		mode[6].org = 0x81;
-		mode[7].bits.red = r_32;
-		mode[7].bits.green = g_32;
-		mode[7].bits.blue = b_32;
-		mode[7].bits.unused = u_32;
-		mode[7].org = 0x81;
 	} else {
-		mode[4].bits.red = r_15f;
-		mode[4].bits.green = g_15f;
-		mode[4].bits.blue = b_15f;
-		mode[4].bits.unused = u_15f;
+		mode[4].bits.red = r_16f;
+		mode[4].bits.green = g_16f;
+		mode[4].bits.blue = b_16f;
 		mode[4].org = 0x01;
-		mode[5].bits.red = r_16f;
-		mode[5].bits.green = g_16f;
-		mode[5].bits.blue = b_16f;
+		mode[5].bits.red = r_32f;
+		mode[5].bits.green = g_32f;
+		mode[5].bits.blue = b_32f;
 		mode[5].org = 0x01;
 		mode[6].bits.red = r_32f;
 		mode[6].bits.green = g_32f;
 		mode[6].bits.blue = b_32f;
-		mode[6].org = 0x81;
-		mode[7].bits.red = r_32f;
-		mode[7].bits.green = g_32f;
-		mode[7].bits.blue = b_32f;
-		mode[7].bits.unused = u_32f;
-		mode[7].org = 0x01;
+		mode[6].org = 0x01;
 	}
 
 	if (me && me->device)
@@ -352,95 +337,65 @@ long check_token(char *token, const char **ptr)
 }
 
 
-/*
- * Do whatever setup work might be necessary on boot up
- * and which couldn't be done directly while loading.
- * Supplied is the default fVDI virtual workstation.
- */
-void CDECL initialize(Virtual *vwk)
+static void setup_wk(Virtual *vwk)
 {
-	Workstation *wk;
-	int old_palette_size;
-	Colour *old_palette_colours;
-	long fb_base;
-	long nf_value = 0;
+	Workstation *wk = vwk->real_address;
 
-	if (nf_check) {
-		nf_value = access->funcs.get_cookie("__NF", 0);
-		if (nf_value == -1) {
-			access->funcs.puts("  Could not find NatFeat cookie!");
-			access->funcs.puts("\x0d\x0a");
-			return;
-		}
-	}
-	if (!nf_initialize(nf_value)) {
-		access->funcs.puts("  No or incompatible NatFeat fVDI!");
-		access->funcs.puts("\x0d\x0a");
-		return;
-	}
-
-	fb_base = c_get_videoramaddress();
-
-#if 0
-	debug = access->funcs.misc(0, 1, 0);
-#endif
-
-	if (debug > 2) {
-		char buf[10];
-		access->funcs.puts("  fb_base  = $");
-		access->funcs.ltoa(buf, fb_base, 16);
-		access->funcs.puts(buf);
-		access->funcs.puts("\x0d\x0a");
-	}
-
-	vwk = me->default_vwk;	/* This is what we're interested in */
-	wk = vwk->real_address;
-
-
-	if (resolution.used) {
-		resolution.bpp = graphics_mode->bpp; /* Table value (like rounded down) --- e.g. no 23bit but 16 etc */
-
-		wk->screen.mfdb.width = resolution.width;
-		wk->screen.mfdb.height = resolution.height;
-	} else {
-		/* FIXME: Hack to get it working after boot in less than 16bit */
-		resolution.bpp = graphics_mode->bpp;	/* 16 bit by default */
-	}
-
+	/* update the settings */
+	wk->screen.mfdb.width = resolution.width;
+	wk->screen.mfdb.height = resolution.height;
+	wk->screen.mfdb.bitplanes = resolution.bpp;
 
 	/*
-	 * Some things need to be changed from the	
+	 * Some things need to be changed from the
 	 * default workstation settings.
 	 */
-	wk->screen.mfdb.address = (void *)fb_base;
-	wk->screen.mfdb.wdwidth = ((long)wk->screen.mfdb.width * resolution.bpp) / 16;
-	wk->screen.mfdb.bitplanes = resolution.bpp;
-	wk->screen.wrap = wk->screen.mfdb.width * (resolution.bpp / 8);
+	wk->screen.mfdb.address = (void *)c_get_videoramaddress();
+	wk->screen.mfdb.wdwidth = ((long)wk->screen.mfdb.width * wk->screen.mfdb.bitplanes) / 16;
+	wk->screen.wrap = wk->screen.mfdb.width * (wk->screen.mfdb.bitplanes / 8);
 
 	wk->screen.coordinates.max_x = wk->screen.mfdb.width - 1;
 	wk->screen.coordinates.max_y = (wk->screen.mfdb.height & 0xfff0) - 1;	/* Desktop can't deal with non-16N heights */
 
 	wk->screen.look_up_table = 0;			/* Was 1 (???)	Shouldn't be needed (graphics_mode) */
 	wk->screen.mfdb.standard = 0;
-	if (wk->screen.pixel.width > 0)			/* Starts out as screen width */
-		wk->screen.pixel.width = (wk->screen.pixel.width * 1000L) / wk->screen.mfdb.width;
+
+	if (pixel.width > 0)			/* Starts out as screen width */
+		wk->screen.pixel.width = (pixel.width * 1000L) / wk->screen.mfdb.width;
 	else								   /*	or fixed DPI (negative) */
-		wk->screen.pixel.width = 25400 / -wk->screen.pixel.width;
-	if (wk->screen.pixel.height > 0)		/* Starts out as screen height */
-		wk->screen.pixel.height = (wk->screen.pixel.height * 1000L) / wk->screen.mfdb.height;
+		wk->screen.pixel.width = 25400 / -pixel.width;
+
+	if (pixel.height > 0)		/* Starts out as screen height */
+		wk->screen.pixel.height = (pixel.height * 1000L) / wk->screen.mfdb.height;
 	else									/*	 or fixed DPI (negative) */
-		wk->screen.pixel.height = 25400 / -wk->screen.pixel.height;
+		wk->screen.pixel.height = 25400 / -pixel.height;
 	
+	device.address		= wk->screen.mfdb.address;
+	device.byte_width	= wk->screen.wrap;
+
+	/**
+	 * The following needs to be here due to bpp > 8 modes where the SDL
+	 * palette needs the appropriate SDL_surface->format to be set prior
+	 * use i.e. _after_ the resolution change
+	 **/
+	c_initialize_palette(vwk, 0, wk->screen.palette.size, colours, wk->screen.palette.colours);
+}
+
+
+static void initialize_wk(Virtual *vwk)
+{
+	Workstation *wk = vwk->real_address;
+
+	if (loaded_palette)
+		access->funcs.copymem(loaded_palette, colours, 256 * 3 * sizeof(short));
 
 	/*
 	 * This code needs more work.
 	 * Especially if there was no VDI started since before.
 	 */
 
-	if (loaded_palette)
-		access->funcs.copymem(loaded_palette, colours, 256 * 3 * sizeof(short));
-	if ((old_palette_size = wk->screen.palette.size) != 256) {	/* Started from different graphics mode? */
-		old_palette_colours = wk->screen.palette.colours;
+	if (wk->screen.palette.size != 256) {	/* Started from different graphics mode? */
+		Colour *old_palette_colours = wk->screen.palette.colours;
 		wk->screen.palette.colours = (Colour *)access->funcs.malloc(256L * sizeof(Colour), 3);	/* Assume malloc won't fail. */
 		if (wk->screen.palette.colours) {
 			wk->screen.palette.size = 256;
@@ -450,24 +405,40 @@ void CDECL initialize(Virtual *vwk)
 			wk->screen.palette.colours = old_palette_colours;
 	}
 
-	if (debug > 1) {
-		access->funcs.puts("  Setting up palette");
+
+	pixel.width = wk->screen.pixel.width;
+	pixel.height = wk->screen.pixel.height;
+}
+
+
+/*
+ * Do whatever setup work might be necessary on boot up
+ * and which couldn't be done directly while loading.
+ * Supplied is the default fVDI virtual workstation.
+ */
+void CDECL initialize(Virtual *vwk)
+{
+	vwk = me->default_vwk;  /* This is what we're interested in */
+	
+	if (!nf_initialize()) {
+		access->funcs.puts("  No or incompatible NatFeat fVDI!");
+		access->funcs.puts("\x0d\x0a");
+		return;
+	}
+
+	initialize_wk(vwk);
+
+	setup_wk(vwk);
+
+	if (debug > 2) {
+		char buf[10];
+		access->funcs.puts("  fb_base  = $");
+		access->funcs.ltoa(buf, c_get_videoramaddress(), 16);
+		access->funcs.puts(buf);
 		access->funcs.puts("\x0d\x0a");
 	}
-
-	if (accel_c & A_SET_PAL)
-		c_initialize_palette(vwk, 0, wk->screen.palette.size, colours, wk->screen.palette.colours);
-	else
-		initialize_palette(vwk, 0, wk->screen.palette.size, colours, wk->screen.palette.colours);
-
-	device.byte_width = wk->screen.wrap;
-	device.address = wk->screen.mfdb.address;
-
-	if (!wk->screen.shadow.address) {
-		driver_name[33] = ')';
-		driver_name[34] = 0;
-	}
 }
+
 
 /*
  *
@@ -477,7 +448,7 @@ long CDECL setup(long type, long value)
 	long ret;
 
 	ret = -1;
-	switch(type) {
+	switch((int)type) {
 	case Q_NAME:
 		ret = (long)driver_name;
 		break;
@@ -489,6 +460,7 @@ long CDECL setup(long type, long value)
 	return ret;
 }
 
+
 /*
  * Initialize according to parameters (boot and sent).
  * Create new (or use old) Workstation and default Virtual.
@@ -496,19 +468,35 @@ long CDECL setup(long type, long value)
  */
 Virtual* CDECL opnwk(Virtual *vwk)
 {
+	vwk = me->default_vwk;  /* This is what we're interested in */
+
+	/* switch off VIDEL */
+	c_openwk(vwk);
+
 	if (resolution.used) {
+		resolution.bpp = graphics_mode->bpp; /* Table value (like rounded down) --- e.g. no 23bit but 16 etc */
+
 		c_set_resolution(resolution.width, resolution.height, resolution.bpp, resolution.freq);
-		device.address = (void*)c_get_videoramaddress();
-		me->default_vwk->real_address->screen.mfdb.address = device.address;
+	} else {
+		/* FIXME: Hack to get it working after boot in less than 16bit */
+		resolution.bpp = graphics_mode->bpp; /* 16 bit by default */
 	}
+
+	/* update the width/height if restricted by the native part */
+	resolution.width = c_get_width();
+	resolution.height = c_get_height();
+
+	setup_wk(vwk);
 
 	return 0;
 }
+
 
 /*
  * 'Deinitialize'
  */
 void CDECL clswk(Virtual *vwk)
 {
+	c_closewk(vwk);
 }
 
