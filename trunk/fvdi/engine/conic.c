@@ -1,7 +1,7 @@
 /*
  * fVDI circle/ellipse/pie/arc code
  *
- * $Id: conic.c,v 1.6 2004-10-24 13:01:11 johan Exp $
+ * $Id: conic.c,v 1.7 2005-04-23 19:03:13 johan Exp $
  *
  * Copyright 1999/2001-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -50,7 +50,8 @@ int SMUL_DIV(int, int, int);   //   d0d1d0d2
 
 
 void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad,
-             long beg_ang, long end_ang, long del_ang, long n_steps, long colour,
+             long beg_ang, long end_ang, long del_ang, long n_steps,
+	     Fgbg fill_colour, Fgbg border_colour,
              short *pattern, short *points, long mode, long interior_style)
 {
 	short i, j, start, angle;
@@ -86,15 +87,49 @@ void clc_arc(Virtual *vwk, long gdp_code, long xc, long yc, long xrad, long yrad
 	}
 
 	if ((gdp_code == 2) || (gdp_code == 6))	/* Open arc */
-		c_pline(vwk, n_steps + 1, colour, points - (n_steps + 1) * 2);
+		c_pline(vwk, n_steps + 1,
+		        *(long *)&border_colour, points - (n_steps + 1) * 2);
 	else {
 #if 0
-		filled_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points, mode, interior_style);
+		filled_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1,
+		            *(long *)&fill_colour, pattern, points, mode, interior_style);
 #else
-		fill_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1, colour, pattern, points, mode, interior_style);
+		fill_poly(vwk, points - (n_steps + 1) * 2, n_steps + 1,
+		          *(long *)&fill_colour, pattern, points, mode, interior_style);
 #endif
 		if (vwk->fill.perimeter)
-			c_pline(vwk, n_steps + 1, colour, points - (n_steps + 1) * 2);
+#if 0
+			c_pline(vwk, n_steps + 1,
+			        *(long *)&border_colour, points - (n_steps + 1) * 2);
+#else
+			c_pline(vwk, n_steps + 1,
+			        *(long *)&border_colour, points - (n_steps + 1) * 2);
+#endif
+	}
+}
+
+
+void col_pat(Virtual *vwk, Fgbg *fill_colour, Fgbg *border_colour, short **pattern)
+{
+	short interior;
+	extern short *pattern_ptrs[];
+
+	interior = vwk->fill.interior;
+
+	*border_colour = vwk->fill.colour;
+	if (interior)
+		*fill_colour = vwk->fill.colour;
+	else {
+		fill_colour->background = vwk->fill.colour.foreground;
+		fill_colour->foreground = vwk->fill.colour.background;
+	}
+
+	if (interior == 4)
+		*pattern = vwk->fill.user.pattern.in_use;
+	else {
+		*pattern = pattern_ptrs[interior];
+		if (interior & 2)     /* interior 2 or 3 */
+			*pattern += (vwk->fill.style - 1) * 16;
 	}
 }
 
@@ -167,14 +202,19 @@ void arc(Virtual *vwk, int xc, int yc, int xrad, int beg_ang, int end_ang, short
 	
 	clc_arc(vwk, 2, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, points);
 }
+#endif
 
 
-void ellipsearc(Virtual *vwk, int xc, int yc, int xrad, int yrad, int beg_ang, int end_ang, short *points)
+void ellipsearc(Virtual *vwk, long gdp_code,
+                long xc, long yc, long xrad, long yrad, long beg_ang, long end_ang)
 {
 	int del_ang, n_steps;
-	
+	short *points, *pattern;
+	Fgbg fill_colour, border_colour;
+	long interior_style;
+
 	del_ang = end_ang - beg_ang;
-	if (del_ang < 0)
+	if (del_ang <= 0)
 		del_ang += 3600;
 
 #if 0
@@ -187,9 +227,25 @@ void ellipsearc(Virtual *vwk, int xc, int yc, int xrad, int yrad, int beg_ang, i
 	if (n_steps == 0)
 		return;
 
-	clc_arc(vwk, 7, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang, n_steps, points);
+	if (!(points = (short *)allocate_block(0)))
+		return;
+
+	pattern = 0;
+	interior_style = 0;
+	border_colour = vwk->line.colour;
+	if (gdp_code == 7 || gdp_code == 5) {
+		col_pat(vwk, &fill_colour, &border_colour, &pattern);
+		interior_style = ((long)vwk->fill.interior << 16) |
+		                 (vwk->fill.style & 0xffffL);
+	}
+
+	/* Dummy fill colour, pattern and interior style since not filled */
+	clc_arc(vwk, gdp_code, xc, yc, xrad, yrad, beg_ang, end_ang, del_ang,
+	        n_steps, fill_colour, border_colour, pattern, points, vwk->mode,
+		interior_style);
+
+	free_block(points);
 }
-#endif
 
 
 #if 0
@@ -237,14 +293,46 @@ void arb_corner(WORD * corners, WORD type)
       rtmp_end = line_end;
       line_end = SQUARED;
 #endif
-void rounded_box(Virtual *vwk, long gdp_code, long x1, long y1, long x2, long y2, long colour,
-                 short *pattern, short *points, long mode, long interior_style)
+void rounded_box(Virtual *vwk, long gdp_code, short *coords)
+/* long x1, long y1, long x2, long y2) */
 {
 	short i, j;
 	short rdeltax, rdeltay;
 	short xc, yc, xrad, yrad;
+	short x1, y1, x2, y2;
 	Workstation *wk = vwk->real_address;
 	long n_steps;
+	short *points, *pattern;
+	Fgbg fill_colour, border_colour;
+	long interior_style;
+
+	if (!(points = (short *)allocate_block(0)))
+		return;
+
+	pattern = 0;
+	interior_style = 0;
+	border_colour = vwk->line.colour;
+	if (gdp_code == 9) {
+		col_pat(vwk, &fill_colour, &border_colour, &pattern);
+		interior_style = ((long)vwk->fill.interior << 16) |
+		                 (vwk->fill.style & 0xffffL);
+	}
+
+	x1 = coords[0];
+	y1 = coords[1];
+	if (x1 <= coords[2])
+		x2 = coords[2];
+	else {
+		x2 = x1;
+		x1 = coords[2];
+	}
+	if (y1 <= coords[3])
+		y2 = coords[3];
+	else {
+		y2 = y1;
+		y1 = coords[3];
+	}
+
 #if 0
 	arb_corner(PTSIN, LLUR);
 #endif
@@ -314,23 +402,29 @@ void rounded_box(Virtual *vwk, long gdp_code, long x1, long y1, long x2, long y2
 
 	if (gdp_code == 8) {
 #if 0
-		c_pline(vwk, n_steps + 1, colour, points - (n_steps + 1) * 2);
+		c_pline(vwk, n_steps + 1, *(long *)&border_colour, points - (n_steps + 1) * 2);
 #else
-		c_pline(vwk, 21, colour, points);
+		c_pline(vwk, 21, *(long *)&border_colour, points);
 #endif
 	} else {
 #if 0
-		filled_poly(vwk, points, 21, colour, pattern, points, mode, interior_style);
+		filled_poly(vwk, points, 21, *(long *)&fill_colour, pattern, points, vwk->mode, interior_style);
 #else
-		fill_poly(vwk, points, 21, colour, pattern, points, mode, interior_style);
+		fill_poly(vwk, points, 21, *(long *)&fill_colour, pattern, points, vwk->mode, interior_style);
 #endif
 		if (vwk->fill.perimeter)
 #if 0
-			c_pline(vwk, 21, colour, points - (n_steps + 1) * 2);
+			c_pline(vwk, 21, *(long *)&border_colour, points - (n_steps + 1) * 2);
 #else
-			c_pline(vwk, 21, colour, points);
+ #if 0
+			c_pline(vwk, 21, *(long *)&border_colour, points);
+ #else
+			c_pline(vwk, 21, *(long *)&border_colour, points);
+ #endif
 #endif
 	}
+
+	free_block(points);
 }
 	
 
