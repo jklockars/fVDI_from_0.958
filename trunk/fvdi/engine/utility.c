@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.9 2004-10-17 21:44:11 johan Exp $
+ * $Id: utility.c,v 1.10 2005-04-23 19:01:03 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -45,6 +45,14 @@ long nvdi = 0;
 long eddi = 0;
 long mint = 0;
 long magic = 0;
+
+typedef struct {  /* NatFeat code */
+        long magic;
+        long CDECL(*nfGetID) (const char *);
+        long CDECL(*nfCall) (long ID, ...);
+} NatFeatCookie;
+NatFeatCookie *nf_ptr = 0;
+long nf_printf_id = 0;
 
 long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
@@ -115,6 +123,13 @@ long get_cookie(const unsigned char *cname, long super)
    long (*get)(long addr);
 
    cname_l = str2long(cname);
+
+#if 0
+   if (gemdos(340, -1, 0L, 0L) == 0) {
+      /* Ssystem is available */
+      return gemdos(340, 8, cname_l, 0L);
+   }
+#endif
 
    get = super ? get_l : get_protected_l;
 
@@ -294,6 +309,14 @@ void check_cookies(void)
       mint = (long)addr;
    if ((addr = get_cookie("MagX", 0)) != -1)
       magic = (long)addr;
+   if ((addr = get_cookie("__NF", 0)) != -1) {
+      nf_ptr = (NatFeatCookie *)addr;
+      if (nf_ptr->magic != 0x20021021L)   /* NatFeat magic constant */
+	nf_ptr = 0;
+      else {
+        nf_printf_id = nf_ptr->nfGetID("DEBUGPRINTF");
+      }
+   }
 }
 
 
@@ -546,7 +569,11 @@ void puts(const char *text)
    if (debug_out == -2)
       Cconws(text);
    else if (debug_out == -1)
+#if 0
       ((void CDECL (*)(const char *))&ARAnyM_out)(text);
+#else
+     nf_ptr->nfCall(nf_printf_id, text);
+#endif
    else
       while (*text)
          Bconout(debug_out, *text++);
