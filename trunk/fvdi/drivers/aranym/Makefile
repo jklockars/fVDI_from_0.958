@@ -116,8 +116,8 @@ m68k-atari-mint-ld -o aranym.sys -L/usr/lib/gcc-lib/m68k-atari-mint/2.95.3 \
 ../common/common.s.gnu.o \
 ../common/clip.s.gnu.o \
 ../common/lineachk.s.gnu.o \
-../common/init.o \
-../common/colours.o \
+init.o \
+colours.o \
 spec.o \
 8b_pal.o \
 16b_pal.o \
