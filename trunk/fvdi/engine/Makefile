@@ -1,159 +1,96 @@
-#!/bin/sh
-
-# This is obviously not yet an actual Makefile.
-# For now, use:
-# source Makefile
-# or something equivalent.
+#!make -f
 #
-# Look at the end for compiler version dependent things.
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
 
-gcc -o ../utility/conv2gas/conv2gas ../utility/conv2gas/conv2gas.c
+#
+# gcc >= 2.95.3 (sparemint) version
+#
 
-for file in ../include/*.inc ../drivers/include/*.inc ../drivers/1_plane/1_expand.inc *.s ; do
-echo Converting $file $file.gnu;
+TARGET = fvdi_gnu.prg
 
-# Comments with * in the first position on the line
-sed "s%^\*.*%%" $file >$file.gnu
-mv $file.gnu $file.tmp
+all: $(TARGET)
 
-# Comments after ; separator
-sed "s%;.*$%%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+top_srcdir = ..
 
-# Conditional compilation
-sed "s%^\\([ \t]\+\\)ifne%\1.ifne%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)ifeq%\1.ifeq%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)else%\1.else%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)endc%\1.endif%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+include $(top_srcdir)/CONFIGVARS
 
-# Constants
-sed "s%^\\([^ \t]*\\)[ \t]\+equ[ \t]\+%\t.equiv\t\\1,%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([^ \t]*\\)[ \t]\+set[ \t]\+%\t.set\t\\1,%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+CFLAGS  = -mshort -m68040 -O2 -fomit-frame-pointer -I$(top_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
+LDFLAGS = $(M68K_ATARI_MINT_LDFLAGS)
+ASFLAGS = -m68040 --defsym gas=1 --defsym lattice=0 -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include -I$(top_srcdir)/drivers/1_plane
 
-# Sections
-sed "s%^\\([ \t]\+\\)text%\1.text%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)data%\1.data%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)bss%\1.bss%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+SINCSRC = \
+	$(top_srcdir)/include/compiler.inc \
+	$(top_srcdir)/include/macros.inc \
+	$(top_srcdir)/include/types.inc \
+	$(top_srcdir)/include/vdi.inc \
+	$(top_srcdir)/drivers/include/linea.inc \
+	$(top_srcdir)/drivers/include/pixelmac.inc \
+	$(top_srcdir)/drivers/1_plane/1_expand.inc
 
-# Includes
-sed "s%\.inc\"%.inc.gnu\"%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)include%\1.include%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+SSRC = \
+	fvdi.s \
+	blit.s \
+	colours.s \
+	draw.s \
+	expand.s \
+	fill_sq.s \
+	gnu.s \
+	line_sq.s \
+	mark_sq.s \
+	mouse.s \
+	simple.s \
+	support.s \
+	sys_call.s \
+	textrndr.s \
+	text.s \
+	text_sq.s \
+	traptabl.s \
+	unimpl.s \
+	vdi_misc.s
 
-# Hexadecimal numbers
-sed "s%\\$%0x%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+CSRC = \
+	startup.c \
+	utility.c \
+	bezier.c \
+	conic.c \
+	escape.c \
+	fonts.c \
+	line.c \
+	loader.c \
+	math.c \
+	patterns.c \
+	polygon.c \
+	setup.c \
+	workstn.c
 
-# Data
-sed "s%\\([ \t]\+\\)dc.b%\1.byte%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.w%\1.word%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.l%\1.long%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+# handle DevPac -> gas conversions
+# defines SSRC_GNU and SINCSRC_GNU variables
+include $(top_srcdir)/utility/conv2gas/RULES
 
-# Miscellaneous directives
-sed "s%\.end\\([ \t]\+\|$\|\:\\)%.end___fix\1%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)end\\(\\([ \t]\+\\)\|$\\)%\1.end%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+# need to convert the .inc file as well
+$(SSRC_GNU): $(SINCSRC_GNU)
 
+# engine binary objects
+OBJECTS = $(SSRC_GNU:.gnu=.gnu.o) $(CSRC:.c=.o)
 
-sed "s%^.loop1:$%1:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^.loop2:$%2:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^.loop2_end:$%3:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%,.loop1$%,1b%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%,.loop2$%,2b%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%.loop2_end$%3f%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+$(TARGET): $(OBJECTS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJECTS)
 
-# Things that would be hard do deal with using sed
-../utility/conv2gas/conv2gas $file.tmp >$file.gnu
+strip:
+	$(STRIP) --strip-all $(TARGET)
 
-# Remove temporary file
-rm $file.tmp
-
-# Compile
-#m68k-atari-mint-gcc -Wa,-m68040,--defsym,gas=1,--defsym,lattice=0,-I../include,-I../drivers/include,-I../drivers/1_plane,-alh=utfil -c <$file.gnu
-#m68k-atari-mint-as -m68040 --defsym gas=1 --defsym lattice=0 -I../include -I../drivers/include -I../drivers/1_plane -alh=utfil <$file.gnu
-
-done
-
-rm purec.s.gnu
-
-for file in *.s.gnu ; do
-echo Assembling $file ;
-m68k-atari-mint-as -m68040 --defsym gas=1 --defsym lattice=0 -I../include -I../drivers/include -I../drivers/1_plane -o $file.o <$file ;
-done
-
-m68k-atari-mint-gcc -mshort -m68040 -O2 -fomit-frame-pointer -c -I../include/ \
-bezier.c \
-conic.c \
-escape.c \
-fonts.c \
-line.c \
-loader.c \
-math.c \
-patterns.c \
-polygon.c \
-setup.c \
-startup.c \
-utility.c \
-workstn.c
-
-
-m68k-atari-mint-ld -o fvdi_gnu.prg -L/usr/lib/gcc-lib/m68k-atari-mint/2.95.3 \
-fvdi.s.gnu.o \
-blit.s.gnu.o \
-colours.s.gnu.o \
-draw.s.gnu.o \
-expand.s.gnu.o \
-fill_sq.s.gnu.o \
-gnu.s.gnu.o \
-line_sq.s.gnu.o \
-mark_sq.s.gnu.o \
-mouse.s.gnu.o \
-simple.s.gnu.o \
-support.s.gnu.o \
-sys_call.s.gnu.o \
-textrndr.s.gnu.o \
-text.s.gnu.o \
-text_sq.s.gnu.o \
-traptabl.s.gnu.o \
-unimpl.s.gnu.o \
-vdi_misc.s.gnu.o \
-startup.o \
-utility.o \
-bezier.o \
-conic.o \
-escape.o \
-fonts.o \
-line.o \
-loader.o \
-math.o \
-patterns.o \
-polygon.o \
-setup.o \
-workstn.o \
--lgcc
-
-m68k-atari-mint-strip --strip-all fvdi_gnu.prg
-
-for file in ../include/*.inc.gnu ../drivers/include/*.inc.gnu ../drivers/1_plane/1_expand.inc.gnu *.s.gnu ; do
-rm $file;
-done
+clean: clean_gnu
+	rm -rf $(OBJECTS)

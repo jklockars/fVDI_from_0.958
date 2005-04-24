@@ -1,3 +1,6 @@
+2005-04-24 - standa
+Buildsystem switch to GNU make
+
 2005-04-23 - johan
 ARAnyM driver synchronized with the ARAnyM CVS repository (relevant
 changes have been added to this file).

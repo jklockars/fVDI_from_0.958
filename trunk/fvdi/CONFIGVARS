@@ -1,0 +1,23 @@
+# handle cross compilation
+
+ifeq ($(M68K_ATARI_MINT_CROSS),yes)
+
+CROSSPREFIX = m68k-atari-mint
+
+CC     = $(CROSSPREFIX)-gcc
+AR     = $(CROSSPREFIX)-ar
+AS     = $(CROSSPREFIX)-as
+LD     = $(CROSSPREFIX)-ld
+STRIP  = $(CROSSPREFIX)-strip
+
+else
+
+CC     = gcc
+AR     = ar
+AS     = as
+LD     = ld
+STRIP  = strip
+
+endif
+
+

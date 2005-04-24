@@ -1,0 +1,24 @@
+# to be included after the SINCSRC and SSRC are defined
+
+CONV2GAS = $(top_srcdir)/utility/conv2gas/conv2gas
+
+# use native compiler when crosscompiling
+$(CONV2GAS): $(top_srcdir)/utility/conv2gas/conv2gas.c
+	$(NATIVE_CC) -o $@ $<
+
+
+SINCSRC_GNU = $(SINCSRC:=.gnu)
+SSRC_GNU = $(SSRC:=.gnu)
+
+# -> .gnu conversion
+%.gnu: $(basename %.gnu) $(CONV2GAS)
+	$(CONV2GAS).sh $<
+
+# assember for .gnu
+%.gnu.o: %.gnu
+	$(AS) $(ASFLAGS) -o $@ < $<
+
+clean_gnu:
+	rm -rf $(SINCSRC_GNU) $(SSRC_GNU)
+
+.PHONY:	clean_gnu
