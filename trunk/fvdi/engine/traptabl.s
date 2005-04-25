@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.4 2004-10-17 21:44:11 johan Exp $
+* $Id: traptabl.s,v 1.5 2005-04-25 19:56:44 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -33,7 +33,8 @@ transparent	equ	1		; Fall through?
 	xref	vr_trn_fm,vsc_form,vsf_udpat,vqin_mode,vqt_extent,vqt_width
 	xref	vex_timv,vst_load_fonts,vst_unload_fonts,v_show_c,v_hide_c
 	xref	vq_mouse,vex_butv,vex_motv,vex_curv,vq_key_s,vqt_name
-	xref	vqt_font_info,vst_height,vst_point,v_cellarray,vq_cellarray
+	xref	vqt_font_info,vex_wheelv
+	xref	vst_height,vst_point,v_cellarray,vq_cellarray
 	xref	vqt_xfntinfo,vst_name,vst_width,vst_charmap,vst_kern
 	xref	v_getbitmap_info,vqt_f_extent,v_ftext,v_getoutline,vst_scratch
 	xref	vst_error,vst_arbt,vqt_advance,vq_devinfo,v_savecache
@@ -212,7 +213,10 @@ default_functions:
 	dc.l	vqt_name
 	dc.w	5,2
 	dc.l	vqt_font_info
-	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing	; 132-199
+	dc.l	0,nothing	; vqt_justified?
+	dc.l	0,nothing
+	dc.l	0,vex_wheelv
+	dc.l	0,nothing,0,nothing	; 135-199
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing

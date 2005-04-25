@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.7 2004-10-17 21:44:11 johan Exp $
+* $Id: unimpl.s,v 1.8 2005-04-25 19:56:44 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -29,7 +29,7 @@ transparent	equ	1		; Fall through?
 	xdef	vrq_locator,vrq_valuator,vrq_choice,vrq_string,vsin_mode
 	xdef	v_contourfill
 	xdef	vqin_mode
-	xdef	vex_timv,vex_butv,vex_motv,vex_curv
+	xdef	vex_timv,vex_butv,vex_motv,vex_curv,vex_wheelv
 	xdef	vq_mouse,vq_key_s
 	xdef	v_cellarray,vq_cellarray
 	xdef	vst_name,vst_width,vst_charmap,vst_kern,v_getbitmap_info
@@ -108,6 +108,7 @@ vex_timv:
 vex_butv:
 vex_motv:
 vex_curv:
+vex_wheelv:
 	tst.w	_no_vex
 	beq	redirect
 	done_return
