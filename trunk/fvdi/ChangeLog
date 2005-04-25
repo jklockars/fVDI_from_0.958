@@ -1,3 +1,6 @@
+2005-04-25 - johan
+Support for redirection of vex_wheelv to an underlying VDI.
+	
 2005-04-24 - standa
 Buildsystem switch to GNU make
 
