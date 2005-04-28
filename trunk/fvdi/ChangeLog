@@ -1,3 +1,8 @@
+2005-04-28 - johan
+Fixed problem that caused 32 bit (without -mshort) gcc build to hang.
+Made the engine understand that v_clswk on pass-through handles are of
+no concern to fVDI drivers.
+	
 2005-04-25 - johan
 Support for redirection of vex_wheelv to an underlying VDI.
 	
@@ -19,7 +24,7 @@ For the ARAnyM driver:
  values in any setup_wk() call.
  The problem was that the setup_wk() used to selfmodify the value based
  on the ones got from common driver init() method. The method setup_wk()
- is called twice however before the openvk().
+ is called twice however before the open_wk().
 
 2005-01-24 - standa
 For the ARAnyM driver:
