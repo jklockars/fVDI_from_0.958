@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.4 2004-10-24 12:59:39 johan Exp $
+ * $Id: workstn.c,v 1.5 2005-04-28 14:37:50 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -85,6 +85,7 @@ static short find_handle(void)
 }
 
 
+// Needs to deal with virtuals on non-screen workstations!
 void v_opnvwk(Virtual *vwk, VDIpars *pars)
 {
 	short *intin;
@@ -367,8 +368,10 @@ void v_clsvwk(Virtual *vwk, VDIpars *pars)
 }
 
 
+// Needs to be able to deal with multiple fVDI workstations!
 void v_clswk(Virtual *vwk, VDIpars *pars)
 {
+#if 0
 	Driver *driver;
 
 	v_clsvwk(vwk, pars);
@@ -376,18 +379,43 @@ void v_clswk(Virtual *vwk, VDIpars *pars)
 	unlink_mouse_routines();
 
 	screen_wk = 0;
-#if 0
+ #if 0
 	if (driver_list->type != ...)		/* Sanity check */
-#endif
+ #endif
 	driver = (Driver *)driver_list->value;
-#if 0
+ #if 0
 	if (driver->flags & 1)
-#endif
+ #endif
 
 	((void (*)(Virtual *))(driver->clswk))(vwk);
 
 	if (old_wk_handle)
 		scall_v_clswk(old_wk_handle);
+#else
+	Driver *driver;
+	Workstation *wk;
+
+	wk = vwk->real_address;
+	v_clsvwk(vwk, pars);
+
+	if (wk != non_fvdi_wk) {
+	    unlink_mouse_routines();
+
+	    screen_wk = 0;
+ #if 0
+	    if (driver_list->type != ...)		/* Sanity check */
+ #endif
+	    driver = (Driver *)driver_list->value;
+ #if 0
+	    if (driver->flags & 1)
+ #endif
+
+	    ((void (*)(Virtual *))(driver->clswk))(vwk);
+
+	    if (old_wk_handle)
+		scall_v_clswk(old_wk_handle);
+	}
+#endif
 
 	return;
 }
