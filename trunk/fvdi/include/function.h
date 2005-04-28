@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.4 2005-04-28 14:07:54 johan Exp $
+ * $Id: function.h,v 1.5 2005-04-28 14:36:29 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -54,12 +54,13 @@ extern void lib_vdi_s(void *, void *, short);
 extern void lib_vdi_sp(void *, void *, short, void *);
 extern void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
 extern void lib_vdi_pp(void *, void *, void *, void *);
-#elifdef __GNUC__
+#else
+ #ifdef __GNUC__
 void lib_vdi_s(void *, void *, long);
 void lib_vdi_sp(void *, void *, long, void *);
 void lib_vdi_spppp(void *, void *, long, void *, void *, void *, void *);
 void lib_vdi_pp(void *, void *, void *, void *);
-#else
+ #else
 void lib_vdi_s(void *, void *, short);
 void lib_vdi_sp(void *, void *, short, void *);
 void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
@@ -69,6 +70,7 @@ void lib_vdi_pp(void *, void *, void *, void *);
 #pragma inline lib_vdi_sp(a2, a0, (short),) LIB_CALL
 #pragma inline lib_vdi_spppp(a2, a0, (short),,,,) LIB_CALL
 #pragma inline lib_vdi_pp(a2, a0,,) LIB_CALL
+ #endif
 #endif
 
 extern void link_mouse_routines(void);
