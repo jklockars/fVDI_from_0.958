@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.3 2004-10-24 13:01:53 johan Exp $
+ * $Id: function.h,v 1.4 2005-04-28 14:07:54 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -49,16 +49,21 @@ extern	void	GEXT_DCALL(short *parmblock[5]);
 #endif
 
 
-void lib_vdi_s(void *, void *, short);
-void lib_vdi_sp(void *, void *, short, void *);
-void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
-void lib_vdi_pp(void *, void *, void *, void *);
 #ifdef __PUREC__
 extern void lib_vdi_s(void *, void *, short);
 extern void lib_vdi_sp(void *, void *, short, void *);
 extern void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
 extern void lib_vdi_pp(void *, void *, void *, void *);
+#elifdef __GNUC__
+void lib_vdi_s(void *, void *, long);
+void lib_vdi_sp(void *, void *, long, void *);
+void lib_vdi_spppp(void *, void *, long, void *, void *, void *, void *);
+void lib_vdi_pp(void *, void *, void *, void *);
 #else
+void lib_vdi_s(void *, void *, short);
+void lib_vdi_sp(void *, void *, short, void *);
+void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *);
+void lib_vdi_pp(void *, void *, void *, void *);
 #define LIB_CALL {"224f4e92";}			/* move.l a7,a1   jsr (a2) */
 #pragma inline lib_vdi_s(a2, a0, (short)) LIB_CALL
 #pragma inline lib_vdi_sp(a2, a0, (short),) LIB_CALL

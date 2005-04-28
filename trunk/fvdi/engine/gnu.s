@@ -15,6 +15,7 @@
 	xdef	_lib_vdi_s,_lib_vdi_sp,_lib_vdi_spppp,_lib_vdi_pp
 	text
 
+ ifne 0
 _lib_vdi_s:
 _lib_vdi_sp:
 _lib_vdi_spppp:
@@ -26,7 +27,52 @@ _lib_vdi_pp:
 	jsr	(a2)
 	move.l	(a7)+,a2
 	rts
+ else
+_lib_vdi_s:
+	move.l	a2,-(a7)
+	move.l	8+0(a7),a2
+	move.l	8+4(a7),a0
+	lea	8+8(a7),a1
+	move.w	2(a1),(a1)
+	jsr	(a2)
+	move.l	(a7)+,a2
+	rts
 
+_lib_vdi_sp:
+	move.l	a2,-(a7)
+	move.l	8+0(a7),a2
+	move.l	8+4(a7),a0
+	lea	8+8(a7),a1
+	move.w	2(a1),(a1)
+	move.l	4(a1),2(a1)
+	jsr	(a2)
+	move.l	(a7)+,a2
+	rts
+
+_lib_vdi_spppp:
+	move.l	a2,-(a7)
+	move.l	8+0(a7),a2
+	move.l	8+4(a7),a0
+	lea	8+8(a7),a1
+	move.w	2(a1),(a1)
+	move.l	4(a1),2(a1)
+	move.l	8(a1),6(a1)
+	move.l	12(a1),10(a1)
+	move.l	16(a1),14(a1)
+	jsr	(a2)
+	move.l	(a7)+,a2
+	rts
+
+_lib_vdi_pp:
+	move.l	a2,-(a7)
+	move.l	8+0(a7),a2
+	move.l	8+4(a7),a0
+	lea	8+8(a7),a1
+	jsr	(a2)
+	move.l	(a7)+,a2
+	rts
+ endc
+	
 _Mxalloc:
 	move.l	a2,-(a7)
 	move.w	8+4(a7),-(a7)
