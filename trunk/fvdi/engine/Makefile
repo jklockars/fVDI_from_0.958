@@ -1,18 +1,7 @@
 #!make -f
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+# This software is licensed under the GNU General Public License.
+# Please, see LICENSE.TXT for further information.
 #
 
 #
@@ -24,12 +13,32 @@ TARGET = fvdi_gnu.prg
 all: $(TARGET)
 
 top_srcdir = ..
+srcdir     = .
 
 include $(top_srcdir)/CONFIGVARS
 
-CFLAGS  = -mshort -m68040 -O2 -fomit-frame-pointer -I$(top_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
-LDFLAGS = $(M68K_ATARI_MINT_LDFLAGS)
-ASFLAGS = -m68040 --defsym gas=1 --defsym lattice=0 -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include -I$(top_srcdir)/drivers/1_plane
+ifneq ($(stdlib_srcdir),)
+STDLIB_CFLAGS = -I$(stdlib_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
+else
+STDLIB_CFLAGS = $(M68K_ATARI_MINT_CFLAGS)
+endif
+
+CFLAGS  = -m68$(CPU) $(OPTS) -I$(top_srcdir)/include $(STDLIB_CFLAGS)
+ASFLAGS = -m68$(CPU) -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include -I$(top_srcdir)/drivers/1_plane
+
+# FreeType2 things
+ifneq ($(ft2_srcdir),)
+
+#LIBKERN = libkern/libkern$(CPU).a
+
+LIBFT2  = ft2/libft2.a
+LIBFILES= $(LIBFT2) $(LIBKERN)
+LDFLAGS = -Lft2 -Llibkern
+CFLAGS += -Ift2/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/include 
+LIBS    = -lft2 -lkern$(CPU)
+
+endif
+
 
 SINCSRC = \
 	$(top_srcdir)/include/compiler.inc \
@@ -61,6 +70,9 @@ SSRC = \
 	unimpl.s \
 	vdi_misc.s
 
+#	 setjmp.s
+
+
 CSRC = \
 	startup.c \
 	utility.c \
@@ -76,6 +88,17 @@ CSRC = \
 	setup.c \
 	workstn.c
 
+ifneq ($(ft2_srcdir),)
+CSRC+= \
+	ft2.c \
+	ft2_ftsystem.c
+
+ifeq ($(DEBUG),yes)
+CSRC+= \
+	ft2_ftdebug.c
+endif
+endif
+
 # handle DevPac -> gas conversions
 # defines SSRC_GNU and SINCSRC_GNU variables
 include $(top_srcdir)/utility/conv2gas/RULES
@@ -86,8 +109,31 @@ $(SSRC_GNU): $(SINCSRC_GNU)
 # engine binary objects
 OBJECTS = $(SSRC_GNU:.gnu=.gnu.o) $(CSRC:.c=.o)
 
-$(TARGET): $(OBJECTS)
-	$(LD) -o $@ $(LDFLAGS) $(OBJECTS)
+# libkern + stdlib additions
+ifneq ($(stdlib_srcdir),)
+CLIBSRC = \
+	$(stdlib_srcdir)/qsort.c \
+	$(stdlib_srcdir)/msort.c \
+	$(stdlib_srcdir)/mempcpy.c \
+	$(stdlib_srcdir)/strdup.c
+
+SLIBSRC = \
+	$(stdlib_srcdir)/setjmp.S
+
+OBJECTS+= $(CLIBSRC:.c=.o) $(SLIBSRC:.S=.S.o)
+endif
+
+%.S.o: %.S
+	$(CC) $(ASFLAGS) -Dgas=1 -Dlattice=0 -o $@ -c $<
+
+$(LIBKERN):
+	cd libkern; make $(CPU)
+
+$(LIBFT2):
+	cd ft2; make
+
+$(TARGET): $(OBJECTS) $(LIBFILES)
+	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 strip:
 	$(STRIP) --strip-all $(TARGET)

@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: fonts.c,v 1.2 2004-10-17 17:52:55 johan Exp $
+ * $Id: fonts.c,v 1.3 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -39,7 +39,7 @@ long unpack_font(Fontheader *header, long format)
    if (height > 16)                    /* 16 bytes per character for now */
       return 0;
 
-   if (!(buf = (char *)malloc((long)chars * 16, 3)))
+   if (!(buf = (char *)malloc((long)chars * 16)))
       return 0;
    
    header->extra.unpacked.data = buf;
@@ -132,7 +132,7 @@ Fontheader *load_font(const char *name)
    if ((font_size = get_size(name) - header_size) < 0)
       return 0;
    
-   if (!(header = (Fontheader *)malloc(sizeof(Fontheader), 3)))
+   if (!(header = (Fontheader *)malloc(sizeof(Fontheader))))
       return 0;
 
    if ((file = Fopen(name, 0)) < 0) {
@@ -142,7 +142,7 @@ Fontheader *load_font(const char *name)
 
    Fread(file, header_size, header);
 
-   if (!(buffer = (char *)malloc(font_size, 3))) {
+   if (!(buffer = (char *)malloc(font_size))) {
       free(header);
       Fclose(file);
       return 0;

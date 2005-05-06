@@ -3,7 +3,7 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.2 2004-10-17 21:44:11 johan Exp $
+ * $Id: utility.h,v 1.3 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -57,7 +57,9 @@ long str2long(const unsigned char *text);
 /*
  * General memory allocation
  */
-void *malloc(long size, long type);
+void *fmalloc(long size, long type);
+void *malloc(long size);
+void *realloc(void *addr, long new_size);
 long free(void *addr);
 long free_all(void);
 

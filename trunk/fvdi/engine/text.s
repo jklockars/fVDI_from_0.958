@@ -1,7 +1,7 @@
 *****
 * fVDI text drawing functions
 *
-* $Id: text.s,v 1.6 2004-10-17 21:44:11 johan Exp $
+* $Id: text.s,v 1.7 2005-05-06 12:29:37 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,6 +19,7 @@ transparent	equ	1		; Fall through?
 	xref	lib_vqt_extent,lib_vrt_cpyfm
 	xref	allocate_block,free_block
 	xref	text_area
+	xref	_vdi_stack_top,_vdi_stack_size,_external_renderer
 
 	xdef	v_gtext,v_ftext,v_justified
 
@@ -393,6 +394,11 @@ lib_v_justified:
 _default_text:
 	movem.l	d3-d7/a3-a6,-(a7)
 
+* Some other method should be used for this!
+	move.l	vwk_text_current_font(a0),a3
+	tst.w	font_flags(a3)
+	bmi	.external_renderer
+
 	moveq	#0,d4		; Offset extension of length
 	move.l	a2,d3
 	beq	.no_offsets
@@ -447,6 +453,32 @@ _default_text:
 
 	movem.l	(a7)+,d0-d2/d4/a1/a3
 	bra	.width_done
+
+* It is simply assumed that the external renderer is successful.
+.external_renderer:
+	move.l	_external_renderer,d2		; (Handle differently?)
+	beq	.no_external_renderer		; Not really allowed
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	move.l	_vdi_stack_size,-(a7)	
+	move.l	a2,-(a7)			; Character offset table
+	ext.l	d0
+	move.l	d0,-(a7)			; String len
+	move.l	a1,-(a7)			; String pointer
+	move.l	d1,-(a7)			; Coordinates (x << 16 | y)
+	move.l	a0,-(a7)			; VDI struct
+	jsr	(a3)
+	add.w	#6*4,a7
+
+	move.l	-(a7),a7			; Return to original stack
+
+.no_external_renderer:
+	movem.l	(a7)+,d3-d7/a3-a6
+	rts
 
 .nonproportional:
 	move.w	font_widest_cell(a5),d3

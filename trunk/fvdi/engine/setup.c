@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.3 2004-10-24 13:00:16 johan Exp $
+ * $Id: setup.c,v 1.4 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -59,7 +59,7 @@ Virtual *initialize_vdi(void)
     *                Used for all unallocated entries in the handled table.
     */
 
-   if (!(tmp = (char *)malloc(sizeof(Workstation *) + sizeof(short) + 257 * sizeof(Function), 3)))
+   if (!(tmp = (char *)malloc(sizeof(Workstation *) + sizeof(short) + 257 * sizeof(Function))))
       return 0;
 
    func_tab_start = (long)&((Workstation *)tmp)->function[-1] - (long)tmp;
@@ -78,12 +78,12 @@ Virtual *initialize_vdi(void)
       handle[i] = dummy_vwk;
 
 
-   if (!(wk = (Workstation *)malloc(sizeof(Workstation), 3))) {
+   if (!(wk = (Workstation *)malloc(sizeof(Workstation)))) {
       free(tmp);
       return 0;
    }
 
-   if (!(vwk = (Virtual *)malloc(sizeof(Virtual), 3))) {
+   if (!(vwk = (Virtual *)malloc(sizeof(Virtual)))) {
       free(wk);
       free(tmp);
       return 0;
@@ -278,7 +278,7 @@ void copy_setup(Virtual *def, int vwk_no, short intout[], short ptsout[])
    Virtual *vwk;
    short tmp;
    
-   vwk = (Virtual *)malloc(sizeof(Virtual) + 32, 3);  /* Extra for fill pattern */
+   vwk = (Virtual *)malloc(sizeof(Virtual) + 32);  /* Extra for fill pattern */
    if (!vwk)
       return;
 
@@ -459,7 +459,7 @@ void copy_workstations(Virtual *def, long really_copy)
       tmp = (char *)malloc((sizeof(Workstation *) + sizeof(short)) * (MAX_OLD_HANDLE - n + 1), 3);
 #else
    if (n <= MAX_OLD_HANDLE)                      /* This is for the dummy virtuals */
-   tmp = (char *)malloc((sizeof(Workstation *) + sizeof(short)) * (MAX_OLD_HANDLE - n + 1), 3);
+   tmp = (char *)malloc((sizeof(Workstation *) + sizeof(short)) * (MAX_OLD_HANDLE - n + 1));
 #endif
 
    last_handle = 0;

@@ -16,7 +16,7 @@ SSRC_GNU = $(SSRC:=.gnu)
 
 # assember for .gnu
 %.gnu.o: %.gnu
-	$(AS) $(ASFLAGS) -o $@ < $<
+	$(AS) $(ASFLAGS) --defsym gas=1 --defsym lattice=0 --defsym mc68000=0 -o $@ < $<
 
 clean_gnu:
 	rm -rf $(SINCSRC_GNU) $(SSRC_GNU)

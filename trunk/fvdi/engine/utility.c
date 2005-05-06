@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.10 2005-04-23 19:01:03 johan Exp $
+ * $Id: utility.c,v 1.11 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -212,7 +212,7 @@ long set_cookie(const unsigned char *name, long value)
       }
    }
 
-   addr = malloc((count + 8) * 8, 3);
+   addr = malloc((count + 8) * 8);
 
    copymem(old_addr, addr, count * 8);
 
@@ -238,7 +238,7 @@ long initialize_pool(long size, long n)
    if ((size <= 0) || (n <= 0))
       return 0;
 
-   if (!(addr = malloc(size * n, 3)))
+   if (!(addr = malloc(size * n)))
       return 0;
 
    block_size = size;
@@ -324,11 +324,37 @@ void copymem(void *s, void *d, long n)
 {
    char *src, *dest;
 
-   src = (char *)s;
+   src  = (char *)s;
    dest = (char *)d;
    for(n = n - 1; n >= 0; n--)
       *dest++ = *src++;
 }
+
+
+void copymem_aligned(void *s, void *d, long n)
+{
+   long *src, *dest, n4;
+
+   src  = (long *)s;
+   dest = (long *)d;
+   for(n4 = (n >> 2) - 1; n4 >= 0; n4--)
+      *dest++ = *src++;
+
+   if (n & 3) {
+      char *s1 = (char *)src;
+      char *d1 = (char *)dest;
+      switch(n & 3) {
+      case 3:
+         *d1++ = *s1++;
+      case 2:
+         *d1++ = *s1++;
+      case 1:
+         *d1++ = *s1++;
+         break;
+      }
+   }
+}
+
 
 void setmem(void *d, long v, long n)
 {
@@ -449,7 +475,7 @@ void ltoa(char *buf, long n, unsigned long base)
 }
 
 
-void *malloc(long size, long type)
+void *fmalloc(long size, long type)
 {
    Circle *new;
    long bp;
@@ -503,11 +529,48 @@ void *malloc(long size, long type)
 }
 
 
+void *malloc(long size)
+{
+   return fmalloc(size, 3);
+}
+
+
+void *realloc(void *addr, long new_size)
+{
+   long old_size;
+   void *new;
+
+   if (!addr)
+      return malloc(new_size);
+   if (!new_size)
+      return (void *)free(addr);
+
+   new = malloc(new_size);
+   if ((long)new <= 0)
+      return 0;
+   old_size = ((Circle *)addr)[-1].size - sizeof(Circle);
+   copymem_aligned(addr, new, old_size < new_size ? old_size : new_size);
+   free(addr);
+
+   if (debug > 2) {
+      char buffer[10];
+      ltoa(buffer, old_size, 10);
+      puts("Reallocation from size ");
+      puts_nl(buffer);
+   }
+
+   return new;
+}
+
+
 long free(void *addr)
 {
    Circle *current;
    long bp, size, ret;
-   
+
+   if (!addr)
+       return 0;
+
    current = &((Circle *)addr)[-1];
    if (memlink) {
       current->prev->next = current->next;
@@ -521,7 +584,7 @@ long free(void *addr)
    }
    if (debug > 2) {
       char buffer[10];
-      ltoa(buffer, (long)addr, 16);
+      ltoa(buffer, (long)current, 16);
       puts("Freeing at $");
       puts_nl(buffer);
    }
@@ -765,7 +828,7 @@ long init_utility(void)
    real_access.funcs.cat = cat;
    real_access.funcs.numeric = numeric;
    real_access.funcs.error = error;
-   real_access.funcs.malloc = malloc;
+   real_access.funcs.malloc = fmalloc;
    real_access.funcs.free = free;
    real_access.funcs.puts = puts;
    real_access.funcs.ltoa = ltoa;

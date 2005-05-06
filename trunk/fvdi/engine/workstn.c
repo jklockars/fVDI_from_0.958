@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.5 2005-04-28 14:37:50 johan Exp $
+ * $Id: workstn.c,v 1.6 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -102,7 +102,7 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 	/* Check if really v_opnbm */
 	if ((pars->control->subfunction != 1) || (pars->control->l_intin < 20)) {
 		extra_size = 32;
-		if (!(new_vwk = malloc(sizeof(Virtual) + extra_size, 3)))
+		if (!(new_vwk = malloc(sizeof(Virtual) + extra_size)))
 			return;
 		copymem(vwk->real_address->driver->default_vwk, new_vwk, sizeof(Virtual));
 		vwk = new_vwk;
@@ -143,7 +143,7 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 			extra_size += size;
 
 		/* New vwk, but it should really not always be for this driver! */
-		if (!(new_vwk = malloc(extra_size, 3)))
+		if (!(new_vwk = malloc(extra_size)))
 			return;
 
 		new_wk = (Workstation *)((long)new_vwk + sizeof(Virtual) + 32);
@@ -266,7 +266,7 @@ void v_opnwk(VDIpars *pars)
 		vwk = 0;
 		if ((old_gdos != -2) &&		/* No pass-through without old GDOS */
 		    (hnd = find_handle()) &&
-		    (vwk = malloc(6, 3)) &&
+		    (vwk = malloc(6)) &&
 		    (oldhnd = call_other(pars, 0))) {	/* Dummy handle for call */
 			vwk->real_address = non_fvdi_wk;
 			/* Mark as pass-through handle */

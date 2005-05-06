@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.8 2004-10-17 21:44:11 johan Exp $
+* $Id: blit.s,v 1.9 2005-05-06 12:29:37 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -26,9 +26,10 @@ lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 
 	xdef	lib_v_bar,lib_vr_recfl,lib_vrt_cpyfm,lib_vro_cpyfm
 	xdef	lib_vr_trn_fm
-	xdef	_lib_vr_trn_fm
 	xdef	lib_v_get_pixel
 
+	xdef	_lib_vrt_cpyfm
+	xdef	_lib_vr_trn_fm
 	xdef	_default_fill,_default_expand,_default_blit
 
 	xdef	_fill_area
@@ -491,11 +492,13 @@ vrt_cpyfm:
 	add.l	#18,a7
 	done_return
 
+
 * lib_vrt_cpyfm - Standard Library function
 * Todo: ?
 *	Clipping should probably not be done for non-screen destinations
 * In:   a1      Parameters (mode, points, source, destination, pens)
 *       a0      VDI struct
+_lib_vrt_cpyfm:
 lib_vrt_cpyfm:
 	move.l	14(a1),a2
 	move.l	(a2),d0		; Background colour (top word)

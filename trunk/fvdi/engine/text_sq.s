@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.4 2004-10-17 21:44:11 johan Exp $
+* $Id: text_sq.s,v 1.5 2005-05-06 12:29:37 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -14,6 +14,9 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	include	"vdi.inc"
 	include	"macros.inc"
+
+	xref	_vdi_stack_top,_vdi_stack_size
+	xref	_external_vst_point,_external_vqt_extent
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
@@ -509,11 +512,17 @@ vqt_f_extent:					; Really more complicated
 vqt_extent:
 	uses_d1
 	movem.l	d2-d4/a3-a4,-(a7)
+
 	move.l	control(a1),a2
 	move.w	6(a2),d0			; Number of characters
 	move.l	ptsout(a1),a2
 	move.l	intin(a1),a1
 	move.l	vwk_text_current_font(a0),a4	; a0 no longer -> VDI struct!
+
+* Some other method should be used for this!
+	tst.w	font_flags(a4)
+	bmi	.external_vqt_extent
+
 	move.l	font_table_character(a4),a3
 	move.w	font_code_low(a4),d3
 	move.w	font_code_high(a4),d4
@@ -572,6 +581,35 @@ vqt_extent:
 	used_d1
 	done_return
 
+.external_vqt_extent:
+	move.l	_external_vqt_extent,d2		; (Handle differently?)
+	beq	.no_external_vqt_extent		; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d1/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)	
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a1,-(a7)
+	move.l	a0,-(a7)			; VDI struct
+	jsr	(a3)
+	add.w	#4*4,a7
+	move.l	d0,d2
+	movem.l	(a7)+,d0-d1/a0-a2
+
+	move.l	-(a7),a7			; Return to original stack
+	bra	.no_italic
+
+.no_external_vqt_extent:
+	movem.l	(a7)+,d2-d4/a3-a4
+	used_d1
+	done_return
+
+	
 * lib_vqt_extent - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vqt_extent(length, &string, points)
@@ -831,6 +869,11 @@ vst_point:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	move.l	vwk_text_current_font(a0),a2
+
+* Some other method should be used for this!
+	tst.w	font_flags(a2)
+	lbmi	.external_vst_point,3
+
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
  label .search,1
@@ -863,6 +906,33 @@ vst_point:
 	move.l	(a7)+,a3
 	used_d1
 	done_return
+
+ label .external_vst_point,3
+	move.l	_external_vst_point,d2		; (Handle differently?)
+	beq	.no_external_vst_point		; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d2/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)			; VDI struct
+	jsr	(a3)
+	add.w	#3*4,a7
+	move.l	d0,a3
+	movem.l	(a7)+,d0-d2/a0-a2
+
+	move.l	-(a7),a7			; Return to original stack
+	lbra	.found,2
+
+.no_external_vst_point:
+	move.l	(a7)+,a3
+	used_d1
+	done_return
+
 
 * lib_vst_point - Standard Library function
 * Todo: ?

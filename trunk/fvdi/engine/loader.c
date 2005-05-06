@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.6 2004-10-24 13:01:11 johan Exp $
+ * $Id: loader.c,v 1.7 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -28,6 +28,20 @@
 /*
  * Global variables
  */
+
+#if 0
+int (*external_init)(void) = ft2_init;
+Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
+long (*external_vqt_extent)(Virtual *vwk, short *text, long length) = ft2_text_width;
+long (*external_vst_point)(Virtual *vwk, long size) = ft2_vst_point;
+long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = ft2_text_render_default;
+#else
+int (*external_init)(void) = 0;
+Fontheader* (*external_load_font)(const char *font) = 0;
+long (*external_vqt_extent)(Virtual *vwk, short *text, long length) = 0;
+long (*external_vst_point)(Virtual *vwk, long size) = 0;
+long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = 0;
+#endif
 
 List *driver_list = 0;
 
@@ -59,6 +73,7 @@ short stand_alone = 0;
 static char path[PATH_SIZE];
 
 static long set_path(Virtual *vwk, const char **ptr);
+static long load_fonts(Virtual *vwk, const char **ptr);
 static long wait_key(Virtual *vwk, const char **ptr);
 static long exit_key(Virtual *vwk, const char **ptr);
 static long swap_key(Virtual *vwk, const char **ptr);
@@ -77,6 +92,7 @@ static long load_palette(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
+   {"fonts",      load_fonts,     -1},  /* path = str, where to look for fonts and drivers */
    {"debug",      &debug,          2},  /* debug, turn on debugging aids */
    {"waitkey",    wait_key,       -1},  /* waitkey n, wait for key press for n seconds */
    {"exitkey",    exit_key,       -1},  /* exitkey c, quit fVDI if 'c' was pressed */
@@ -114,7 +130,7 @@ static Option options[] = {
 };
 
 
-long set_path(Virtual *vwk, const char **ptr)
+long get_pathname(const char **ptr, char *dest)
 {
    char token[TOKEN_SIZE];
 
@@ -132,16 +148,21 @@ long set_path(Virtual *vwk, const char **ptr)
       return -1;
    }
    *ptr = get_token(*ptr, token, TOKEN_SIZE);
-   copy(token, path);
-   switch (path[length(path) - 1]) {
+   copy(token, dest);
+   switch (dest[length(dest) - 1]) {
    case '\\':
    case '/':
       break;
    default:
-      cat("\\", path);
+      cat("\\", dest);
    }
    
    return 1;
+}
+
+long set_path(Virtual *vwk, const char **ptr)
+{
+   return get_pathname(ptr, path);
 }
 
 long wait_key(Virtual *vwk, const char **ptr)
@@ -413,7 +434,7 @@ long load_palette(Virtual *vwk, const char **ptr)
       return -1;
    }
 
-   if (!(palette = malloc(size, 3))) {
+   if (!(palette = malloc(size))) {
       error("Can't allocate memory for palette!", 0);
       return -1;
    }
@@ -513,7 +534,7 @@ long tokenize(const char *buffer)
    extern struct Super_data *super;
 
    if (debug && !super->fvdi_log.start) {   /* Set up log table if there isn't one */
-      if (super->fvdi_log.start = malloc(log_size * sizeof(long), 3)) {
+      if (super->fvdi_log.start = malloc(log_size * sizeof(long))) {
          super->fvdi_log.active = 1;
          super->fvdi_log.current = super->fvdi_log.start;
          super->fvdi_log.end = &super->fvdi_log.start[log_size - 8];
@@ -592,7 +613,7 @@ int load_driver(const char *name, Driver *driver, Virtual *vwk, char *opts)
    Fread(file, sizeof(header), &header);
    program_size = header.tsize + header.dsize + header.bsize;
 
-   if (!(addr = (char *)malloc(MAX(file_size, program_size), 3))) {
+   if (!(addr = (char *)malloc(MAX(file_size, program_size)))) {
       Fclose(file);
       return 0;
    }
@@ -613,6 +634,64 @@ int load_driver(const char *name, Driver *driver, Virtual *vwk, char *opts)
    }
 
    return init_result;
+}
+
+
+/* This should really be handled somewhat differently. */
+/* Probably ought to be in another file. */
+long load_fonts(Virtual *vwk, const char **ptr)
+{
+#ifdef __GNUC__
+   _DTA info;
+#else
+   DTA info;       /* Thanks to tos.h for Lattice C */
+#endif
+   static char fonts[PATH_SIZE], *pathtail;
+   int error;
+
+   if (!external_init)
+     return -1;
+
+   if (get_pathname(ptr, fonts) != 1)
+      return -1;
+
+   /* Point past the last char */
+   pathtail = &fonts[length(fonts)];
+
+   copy("*.*", pathtail);
+   
+   puts("Fonts: ");
+   puts_nl(fonts);
+
+   /* Initialize FreeType2 module */	
+   external_init();
+
+   Fsetdta((void *)&info);
+   error = Fsfirst(fonts, 7);
+   while (error == 0) {
+      Fontheader *new_font;
+
+#ifdef __GNUC__
+      info.dta_name[12] = 0;
+      copy(info.dta_name, pathtail);
+#else
+      info.d_name[12] = 0;
+      copy(info.d_name, pathtail);
+#endif
+		
+      puts("   Load font: ");
+      puts_nl(fonts);
+
+      if ((new_font = external_load_font(fonts))) {
+	 /* It's assumed that a device has been initialized (driver exists) */
+	 if (insert_font(&vwk->real_address->writing.first_font, new_font))
+	    vwk->real_address->writing.fonts++;
+      }
+
+      error = Fsnext();
+   }
+
+   puts_nl("   Load fonts done");
 }
 
 
@@ -649,7 +728,7 @@ int load_prefs(Virtual *vwk, char *sysname)
       }
    }
    
-   if (!(buffer = (char *)malloc(file_size + 1, 3)))
+   if (!(buffer = (char *)malloc(file_size + 1)))
       return 0;
 
    if ((file = Fopen(path, 0)) < 0) {
@@ -705,7 +784,7 @@ int load_prefs(Virtual *vwk, char *sysname)
                token[ptr - opts] = '\0';
             } else
                copy(opts, token);
-            if (!(tmp = (char *)malloc(sizeof(List) + sizeof(Driver) + length(name) + 1, 3)))
+            if (!(tmp = (char *)malloc(sizeof(List) + sizeof(Driver) + length(name) + 1)))
                break;
             list_elem = (List *)tmp;
             driver = (Driver *)(tmp + sizeof(List));
@@ -777,7 +856,7 @@ int load_prefs(Virtual *vwk, char *sysname)
          wk = ((Driver *)tmp->value)->default_vwk->real_address;
          if (!wk->writing.first_font || (wk->writing.first_font->id != 1)) {	/* No system font? */
             system_font = linea_fonts();					/*   Find one in the ROM */
-            if (!(header = (Fontheader *)malloc(sizeof(Fontheader) * 3, 3)))
+            if (!(header = (Fontheader *)malloc(sizeof(Fontheader) * 3)))
                break;
             copymem(system_font[0], &header[0], header_size);
             copymem(system_font[1], &header[1], header_size);

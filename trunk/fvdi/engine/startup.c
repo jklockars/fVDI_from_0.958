@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.10 2005-04-28 14:09:50 johan Exp $
+ * $Id: startup.c,v 1.11 2005-05-06 12:29:37 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0964
-#define BETA	3
+#define BETA	4
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -79,7 +79,11 @@ long old_eddi = 0;
 long old_fsmc = 0;
 long base_page;
 
-char vdi_stack[2048];
+/* Stack should probably be allocated dynamically */
+char vdi_stack[8192];   /* Used to be 2048, but Standa wants 8192 for FreeType */
+char *vdi_stack_top = &vdi_stack[sizeof(vdi_stack)];
+long vdi_stack_size = sizeof(vdi_stack);
+
 long stack_address;
 
 
@@ -100,7 +104,7 @@ long startup(void)
 		return 0;
 	}
 
-	if (!(super = malloc(sizeof(struct Super_data), 0x4033))) {
+	if (!(super = fmalloc(sizeof(struct Super_data), 0x4033))) {
 		error("Could not allocate space for supervisor accessible data.", 0);
 		return 0;
 	}
@@ -109,7 +113,7 @@ long startup(void)
 	super->fvdi_log.current = 0;
 	super->fvdi_log.end = 0;
 
-	if (!(readable = malloc(sizeof(struct Readable_data), 0x4043))) {
+	if (!(readable = fmalloc(sizeof(struct Readable_data), 0x4043))) {
 		error("Could not allocate space for world-readable data.", 0);
 		return 0;
 	}
@@ -132,7 +136,7 @@ long startup(void)
 	}
 
 	if (debug) {				/* Set up log table if asked for */
-		if (super->fvdi_log.start = malloc(log_size * sizeof(long), 3)) {
+		if (super->fvdi_log.start = malloc(log_size * sizeof(long))) {
 			super->fvdi_log.active = 1;
 			super->fvdi_log.current = super->fvdi_log.start;
 			super->fvdi_log.end = &super->fvdi_log.start[log_size - 8];

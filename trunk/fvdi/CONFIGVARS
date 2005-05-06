@@ -1,23 +1,51 @@
 # handle cross compilation
 
+NATIVE_CC = gcc
+
 ifeq ($(M68K_ATARI_MINT_CROSS),yes)
 
 CROSSPREFIX = m68k-atari-mint
 
 CC     = $(CROSSPREFIX)-gcc
-AR     = $(CROSSPREFIX)-ar
 AS     = $(CROSSPREFIX)-as
 LD     = $(CROSSPREFIX)-ld
+AR     = $(CROSSPREFIX)-ar
+RANLIB = $(CROSSPREFIX)-ranlib
 STRIP  = $(CROSSPREFIX)-strip
 
 else
 
 CC     = gcc
-AR     = ar
 AS     = as
 LD     = ld
+AR     = ar
+RANLIB = ranlib
 STRIP  = strip
 
 endif
 
+# debug build (mainly FreeType2 debugs here)
+DEBUG  = no
 
+# cpu to compile for
+CPU    = 040 
+
+# general compilation and optimalization options (CFLAGS)
+OPTS   = \
+	-mshort \
+	-O2 -fomit-frame-pointer
+
+
+
+
+stdlib_srcdir = $(top_srcdir)/engine/stdlib
+ft2_srcdir    = $(top_srcdir)/engine/freetype-2.1.9
+
+stdlib_srcdir =
+ft2_srcdir    =
+
+ifeq ($(DEBUG),yes)
+FT2_DEBUG_OPTS = -I$(top_srcdir)/engine/ft2/devel 
+else
+FT2_DEBUG_OPTS =
+endif

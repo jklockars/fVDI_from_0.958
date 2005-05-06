@@ -1,3 +1,6 @@
+2005-05-06 - johan/standa
+Updates to support Standa's new FreeType2 machinery.
+
 2005-04-28 - johan
 Fixed problem that caused 32 bit (without -mshort) gcc build to hang.
 Made the engine understand that v_clswk on pass-through handles are of
