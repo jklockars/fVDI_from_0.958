@@ -1,132 +1,70 @@
-#!/bin/sh
-
-# This is obviously not yet an actual Makefile.
-# For now, use:
-# source Makefile
-# or something equivalent.
+#!make -f
 #
-# Look at the end for compiler version dependent things.
+# This software is licensed under the GNU General Public License.
+# Please, see LICENSE.TXT for further information.
+#
 
-gcc -o ../../utility/conv2gas/conv2gas ../../utility/conv2gas/conv2gas.c
+#
+# gcc >= 2.95.3 (sparemint) version
+#
 
-for file in ../../include/*.inc ../include/*.inc ../common/*.s; do
-echo Converting $file $file.gnu;
+TARGET = aranym.sys
 
-# Comments with * in the first position on the line
-sed "s%^\*.*%%" $file >$file.gnu
-mv $file.gnu $file.tmp
+all: $(TARGET)
 
-# Comments after ; separator
-sed "s%;.*$%%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+top_srcdir = ../..
 
-# Conditional compilation
-sed "s%^\\([ \t]\+\\)ifne%\1.ifne%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)ifeq%\1.ifeq%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)else%\1.else%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)endc%\1.endif%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+include $(top_srcdir)/CONFIGVARS
 
-# Constants
-sed "s%^\\([^ \t]*\\)[ \t]\+equ[ \t]\+%\t.equiv\t\\1,%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([^ \t]*\\)[ \t]\+set[ \t]\+%\t.set\t\\1,%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+CPU     = 040
 
-# Sections
-sed "s%^\\([ \t]\+\\)text%\1.text%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)data%\1.data%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)bss%\1.bss%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+CFLAGS  = -m68$(CPU) -mshort -O2 -fomit-frame-pointer -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include $(M68K_ATARI_MINT_CFLAGS)
+ASFLAGS = -m68$(CPU) -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include
 
-# Includes
-sed "s%\.inc\"%.inc.gnu\"%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)include%\1.include%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+#LDFLAGS = $(M68K_ATARI_MINT_LDFLAGS)
+#-L/usr/local/m68k-atari-mint/usr/lib
+#CFLAGS += -I/usr/local/m68k-atari-mint/usr/include
+#LIBS    = -L/lib/gcc-lib/m68k-atari-mint/2.95.3/ -lgcc
 
-# Hexadecimal numbers
-sed "s%\\$%0x%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+SINCSRC = \
+	$(top_srcdir)/include/compiler.inc \
+	$(top_srcdir)/include/macros.inc \
+	$(top_srcdir)/include/types.inc \
+	$(top_srcdir)/include/vdi.inc \
+	$(top_srcdir)/drivers/include/linea.inc \
+	$(top_srcdir)/drivers/include/pixelmac.inc \
+	$(top_srcdir)/drivers/1_plane/1_expand.inc
 
-# Data
-sed "s%\\([ \t]\+\\)dc.b%\1.byte%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.w%\1.word%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.l%\1.long%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+SSRC = \
+       ../common/c_common.s \
+       ../common/common.s \
+       ../common/clip.s \
+       ../common/lineachk.s
 
-# Miscellaneous directives
-sed "s%\.end\\([ \t]\+\|$\|\:\\)%.end___fix\1%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)end\\(\\([ \t]\+\\)\|$\\)%\1.end%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+CSRC = \
+	../common/init.c \
+	../common/colours.c \
+	spec.c \
+	8b_pal.c \
+	16b_pal.c \
+	32b_pal.c \
+	dispatch.c
 
+# handle DevPac -> gas conversions
+# defines SSRC_GNU and SINCSRC_GNU variables
+include $(top_srcdir)/utility/conv2gas/RULES
 
-sed "s%^.loop1:$%1:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^.loop2:$%2:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%^.loop2_end:$%3:%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%,.loop1$%,1b%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%,.loop2$%,2b%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
-sed "s%.loop2_end$%3f%" $file.tmp >$file.gnu
-mv $file.gnu $file.tmp
+# need to convert the .inc file as well
+$(SSRC_GNU): $(SINCSRC_GNU)
 
-# Things that would be hard do deal with using sed
-../../utility/conv2gas/conv2gas $file.tmp >$file.gnu
+# engine binary objects
+OBJECTS = $(SSRC_GNU:.gnu=.gnu.o) $(CSRC:.c=.o)
 
-# Remove temporary file
-rm $file.tmp
+$(TARGET): $(OBJECTS) $(LIBFILES)
+	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 
-# Compile
-#m68k-atari-mint-gcc -Wa,-m68040,--defsym,gas=1,--defsym,lattice=0,-I../include,-I../drivers/include,-I../drivers/1_plane,-alh=utfil -c <$file.gnu
-#m68k-atari-mint-as -m68040 --defsym gas=1 --defsym lattice=0 -I../include -I../drivers/include -I../drivers/1_plane -alh=utfil <$file.gnu
+strip:
+	$(STRIP) --strip-all $(TARGET)
 
-done
-
-rm ../common/purec.s.gnu
-
-for file in ../common/*.s.gnu ; do
-echo Assembling $file ;
-m68k-atari-mint-as -m68040 --defsym gas=1 --defsym lattice=0 --defsym mc68000=0 -I../../include -I../include -o $file.o <$file ;
-done
-
-m68k-atari-mint-gcc -mshort -m68040 -O2 -fomit-frame-pointer -c -I../../include/ -I../include \
-../common/init.c \
-../common/colours.c \
-spec.c \
-8b_pal.c \
-16b_pal.c \
-32b_pal.c \
-dispatch.c
-
-
-m68k-atari-mint-ld -o aranym.sys -L/usr/lib/gcc-lib/m68k-atari-mint/2.95.3 \
-../common/c_common.s.gnu.o \
-../common/common.s.gnu.o \
-../common/clip.s.gnu.o \
-../common/lineachk.s.gnu.o \
-init.o \
-colours.o \
-spec.o \
-8b_pal.o \
-16b_pal.o \
-32b_pal.o \
-dispatch.o \
--lgcc
-
-m68k-atari-mint-strip --strip-all aranym.sys
-
-for file in ../../include/*.inc.gnu ../include/*.inc.gnu ../common/*.s.gnu ; do
-rm $file;
-done
+clean: clean_gnu
+	rm -rf $(OBJECTS)
