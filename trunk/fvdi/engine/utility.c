@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.11 2005-05-06 12:29:37 johan Exp $
+ * $Id: utility.c,v 1.12 2005-05-07 16:06:00 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -542,8 +542,10 @@ void *realloc(void *addr, long new_size)
 
    if (!addr)
       return malloc(new_size);
-   if (!new_size)
-      return (void *)free(addr);
+   if (!new_size) {
+      free(addr);
+      return 0;
+   }
 
    new = malloc(new_size);
    if ((long)new <= 0)
