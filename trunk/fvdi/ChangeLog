@@ -1,3 +1,9 @@
+2005-05-07 - standa
+Fatal Return stack issue fixed. Now the FreeType2 again works with
+the changed asm parts.
+Fix in lib_vqt_extent() where the justifications didn't necessarilly
+work due to register number confusion.
+
 2005-05-06 - johan/standa
 Updates to support Standa's new FreeType2 machinery.
 
