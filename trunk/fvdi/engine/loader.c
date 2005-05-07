@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.7 2005-05-06 12:29:37 johan Exp $
+ * $Id: loader.c,v 1.8 2005-05-07 18:42:54 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -30,15 +30,25 @@
  */
 
 #if 0
+/* headers to ft2_* functions ... FIXME: to be moved */
+int ft2_init( void );
+Fontheader *ft2_load_font(const char *filename);
+long ft2_char_width(Fontheader *font, long ch);
+long ft2_text_width(Fontheader *font, short *s, long slen );
+Fontheader *ft2_vst_point(Virtual *vwk, long ptsize);
+long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long slen );
+
 int (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
-long (*external_vqt_extent)(Virtual *vwk, short *text, long length) = ft2_text_width;
+long (*external_vqt_extent)(Fontheader *font, short *text, long length) = ft2_text_width;
+long (*external_vqt_width)(Fontheader *font, short ch) = ft2_char_width;
 long (*external_vst_point)(Virtual *vwk, long size) = ft2_vst_point;
 long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = ft2_text_render_default;
 #else
 int (*external_init)(void) = 0;
 Fontheader* (*external_load_font)(const char *font) = 0;
-long (*external_vqt_extent)(Virtual *vwk, short *text, long length) = 0;
+long (*external_vqt_extent)(Fontheader *font, short *text, long length) = 0;
+long (*external_vqt_width)(Fontheader *font, short ch) = 0;
 long (*external_vst_point)(Virtual *vwk, long size) = 0;
 long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = 0;
 #endif
