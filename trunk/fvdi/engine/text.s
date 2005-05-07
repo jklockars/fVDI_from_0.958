@@ -1,7 +1,7 @@
 *****
 * fVDI text drawing functions
 *
-* $Id: text.s,v 1.7 2005-05-06 12:29:37 johan Exp $
+* $Id: text.s,v 1.8 2005-05-07 18:38:55 standa Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -474,7 +474,7 @@ _default_text:
 	jsr	(a3)
 	add.w	#6*4,a7
 
-	move.l	-(a7),a7			; Return to original stack
+	move.l	(a7),a7			; Return to original stack
 
 .no_external_renderer:
 	movem.l	(a7)+,d3-d7/a3-a6

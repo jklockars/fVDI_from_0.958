@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.5 2005-05-06 12:29:37 johan Exp $
+* $Id: text_sq.s,v 1.6 2005-05-07 18:38:56 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -16,7 +16,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	include	"macros.inc"
 
 	xref	_vdi_stack_top,_vdi_stack_size
-	xref	_external_vst_point,_external_vqt_extent
+	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
@@ -316,6 +316,7 @@ lib_vqt_name:
 	move.b	(a2)+,d0
 	move.w	d0,(a1)+
 	dbra	d1,.name
+
 	move.l	a0,d0
 	rts
 
@@ -517,7 +518,7 @@ vqt_extent:
 	move.w	6(a2),d0			; Number of characters
 	move.l	ptsout(a1),a2
 	move.l	intin(a1),a1
-	move.l	vwk_text_current_font(a0),a4	; a0 no longer -> VDI struct!
+	move.l	vwk_text_current_font(a0),a4
 
 * Some other method should be used for this!
 	tst.w	font_flags(a4)
@@ -595,19 +596,20 @@ vqt_extent:
 	ext.l	d0
 	move.l	d0,-(a7)
 	move.l	a1,-(a7)
-	move.l	a0,-(a7)			; VDI struct
+	move.l	a4,-(a7)			; Fontheader
 	jsr	(a3)
 	add.w	#4*4,a7
 	move.l	d0,d2
 	movem.l	(a7)+,d0-d1/a0-a2
 
-	move.l	-(a7),a7			; Return to original stack
+	move.l	(a7),a7				; Return to original stack
 	bra	.no_italic
 
 .no_external_vqt_extent:
 	movem.l	(a7)+,d2-d4/a3-a4
 	used_d1
 	done_return
+
 
 	
 * lib_vqt_extent - Standard Library function
@@ -622,10 +624,15 @@ lib_vqt_extent:
 	move.w	(a1),d0			; Number of characters
 	move.l	6(a1),a2
 	move.l	2(a1),a1
-	move.l	vwk_text_current_font(a0),a0	; a0 no longer -> VDI struct!
-	move.l	font_table_character(a0),a3
-	move.w	font_code_low(a0),d3
-	move.w	font_code_high(a0),d4
+	move.l	vwk_text_current_font(a0),a4
+
+* Some other method should be used for this!
+	tst.w	font_flags(a4)
+	lbmi	.external_vqt_extent,8
+
+	move.l	font_table_character(a4),a3
+	move.w	font_code_low(a4),d3
+	move.w	font_code_high(a4),d4
 
 	moveq	#0,d2			; Width total
 ;	subq.w	#1,d0
@@ -669,7 +676,7 @@ lib_vqt_extent:
   endc
 	swap	d2
 	move.l	d2,(a2)+
-	move.w	font_height(a0),d2
+	move.w	font_height(a4),d2
   ifne SUB1
 	subq.w	#1,d2
   endc
@@ -677,6 +684,33 @@ lib_vqt_extent:
 	ext.l	d2
 	move.l	d2,(a2)+
 
+	movem.l	(a7)+,d2-d4/a3-a4
+	rts
+
+ label .external_vqt_extent,8
+	move.l	_external_vqt_extent,d2		; (Handle differently?)
+	lbeq	.no_external_vqt_extent,8	; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d1/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)	
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a1,-(a7)
+	move.l	a4,-(a7)			; Fontheader
+	jsr	(a3)
+	add.w	#4*4,a7
+	move.l	d0,d2
+	movem.l	(a7)+,d0-d1/a0-a2
+
+	move.l	(a7),a7				; Return to original stack
+	lbra	.no_italic,7
+
+ label .no_external_vqt_extent,9
 	movem.l	(a7)+,d2-d4/a3-a4
 	rts
 
@@ -694,6 +728,11 @@ vqt_width:
 	move.l	ptsout(a1),a2
 	move.l	intout(a1),a1
 	move.l	vwk_text_current_font(a0),a0	; a0 no longer -> VDI struct!
+
+* Some other method should be used for this!
+	tst.w	font_flags(a0)
+	bmi	.external_vqt_width
+
 	move.l	font_table_character(a0),a3
 	move.w	font_code_low(a0),d1
 
@@ -729,6 +768,34 @@ vqt_width:
 .no_char:
 	move.w	#-1,(a1)
 	bra	.end_vqt_width	; .end
+
+.external_vqt_width:
+	move.l	_external_vqt_width,d2		; (Handle differently?)
+	beq	.no_external_vqt_width		; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d1/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)	
+	ext.l	d0
+	move.l	d0,-(a7)			; Character
+	move.l	a0,-(a7)			; Fontheader
+	jsr	(a3)
+	add.w	#3*4,a7
+	move.l	d0,d2
+	movem.l	(a7)+,d0-d1/a0-a2
+
+	move.l	(a7),a7				; Return to original stack
+	bra	.no_offset
+
+.no_external_vqt_width:
+	movem.l	(a7)+,d2/a3
+	used_d1
+	done_return
+
 
 * lib_vqt_width - Standard Library function
 * Todo: ?
@@ -925,7 +992,7 @@ vst_point:
 	move.l	d0,a3
 	movem.l	(a7)+,d0-d2/a0-a2
 
-	move.l	-(a7),a7			; Return to original stack
+	move.l	(a7),a7				; Return to original stack
 	lbra	.found,2
 
 .no_external_vst_point:
