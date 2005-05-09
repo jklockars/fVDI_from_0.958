@@ -20,7 +20,7 @@ include $(top_srcdir)/CONFIGVARS
 ifneq ($(stdlib_srcdir),)
 STDLIB_CFLAGS = -I$(stdlib_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
 else
-STDLIB_CFLAGS = $(M68K_ATARI_MINT_CFLAGS)
+STDLIB_CFLAGS = -I$(top_srcdir)/modules/include $(M68K_ATARI_MINT_CFLAGS)
 endif
 
 CFLAGS  = -m68$(CPU) $(OPTS) -I$(top_srcdir)/include $(STDLIB_CFLAGS)
@@ -29,13 +29,22 @@ ASFLAGS = -m68$(CPU) -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include -I$
 # FreeType2 things
 ifneq ($(ft2_srcdir),)
 
-#LIBKERN = libkern/libkern$(CPU).a
+ifneq ($(libkern_srcdir),)
 
-LIBFT2  = ft2/libft2.a
+LIBKERN = $(libkern_srcdir)/libkern$(CPU).a
+#LIBS    = -lft2 -lkern$(CPU)
+LIBS    = -lft2 -lkern020-60
+LDFLAGS = -L$(top_srcdir)/modules/ft2 -L$(libkern_srcdir)
+CFLAGS += -DUSE_LIBKERN
+else
+LIBKERN = 
+LIBS    = -lft2
+LDFLAGS = -L$(top_srcdir)/modules/ft2
+endif
+
+LIBFT2  = $(top_srcdir)/modules/ft2/libft2.a
 LIBFILES= $(LIBFT2) $(LIBKERN)
-LDFLAGS = -Lft2 -Llibkern
-CFLAGS += -Ift2/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/include 
-LIBS    = -lft2 -lkern$(CPU)
+CFLAGS += -DFT2 -I$(top_srcdir)/modules/ft2/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/include 
 
 endif
 
@@ -68,9 +77,8 @@ SSRC = \
 	text_sq.s \
 	traptabl.s \
 	unimpl.s \
-	vdi_misc.s
-
-#	 setjmp.s
+	vdi_misc.s \
+	setjmp.s
 
 
 CSRC = \
@@ -90,12 +98,12 @@ CSRC = \
 
 ifneq ($(ft2_srcdir),)
 CSRC+= \
-	ft2.c \
-	ft2_ftsystem.c
+	$(top_srcdir)/modules/ft2/ft2.c \
+	$(top_srcdir)/modules/ft2/ft2_ftsystem.c
 
 ifeq ($(DEBUG),yes)
 CSRC+= \
-	ft2_ftdebug.c
+	../modules/ft2/ft2_ftdebug.c
 endif
 endif
 
@@ -127,10 +135,10 @@ endif
 	$(CC) $(ASFLAGS) -Dgas=1 -Dlattice=0 -o $@ -c $<
 
 $(LIBKERN):
-	cd libkern; make $(CPU)
+	cd $(libkern_srcdir); make 020-60
 
 $(LIBFT2):
-	cd ft2; make
+	cd $(top_srcdir)/modules/ft2; make
 
 $(TARGET): $(OBJECTS) $(LIBFILES)
 	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)

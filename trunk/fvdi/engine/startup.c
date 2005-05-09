@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.11 2005-05-06 12:29:37 johan Exp $
+ * $Id: startup.c,v 1.12 2005-05-09 20:47:53 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0964
-#define BETA	4
+#define BETA	6
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -49,6 +49,8 @@ char fake_bp[256];
 long old_gdos = -2;
 
 short initialized = 0;
+
+short int_is_short = sizeof(int) == sizeof(short);
 
 long remove_fvdi(void);
 long setup_fvdi(unsigned long, long);

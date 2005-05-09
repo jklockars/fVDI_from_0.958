@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.6 2005-05-07 18:38:56 standa Exp $
+* $Id: text_sq.s,v 1.7 2005-05-09 20:47:53 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -317,6 +317,11 @@ lib_vqt_name:
 	move.w	d0,(a1)+
 	dbra	d1,.name
 
+	tst.w	font_flags(a2)
+	lbpl	.end,5
+	move.w	#1,(a1)+	; Vector font!
+
+ label .end,5
 	move.l	a0,d0
 	rts
 

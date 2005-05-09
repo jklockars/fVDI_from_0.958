@@ -27,7 +27,7 @@ typedef struct _Prgheader {
 } Prgheader;
 
 typedef struct _Funcs {
-	void CDECL (*copymem)(void *s, void *d, long n);
+	void CDECL (*copymem)(const void *s, void *d, long n);
 	const char* CDECL (*next_line)(const char *ptr);
 	const char* CDECL (*skip_space)(const char *ptr);
 	const char* CDECL (*get_token)(const char *ptr, char *buf, long n);
@@ -40,7 +40,7 @@ typedef struct _Funcs {
 	void CDECL (*error)(const char *text1, const char *text2);
 	void* CDECL (*malloc)(long size, long type);			/* Uses Mxalloc if possible */
 	long CDECL (*free)(void *addr);
-	void CDECL (*puts)(const char *text);
+	int CDECL (*puts)(const char *text);
 	void CDECL (*ltoa)(char *buf, long n, unsigned long base);
 	long CDECL (*get_cookie)(const unsigned char *cname, long super);
 	long CDECL (*set_cookie)(const unsigned char *cname, long value);

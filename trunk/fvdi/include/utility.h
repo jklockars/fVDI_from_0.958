@@ -3,7 +3,7 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.3 2005-05-06 12:29:37 johan Exp $
+ * $Id: utility.h,v 1.4 2005-05-09 20:47:53 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -38,7 +38,7 @@ void free_block(void *addr);
 /*
  * Memory/string operations
  */
-void copymem(void *s, void *d, long n);
+void copymem(const void *s, void *d, long n);
 void setmem(void *d, long v, long n);
 void copy(const char *src, char *dest);
 void cat(const char *src, char *dest);
@@ -66,7 +66,7 @@ long free_all(void);
 /*
  * Text output
  */
-void puts(const char *text);
+int puts(const char *text);
 void error(const char *text1, const char *text2);
 #define puts_nl(text)	{ puts(text); puts("\x0a\x0d"); }
 

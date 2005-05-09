@@ -1,4 +1,4 @@
-# handle cross compilation
+# Handle cross compilation
 
 NATIVE_CC = gcc
 
@@ -24,25 +24,27 @@ STRIP  = strip
 
 endif
 
-# debug build (mainly FreeType2 debugs here)
+# Debug build (mainly FreeType2 debugs here)
 DEBUG  = no
 
-# cpu to compile for
+# CPU to compile for
 CPU    = 040 
 
-# general compilation and optimalization options (CFLAGS)
+# General compilation and optimization options (CFLAGS)
 OPTS   = \
 	-mshort \
 	-O2 -fomit-frame-pointer
 
 
 
+# Set these to point to the correct directories for FreeType support!
+#stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
+#ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
+#libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
-stdlib_srcdir = $(top_srcdir)/engine/stdlib
-ft2_srcdir    = $(top_srcdir)/engine/freetype-2.1.9
-
-stdlib_srcdir =
-ft2_srcdir    =
+#stdlib_srcdir  =
+#ft2_srcdir     =
+#libkern_srcdir =
 
 ifeq ($(DEBUG),yes)
 FT2_DEBUG_OPTS = -I$(top_srcdir)/engine/ft2/devel 

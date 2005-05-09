@@ -1,18 +1,23 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.12 2005-05-07 16:06:00 standa Exp $
+ * $Id: utility.c,v 1.13 2005-05-09 20:47:53 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
+
+#include "stdarg.h"
  
 #include "os.h"
 #include "fvdi.h"
 #include "relocate.h"
 #include "utility.h"
 #include "globals.h"
+
+
+typedef unsigned long size_t;
 
 /*
  * Global variables
@@ -320,7 +325,7 @@ void check_cookies(void)
 }
 
 
-void copymem(void *s, void *d, long n)
+void copymem(const void *s, void *d, long n)
 {
    char *src, *dest;
 
@@ -331,7 +336,7 @@ void copymem(void *s, void *d, long n)
 }
 
 
-void copymem_aligned(void *s, void *d, long n)
+void copymem_aligned(const void *s, void *d, long n)
 {
    long *src, *dest, n4;
 
@@ -356,6 +361,75 @@ void copymem_aligned(void *s, void *d, long n)
 }
 
 
+#ifndef USE_LIBKERN
+/* Conflicting type with builtin */
+/* Rely on builtin? */
+void *memcpy(void *dest, const void *src, size_t n)
+{
+   if (n > 3) {
+     if (!((long)dest & 1)) {
+       if (!((long)src & 1)) {
+          copymem_aligned(src, dest, n);
+          return dest;
+       }
+     } else if ((long)src & 1) {
+       *(char *)dest++ = *(char *)src++;
+       copymem_aligned(src, dest, n - 1);
+       return dest - 1;
+     }
+   }
+
+   copymem(src, dest, n);
+
+   return dest;
+}
+
+/* A movem with d1-d7/a2-a6 moves 48 bytes at a time */
+void *memmove(void *dest, const void *src, long n)
+{
+  char *s1, *d1;
+
+  if (((long)dest >= (long)src + 48) || ((long)dest + n < (long)src))
+     return memcpy(dest, src, n);
+
+  s1 = (char *)src + n;
+  d1 = (char *)dest + n;
+  for(n--; n >= 0; n--)
+    *(--d1) = *(--s1);
+
+  return dest;
+}
+
+/* This can only deal with the things in FreeType 2.1.10 */
+int sprintf(char *str, const char *format, ...)
+{
+   va_list args;
+
+   va_start(args, format);
+   if (strcmp(format, "%s%c%s") == 0) {
+      char *text, ch;
+
+      text = va_arg(args, char *);
+      while (*str++ = *text++)
+	;
+      str--;
+      ch = va_arg(args, char);
+      *str++ = ch;
+      text = va_arg(args, char *);
+      while (*str++ = *text++)
+	;
+   } else if (strcmp(format, "%hd") == 0) {
+      short val;
+      val = va_arg(args, short);
+      ltoa(str, val, 10);
+   }
+   va_end(args);
+
+   return 0;
+}
+#endif
+
+
 void setmem(void *d, long v, long n)
 {
    char *dest;
@@ -366,11 +440,150 @@ void setmem(void *d, long v, long n)
 }
 
 
+void setmem_aligned(void *d, long v, long n)
+{
+   long *dest;
+   long n4;
+
+   dest = (long *)d;
+   for(n4 = (n >> 2) - 1; n4 >= 0; n4--)
+      *dest++ = v;
+
+   if (n & 3) {
+      char *d1 = (char *)dest;
+      switch(n & 3) {
+      case 3:
+         *d1++ = (char)(v >> 24);
+      case 2:
+         *d1++ = (char)(v >> 16);
+      case 1:
+         *d1++ = (char)(v >> 8);
+         break;
+      }
+   }
+}
+
+
+#ifndef USE_LIBKERN
+/* Conflicting type with builtin */
+/* Rely on builtin? */
+void *memset(void *s, int c, size_t n)
+{
+   if ((n > 3) && !((long)s & 1)) {
+      unsigned long v;
+      v = ((unsigned short)c << 8) | (unsigned short)c;
+      v = (v << 16) | v;
+      setmem_aligned(s, v, n);
+   } else
+      setmem(s, c, n);
+
+   return s;
+}
+
+
+long strlen(const char *s)
+{
+   const char *p = s;
+   while (*p++)
+      ;
+
+   return (long)(p - s) - 1;
+}
+
+
+int strcmp(const char *s1, const char *s2)
+{
+   char c1;
+
+   do {
+       if (!(c1 = *s1++)) {
+           s2++;
+           break;
+       }
+   } while (c1 == *s2++);
+
+   return (long)(c1 - s2[-1]);
+}
+
+
+int strncmp(const char *s1, const char *s2, size_t n)
+{
+   char c1;
+
+   for(n--; n >= 0; n--) {
+      if (!(c1 = *s1++)) {
+         s2++;
+         break;
+      }
+      if (c1 != *s2++)
+         break;
+   }
+
+   if (n < 0)
+      return 0L;
+
+   return (long)(c1 - s2[-1]);
+}
+
+
+int memcmp(const void *s1, const void *s2, size_t n)
+{
+   char c1;
+   char *s1c, *s2c;
+
+   for(n--; n >= 0; n--) {
+      if (*s1c++ != *s2c++)
+         return (long)(s1c[-1] - s2c[-1]);
+   }
+
+   return 0L;
+}
+#endif
+
+
 void copy(const char *src, char *dest)
 {
    while (*dest++ = *src++)
       ;
 }
+
+
+#ifndef USE_LIBKERN
+char *strcpy(char *dest, const char *src)
+{
+   copy(src, dest);
+
+   return dest;
+}
+
+
+char *strncpy(char *dest, const char *src, long n)
+{
+   char c1;
+
+   for(n--; n >= 0; n--) {
+      c1 = *src++;
+      *dest++ = c1;
+      if (!c1)
+         break;
+   }
+   for(; n >= 0; n--)
+      *dest++ = 0;
+
+   return dest;
+}
+
+
+char *strdup(const char *s)
+{
+   char *d;
+
+   if (d = (char *)malloc(strlen(s) + 1))
+      strcpy(d, s);
+
+   return d;
+}
+#endif
 
 
 void cat(const char *src, char *dest)
@@ -379,6 +592,54 @@ void cat(const char *src, char *dest)
       ;
    copy(src, dest - 1);
 }
+
+
+#ifndef USE_LIBKERN
+char *strcat(char *dest, const char *src)
+{
+   cat(src, dest);
+
+   return dest;
+}
+
+
+char *strchr(const char *s, int c)
+{
+   char ch, c1;
+
+   if (!c)
+      return (char *)s + strlen(s);
+
+   c1 = c;
+   while(ch = *s++) {
+      if (ch == c1)
+         return (char *)s - 1;
+   }
+
+   return 0;
+}
+
+
+char *strrchr(const char *s, int c)
+{
+   char *found, ch, c1;
+
+   if (!c)
+      return (char *)s + strlen(s);
+
+   c1 = c;
+   found = 0;
+   while(ch = *s++) {
+      if (ch == c1)
+         found = (char *)s;
+   }
+
+   if (found)
+      return found - 1;
+
+   return 0;
+}
+#endif
 
 
 long length(const char *text)
@@ -413,6 +674,26 @@ long check_base(char ch, long base)
    
    return -1;
 }
+
+
+#ifndef USE_LIBKERN
+int isdigit(int c)
+{
+   return numeric(c);
+}
+
+
+int isxdigit(int c)
+{
+   return check_base(c, 16);
+}
+
+
+int isalnum(int c)
+{
+    return check_base(c, 36);   /* Base 36 has 0-9, A-Z */
+}
+#endif
 
 
 long atol(const char *text)
@@ -473,6 +754,43 @@ void ltoa(char *buf, long n, unsigned long base)
       *tmp = ch;
    }
 }
+
+
+#ifndef USE_LIBKERN
+/* This is really a Shell sort. */
+/* Not the best, but short and decent. */
+void qsort(void *base, long nmemb, long size,
+           int (*compar)(const void *,const void *))
+{
+   long gap, i, j, k, gap_size;
+   char *p, *pt, *q, c, *cbase;
+
+   gap_size = nmemb * size;
+   for(gap = nmemb / 2; gap > 0; gap /= 2) {
+      gap_size /= 2;
+      cbase = (char *)base + gap_size;
+      for(i = gap; i < nmemb; i++) {
+         q = cbase;
+         p = q - gap_size;
+         for(j = i - gap; j >= 0; j -= gap) {
+            if ((*compar)(p, q) <= 0)
+               break;
+            else {
+               pt = p;
+               for(k = size - 1; k >= 0; k--) {
+                  c    = *q;
+                  *q++ = *pt;
+                  *pt++ = c;
+               }
+            }
+            q = p;
+            p -= gap_size;
+         }
+         cbase += size;
+      }
+   }
+}
+#endif
 
 
 void *fmalloc(long size, long type)
@@ -629,7 +947,7 @@ long free_all(void)
 }
 
 
-void puts(const char *text)
+int puts(const char *text)
 {
    if (debug_out == -2)
       Cconws(text);
@@ -642,6 +960,8 @@ void puts(const char *text)
    else
       while (*text)
          Bconout(debug_out, *text++);
+
+   return 1;
 }
 
 
