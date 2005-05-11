@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.9 2005-05-09 20:47:53 johan Exp $
+ * $Id: loader.c,v 1.10 2005-05-11 14:16:19 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -659,8 +659,10 @@ long load_fonts(Virtual *vwk, const char **ptr)
    static char fonts[PATH_SIZE], *pathtail;
    int error;
 
-   if (!external_init)
-     return -1;
+   if (!external_init) {
+      puts_nl("Font directory specified without FreeType support!");
+      return -1;
+   }
 
    if (get_pathname(ptr, fonts) != 1)
       return -1;
