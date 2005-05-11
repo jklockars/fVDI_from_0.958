@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.13 2005-05-09 20:47:53 johan Exp $
+ * $Id: utility.c,v 1.14 2005-05-11 14:18:45 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -362,8 +362,6 @@ void copymem_aligned(const void *s, void *d, long n)
 
 
 #ifndef USE_LIBKERN
-/* Conflicting type with builtin */
-/* Rely on builtin? */
 void *memcpy(void *dest, const void *src, size_t n)
 {
    if (n > 3) {
@@ -384,48 +382,27 @@ void *memcpy(void *dest, const void *src, size_t n)
    return dest;
 }
 
-/* A movem with d1-d7/a2-a6 moves 48 bytes at a time */
+
 void *memmove(void *dest, const void *src, long n)
 {
-  char *s1, *d1;
+   char *s1, *d1;
 
-  if (((long)dest >= (long)src + 48) || ((long)dest + n < (long)src))
-     return memcpy(dest, src, n);
+   if (((long)dest >= (long)src + n) || ((long)dest + n <= (long)src))
+      return memcpy(dest, src, n);
 
-  s1 = (char *)src + n;
-  d1 = (char *)dest + n;
-  for(n--; n >= 0; n--)
-    *(--d1) = *(--s1);
-
-  return dest;
-}
-
-/* This can only deal with the things in FreeType 2.1.10 */
-int sprintf(char *str, const char *format, ...)
-{
-   va_list args;
-
-   va_start(args, format);
-   if (strcmp(format, "%s%c%s") == 0) {
-      char *text, ch;
-
-      text = va_arg(args, char *);
-      while (*str++ = *text++)
-	;
-      str--;
-      ch = va_arg(args, char);
-      *str++ = ch;
-      text = va_arg(args, char *);
-      while (*str++ = *text++)
-	;
-   } else if (strcmp(format, "%hd") == 0) {
-      short val;
-      val = va_arg(args, short);
-      ltoa(str, val, 10);
+   if ((long)dest < (long)src) {
+      s1 = (char *)src;
+      d1 = (char *)dest;
+      for(n--; n >= 0; n--)
+         *d1++ = *s1++;
+   } else {
+      s1 = (char *)src + n;
+      d1 = (char *)dest + n;
+      for(n--; n >= 0; n--)
+         *(--d1) = *(--s1);
    }
-   va_end(args);
 
-   return 0;
+   return dest;
 }
 #endif
 
@@ -465,8 +442,6 @@ void setmem_aligned(void *d, long v, long n)
 
 
 #ifndef USE_LIBKERN
-/* Conflicting type with builtin */
-/* Rely on builtin? */
 void *memset(void *s, int c, size_t n)
 {
    if ((n > 3) && !((long)s & 1)) {
@@ -509,8 +484,10 @@ int strcmp(const char *s1, const char *s2)
 int strncmp(const char *s1, const char *s2, size_t n)
 {
    char c1;
+   long ns;     /* size_t can't be negative */
 
-   for(n--; n >= 0; n--) {
+   ns = n;
+   for(ns--; ns >= 0; ns--) {
       if (!(c1 = *s1++)) {
          s2++;
          break;
@@ -519,7 +496,7 @@ int strncmp(const char *s1, const char *s2, size_t n)
          break;
    }
 
-   if (n < 0)
+   if (ns < 0)
       return 0L;
 
    return (long)(c1 - s2[-1]);
@@ -530,8 +507,12 @@ int memcmp(const void *s1, const void *s2, size_t n)
 {
    char c1;
    char *s1c, *s2c;
+   long ns;     /* size_t can't be negative */
 
-   for(n--; n >= 0; n--) {
+   ns = n;
+   s1c = (char *)s1;
+   s2c = (char *)s2;
+   for(ns--; ns >= 0; ns--) {
       if (*s1c++ != *s2c++)
          return (long)(s1c[-1] - s2c[-1]);
    }
@@ -557,20 +538,23 @@ char *strcpy(char *dest, const char *src)
 }
 
 
-char *strncpy(char *dest, const char *src, long n)
+char *strncpy(char *dest, const char *src, size_t n)
 {
-   char c1;
+   char c1, *d;
+   long ns;
 
-   for(n--; n >= 0; n--) {
+   d = dest;
+   ns = n;
+   for(ns--; ns >= 0; ns--) {
       c1 = *src++;
       *dest++ = c1;
       if (!c1)
          break;
    }
-   for(; n >= 0; n--)
+   for(ns--; ns >= 0; ns--)
       *dest++ = 0;
 
-   return dest;
+   return d;
 }
 
 
@@ -582,6 +566,93 @@ char *strdup(const char *s)
       strcpy(d, s);
 
    return d;
+}
+
+
+/* This can only deal with some formats (enough for FreeType 2.1.10) */
+int sprintf(char *str, const char *format, ...)
+{
+   va_list args;
+   int mode = 0;
+   char *s, *text, ch;
+   long val_l;
+   int val_i;
+   short val_s;
+   char val_c;
+
+   s = str;
+   va_start(args, format);
+#if 1
+   while (ch = *format++) {
+       if (mode) {
+	   switch(ch) {
+	       case 's':
+		   text = va_arg(args, char *);
+		   while (*str++ = *text++)
+		       ;
+		   str--;
+		   mode = 0;
+		   break;
+	       case 'c':
+		   val_c = va_arg(args, int);    /* char promoted to int */
+		   *str++ = val_c;
+		   mode = 0;
+		   break;
+	       case 'd':
+		   if (mode == 2) {
+		       val_s = va_arg(args, int);    /* short promoted */
+		       ltoa(str, val_s, 10);
+		   } else {
+		       val_i = va_arg(args, int);
+		       ltoa(str, val_i, 10);
+		   }
+		   str += strlen(s);
+		   mode = 0;
+		   break;
+	       case 'h':
+		   mode = 2;
+		   break;
+	       case '%':
+		   *str++ = '%';
+		   mode = 0;
+		   break;
+	       default:
+		   *str++ = 'B';
+		   *str++ = 'A';
+		   *str++ = 'D';
+		   *str++ = '!';
+		   break;
+	   }
+       } else if (ch == '%') {
+	   mode = 1;
+       } else {
+	   *str++ = ch;
+       }
+   }
+   *str = 0;
+#else
+   if (strcmp(format, "%s%c%s") == 0) {
+      char *text, ch;
+
+      text = va_arg(args, char *);
+      while (*str++ = *text++)
+         ;
+      str--;
+      ch = va_arg(args, int);    /* char promoted to int */
+      *str++ = ch;
+      text = va_arg(args, char *);
+      while (*str++ = *text++)
+         ;
+   } else if (strcmp(format, "%hd") == 0) {
+      short val;
+      val = va_arg(args, int);   /* short promoted to int */
+      ltoa(str, val, 10);
+   } else
+       strcpy(str, "BAD!");
+#endif
+   va_end(args);
+
+   return strlen(s);
 }
 #endif
 
@@ -685,21 +756,40 @@ int isdigit(int c)
 
 int isxdigit(int c)
 {
-   return check_base(c, 16);
+   return check_base(c, 16) >= 0;
 }
 
 
 int isalnum(int c)
 {
-    return check_base(c, 36);   /* Base 36 has 0-9, A-Z */
+    return check_base(c, 36) >= 0;   /* Base 36 has 0-9, A-Z */
 }
 #endif
+
+
+int isspace(int c)
+{
+   switch(c) {
+   case ' ':
+   case '\f':
+   case '\n':
+   case '\r':
+   case '\t':
+   case '\v':
+      return 1;
+   }
+
+   return 0;
+}
 
 
 long atol(const char *text)
 {
    long n;
    int minus, base, ch;
+
+   while(isspace(*text))
+       text++;
 
    minus = 0;   
    if (*text == '-') {
@@ -759,15 +849,15 @@ void ltoa(char *buf, long n, unsigned long base)
 #ifndef USE_LIBKERN
 /* This is really a Shell sort. */
 /* Not the best, but short and decent. */
-void qsort(void *base, long nmemb, long size,
-           int (*compar)(const void *,const void *))
+ #if 0
+void fvdi_qsort(void *base, long nmemb, long size,
+                int (*compar)(const void *, const void *))
 {
    long gap, i, j, k, gap_size;
    char *p, *pt, *q, c, *cbase;
 
-   gap_size = nmemb * size;
    for(gap = nmemb / 2; gap > 0; gap /= 2) {
-      gap_size /= 2;
+      gap_size = gap * size;
       cbase = (char *)base + gap_size;
       for(i = gap; i < nmemb; i++) {
          q = cbase;
@@ -790,6 +880,53 @@ void qsort(void *base, long nmemb, long size,
       }
    }
 }
+ #else
+void qsort(void *base, long nmemb, long size,
+           int (*compar)(const void *, const void *))
+{
+    static long incs[16] = { 1391376, 463792, 198768, 86961, 33936, 13776, 
+                             4592, 1968, 861, 336, 112, 48, 21, 7, 3, 1 };
+    long i, j, k, h, j_size, h_size;
+    short n;
+    char buf[16], *v, *p1, *p2, *cbase;
+
+    v = buf;
+    if (size > sizeof(buf)) {
+       v = malloc(size);
+       if (!v)       /* Can't sort? */
+          return;
+    }
+
+   cbase = (char *)base;
+   for(k = 0; k < 16; k++) {
+      h = incs[k];
+      h_size = h * size;
+      for(i = h; i < nmemb; i++) {
+         j = i;
+         j_size = j * size;
+         p1 = v;
+         p2 = cbase + j_size;
+         for(n = size - 1; n >= 0; n--)
+            *p1++ = *p2++;
+         while ((j >= h) && (compar(v, cbase + j_size - h_size) < 0)) {
+            p1 = cbase + j_size;
+            p2 = p1 - h_size;
+            for(n = size - 1; n >= 0; n--)
+               *p1++ = *p2++;
+            j -= h;
+            j_size -= h_size;
+         }
+         p1 = cbase + j_size;
+         p2 = v;
+         for(n = size - 1; n >= 0; n--)
+            *p1++ = *p2++;
+      }
+   } 
+
+   if (size > sizeof(buf))
+      free(v);
+}
+ #endif
 #endif
 
 

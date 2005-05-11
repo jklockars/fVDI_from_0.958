@@ -1,3 +1,7 @@
+2005-05-11 - johan
+Bug fixes for the internal FreeType support code.
+FreeType support now works without external libraries!
+
 2005-05-11 - patrice
 Added getBpp() function to the ARAnyM fVDI driver.
 Needed when using fVDI driver with OpenGL rendering.
