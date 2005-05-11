@@ -1,3 +1,7 @@
+2005-05-11 - patrice
+Added getBpp() function to the ARAnyM fVDI driver.
+Needed when using fVDI driver with OpenGL rendering.
+
 2005-05-09 - johan
 Miscellaneous additions to make it possible to build fVDI with
 FreeType support without depending on external library code.
