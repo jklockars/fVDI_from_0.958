@@ -207,6 +207,12 @@ c_get_height(void)
 }
 
 long CDECL
+c_get_bpp(void)
+{
+   return ARAnyM((NF_fVDI+FVDI_GETBPP));
+}
+
+long CDECL
 c_openwk(void)
 {
    return ARAnyM((NF_fVDI+FVDI_OPENWK));
@@ -217,4 +223,3 @@ c_closewk(void)
 {
    return ARAnyM((NF_fVDI+FVDI_CLOSEWK));
 }
-
