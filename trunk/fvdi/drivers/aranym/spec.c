@@ -172,23 +172,9 @@ char *get_num(char *token, short *num)
 }
 
 
-long set_mode(const char **ptr)
+int set_bpp(int bpp)
 {
-	char token[80], *tokenptr;
-	
-	if (!(*ptr = access->funcs.skip_space(*ptr)))
-		;		/* *********** Error, somehow */
-	*ptr = access->funcs.get_token(*ptr, token, 80);
-
-	tokenptr = token;
-	tokenptr = get_num(tokenptr, &resolution.width);
-	tokenptr = get_num(tokenptr, &resolution.height);
-	tokenptr = get_num(tokenptr, &resolution.bpp);
-	tokenptr = get_num(tokenptr, &resolution.freq);
-
-	resolution.used = 1;
-	
-	switch (resolution.bpp) {
+	switch (bpp) {
 	case 1:
 		graphics_mode = &mode[0];
 		driver_name[28] = '1';
@@ -206,13 +192,13 @@ long set_mode(const char **ptr)
 	case 16:
 	case 24:
 	case 32:
-		graphics_mode = &mode[resolution.bpp / 8 + 2];
+		graphics_mode = &mode[bpp / 8 + 2];
 		break;
 	default:
-		resolution.bpp = 16;		/* Default as 16 bit */
+		bpp = 16;		/* Default as 16 bit */
 	}
 
-	switch (resolution.bpp) {
+	switch (bpp) {
 	case 16:
 		set_colours_r = &c_set_colours_16;
 		get_colours_r = &c_get_colours_16;
@@ -236,6 +222,28 @@ long set_mode(const char **ptr)
 		driver_name[27] = ' ';
 		break;
 	}
+
+	return bpp;
+}
+
+
+long set_mode(const char **ptr)
+{
+	char token[80], *tokenptr;
+	
+	if (!(*ptr = access->funcs.skip_space(*ptr)))
+		;		/* *********** Error, somehow */
+	*ptr = access->funcs.get_token(*ptr, token, 80);
+
+	tokenptr = token;
+	tokenptr = get_num(tokenptr, &resolution.width);
+	tokenptr = get_num(tokenptr, &resolution.height);
+	tokenptr = get_num(tokenptr, &resolution.bpp);
+	tokenptr = get_num(tokenptr, &resolution.freq);
+
+	resolution.used = 1;
+
+	resolution.bpp = set_bpp(resolution.bpp);
 
 	return 1;
 }
@@ -486,7 +494,7 @@ Virtual* CDECL opnwk(Virtual *vwk)
 	/* update the width/height if restricted by the native part */
 	resolution.width = c_get_width();
 	resolution.height = c_get_height();
-	resolution.bpp = c_get_bpp();
+	resolution.bpp = set_bpp(c_get_bpp());
 
 	setup_wk(vwk);
 
