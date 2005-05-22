@@ -1,3 +1,6 @@
+2005-05-22 - johan
+Forced the ARAnyM fVDI driver to set itself up according to getBpp().
+
 2005-05-11 - johan
 Bug fixes for the internal FreeType support code.
 FreeType support now works without external libraries!
