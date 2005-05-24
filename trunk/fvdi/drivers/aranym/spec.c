@@ -425,14 +425,14 @@ static void initialize_wk(Virtual *vwk)
  * and which couldn't be done directly while loading.
  * Supplied is the default fVDI virtual workstation.
  */
-void CDECL initialize(Virtual *vwk)
+long CDECL initialize(Virtual *vwk)
 {
 	vwk = me->default_vwk;  /* This is what we're interested in */
 	
 	if (!nf_initialize()) {
 		access->funcs.puts("  No or incompatible NatFeat fVDI!");
 		access->funcs.puts("\x0d\x0a");
-		return;
+		return 0;
 	}
 
 	initialize_wk(vwk);
@@ -446,6 +446,8 @@ void CDECL initialize(Virtual *vwk)
 		access->funcs.puts(buf);
 		access->funcs.puts("\x0d\x0a");
 	}
+
+	return 1;
 }
 
 
