@@ -61,8 +61,6 @@ static long*
 clipping(Virtual *vwk, long *rect)
 {
    vwk = (Virtual *)((long)vwk & ~1);
-   if (!vwk->clip.on)
-      return 0;
    
    rect[0] = vwk->clip.rectangle.x1;
    rect[1] = vwk->clip.rectangle.y1;
