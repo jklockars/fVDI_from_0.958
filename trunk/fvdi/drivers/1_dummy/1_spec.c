@@ -74,7 +74,7 @@ void check_token(char *token, const char **ptr)
  * and which couldn't be done directly while loading.
  * Supplied is the default fVDI virtual workstation.
  */
-void initialize(Virtual *vwk)
+long initialize(Virtual *vwk)
 {
 	Workstation *wk;
 
@@ -85,6 +85,8 @@ void initialize(Virtual *vwk)
 
 	device.byte_width = wk->screen.wrap;
 	device.address = wk->screen.mfdb.address;
+
+	return 1;
 }
 
 /*

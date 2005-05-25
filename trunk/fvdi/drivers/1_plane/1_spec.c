@@ -1,7 +1,7 @@
 /*
  * fVDI device driver specific setup
  *
- * $Id: 1_spec.c,v 1.2 2002-07-10 22:13:40 johan Exp $
+ * $Id: 1_spec.c,v 1.3 2005-05-25 14:02:00 johan Exp $
  *
  * Copyright 1998-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -99,7 +99,7 @@ void check_token(char *token, const char **ptr)
  * and which couldn't be done directly while loading.
  * Supplied is the default fVDI virtual workstation.
  */
-void initialize(Virtual *vwk)
+long initialize(Virtual *vwk)
 {
 	Workstation *wk;
 	char *buf;
@@ -196,6 +196,8 @@ void initialize(Virtual *vwk)
 		}
 	}
 #endif
+
+	return 1;
 }
 
 /*

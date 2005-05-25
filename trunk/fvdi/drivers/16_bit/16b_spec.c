@@ -1,7 +1,7 @@
 /* 
  * A 16 bit mode specification/initialization file, by Johan Klockars.
  *
- * $Id: 16b_spec.c,v 1.4 2002-07-10 22:13:39 johan Exp $
+ * $Id: 16b_spec.c,v 1.5 2005-05-25 14:02:00 johan Exp $
  *
  * This file is an example of how to write an
  * fVDI device driver routine in C.
@@ -287,7 +287,7 @@ void check_token(char *token, const char **ptr)
  * and which couldn't be done directly while loading.
  * Supplied is the default fVDI virtual workstation.
  */
-void CDECL initialize(Virtual *vwk)
+long CDECL initialize(Virtual *vwk)
 {
 	Workstation *wk;
 	char *buf;
@@ -397,6 +397,8 @@ void CDECL initialize(Virtual *vwk)
 #endif
 	if (!wk->screen.shadow.address)
 		driver_name[20] = 0;
+
+	return 1;
 }
 
 /*
