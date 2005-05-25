@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.10 2005-05-11 14:16:19 johan Exp $
+ * $Id: loader.c,v 1.11 2005-05-25 14:36:07 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -31,29 +31,33 @@
 
 #ifdef FT2
 /* Headers to ft2_* functions ... FIXME: to be moved */
-int ft2_init(void);
-Fontheader *ft2_load_font(const char *filename);
-long ft2_char_width(Fontheader *font, long ch);
-long ft2_text_width(Fontheader *font, short *s, long slen);
-Fontheader *ft2_vst_point(Virtual *vwk, long ptsize);
-long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long slen);
+int         ft2_init(void);
+Fontheader* ft2_load_font(const char *filename);
+long        ft2_char_width(Fontheader *font, long ch);
+long        ft2_text_width(Fontheader *font, short *s, long slen);
+Fontheader* ft2_vst_point(Virtual *vwk, long ptsize);
+long        ft2_text_render_default(Virtual *vwk, unsigned long coords,
+                                    short *s, long slen);
 
-int (*external_init)(void) = ft2_init;
+int         (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
-long (*external_vqt_extent)(Fontheader *font, short *text, long length) = ft2_text_width;
-long (*external_vqt_width)(Fontheader *font, long ch) = ft2_char_width;
+long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = ft2_text_width;
+long        (*external_vqt_width)(Fontheader *font, long ch) = ft2_char_width;
 Fontheader* (*external_vst_point)(Virtual *vwk, long size) = ft2_vst_point;
-long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = ft2_text_render_default;
+long        (*external_renderer)(Virtual *vwk, unsigned long coords,
+                                 short *text, long length) = ft2_text_render_default;
 #else
-int (*external_init)(void) = 0;
+int         (*external_init)(void) = 0;
 Fontheader* (*external_load_font)(const char *font) = 0;
-long (*external_vqt_extent)(Fontheader *font, short *text, long length) = 0;
-long (*external_vqt_width)(Fontheader *font, long ch) = 0;
+long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = 0;
+long        (*external_vqt_width)(Fontheader *font, long ch) = 0;
 Fontheader* (*external_vst_point)(Virtual *vwk, long size) = 0;
-long (*external_renderer)(Virtual *vwk, unsigned long coords, short *text, long length) = 0;
+long        (*external_renderer)(Virtual *vwk, unsigned long coords,
+                                 short *text, long length) = 0;
 #endif
 
 List *driver_list = 0;
+List *module_list = 0;
 
 short disabled = 0;
 short booted = 0;
@@ -78,6 +82,8 @@ short no_vex = 0;
 short debug_out = -2;
 short interactive = 0;
 short stand_alone = 0;
+short nvdi_cookie = 0;
+short speedo_cookie = 0;
 
 
 static char path[PATH_SIZE];
@@ -99,10 +105,12 @@ static long set_arc_split(Virtual *vwk, const char **ptr);
 static long set_arc_min(Virtual *vwk, const char **ptr);
 static long set_arc_max(Virtual *vwk, const char **ptr);
 static long load_palette(Virtual *vwk, const char **ptr);
+static long specify_cookie(Virtual *vwk, const char **ptr);
+static long module_load(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
-   {"fonts",      load_fonts,     -1},  /* path = str, where to look for fonts and drivers */
+   {"fonts",      load_fonts,     -1},  /* fonts = str, where to look for fonts and drivers */
    {"debug",      &debug,          2},  /* debug, turn on debugging aids */
    {"waitkey",    wait_key,       -1},  /* waitkey n, wait for key press for n seconds */
    {"exitkey",    exit_key,       -1},  /* exitkey c, quit fVDI if 'c' was pressed */
@@ -136,8 +144,110 @@ static Option options[] = {
    {"palette",    load_palette,   -1},  /* palette filename, loads the palette (3*short per colour) specified */
    {"debugout",   &debug_out,      4},  /* debugout n, send all debug (and similar) output to device number n */
    {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
-   {"standalone", &stand_alone,    1}   /* standalone, forces fVDI to refrain from relying on an underlying VDI */
+   {"standalone", &stand_alone,    1},  /* standalone, forces fVDI to refrain from relying on an underlying VDI */
+   {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
+   {"module",     module_load,    -1}   /* module str, specify a module to load */
 };
+
+
+/* Allocate for size of Driver since the module might be one. */
+long module_load(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE], name[NAME_SIZE], *tmp;
+   const char *opts;
+   List *list_elem;
+   Module *module;
+
+   if (!(*ptr = skip_space(*ptr))) {
+      error("Bad module specification", 0);
+      return -1;
+   }
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   copy(path, name);
+   cat(token, name);
+   opts = *ptr;
+   *ptr = next_line(*ptr);               /* Rest of line is parameter data */
+   if (*ptr) {                           /* Assumed no larger than a maximum length token */
+      copymem((char *)opts, (char *)token, *ptr - opts);
+      token[*ptr - opts] = '\0';
+   } else
+      copy(opts, token);
+
+   if (!(tmp = (char *)malloc(sizeof(List) + sizeof(Driver) + length(name) + 1)))
+      return -1;
+
+   list_elem = (List *)tmp;
+   module = (Module *)(tmp + sizeof(List));
+   list_elem->next = 0;
+   list_elem->type = 1;
+   list_elem->value = module;
+   module->id = -1;
+   module->flags = 1;	                  /* Resident */
+   module->file_name = tmp + sizeof(List) + sizeof(Driver);
+   copy(name, module->file_name);
+
+   if (!load_driver(name, module, vwk, token)) {
+      error("Failed to load module: ", name);
+      free(tmp);
+      return -1;
+   } else {
+      if (!module_list)
+	 module_list = list_elem;
+      else {
+	 list_elem->next = module_list;
+	 module_list = list_elem;
+      }
+   }
+
+   return 1;
+}
+
+
+long specify_cookie(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   short nvdi_val, speedo_val;
+
+   nvdi_val = 0;
+   speedo_val = 0;
+
+   if (!(*ptr = skip_space(*ptr))) {
+      error("Bad cookie setting!", 0);
+      return -1;
+   }
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   if (equal(token, "nvdi")) {
+#ifdef FT2
+      nvdi_val   = 0x0400;
+#else
+      nvdi_val   = 0x0250;
+#endif
+   } else if (equal(token, "speedo")) {
+      speedo_val = 0x0500;
+   }
+
+   *ptr = skip_space(*ptr);
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   if (equal(token, "=")) {
+      if (!(*ptr = skip_space(*ptr))) {
+         error("Bad cookie setting!", 0);
+         return -1;
+      }
+      *ptr = get_token(*ptr, token, TOKEN_SIZE);
+
+      if (nvdi_val)
+	  nvdi_val   = (short)atol(token);
+      else if (speedo_val)
+	  speedo_val = (short)atol(token);
+   }
+
+   if (nvdi_val)
+      nvdi_cookie = (short)nvdi_val;
+   else if (speedo_val)
+      speedo_cookie = (short)speedo_val;
+
+   return 1;
+}
 
 
 long get_pathname(const char **ptr, char *dest)
