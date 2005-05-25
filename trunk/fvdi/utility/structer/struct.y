@@ -1,7 +1,7 @@
 /*
  * C structure parser
  *
- * $Id: struct.y,v 1.3 2002-07-01 21:10:21 johan Exp $
+ * $Id: struct.y,v 1.4 2005-05-25 13:48:58 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -9,6 +9,7 @@
  */
 
 %{
+#include <stdio.h>
 #include "list.h"
 #include "misc.h"
 #include "expr.h"
