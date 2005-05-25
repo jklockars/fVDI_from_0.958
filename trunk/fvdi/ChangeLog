@@ -1,3 +1,15 @@
+2005-05-25 - johan
+ARAnyM driver now always passes OK clip data to native side.
+The driver initialize() function is allowed to return with failure (0),
+but nothing is done yet about that (fVDI crash likely on v_opnwk).
+Some very minor changes for conv2gas and structer.
+Proper dependency handling in the engine Makefile.
+Loading of modules (such as for mouse handling) supported.
+Fake NVDI and Speedo cookies if requested.
+Added information about FreeType support and integer size in fVDI
+version message at startup.
+A bunch of .cvsignore files added.
+	
 2005-05-22 - johan
 Forced the ARAnyM fVDI driver to set itself up according to getBpp().
 
