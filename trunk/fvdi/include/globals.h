@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.1 2004-10-17 17:53:54 johan Exp $
+ * $Id: globals.h,v 1.2 2005-05-25 14:11:29 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -95,6 +95,8 @@ extern short arc_max;
 extern short debug_out;
 extern short interactive;
 extern short stand_alone;
+extern short nvdi_cookie;
+extern short speedo_cookie;
 
 
 extern long pid_addr;
