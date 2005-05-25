@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.13 2005-05-11 14:32:29 johan Exp $
+ * $Id: startup.c,v 1.14 2005-05-25 14:33:46 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0964
-#define BETA	7
+#define BETA	8
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -67,18 +67,26 @@ struct fVDI_cookie {
 struct FSMC_cookie {
 	long type;
 	short versions;
-	short dummy;
+	short quality;
 };	/* fsmc_cookie = {"_FSM", 0x0100, -1}; */
+
+struct NVDI_cookie {
+	short version;  /*  0x0502 for version 5.02   */
+	long  date;     /*  0x18061990 for 1990-06-18 */
+};
 
 struct Readable_data {
 	struct fVDI_cookie cookie;
 	struct FSMC_cookie fsmc_cookie;
+	struct NVDI_cookie nvdi_cookie;
 } *readable = 0;
 
 struct Super_data *super = 0;
 
 long old_eddi = 0;
 long old_fsmc = 0;
+long old_nvdi = 0;
+
 long base_page;
 
 /* Stack should probably be allocated dynamically */
@@ -124,8 +132,18 @@ long startup(void)
 	readable->cookie.remove = remove_fvdi;
 	readable->cookie.setup = setup_fvdi;
 	readable->cookie.log = &super->fvdi_log;
-	readable->fsmc_cookie.type = str2long("_FSM");
-	readable->fsmc_cookie.versions = 0x0100;
+	if (!speedo_cookie) {
+		readable->fsmc_cookie.type = str2long("_FSM");
+		readable->fsmc_cookie.versions = 0x0100;
+	} else {
+		readable->fsmc_cookie.type = str2long("_SPD");
+		readable->fsmc_cookie.versions = speedo_cookie;
+		readable->fsmc_cookie.quality = 0xffff;
+	}
+	if (nvdi_cookie) {
+		readable->nvdi_cookie.version = nvdi_cookie;
+		readable->nvdi_cookie.date    = 0x13052005;
+	}
 
 	if (!(base_vwk = initialize_vdi())) {		/* Setup initial real and virtual workstations */
 		error("Error while initializing VDI.", 0);
@@ -199,6 +217,12 @@ long startup(void)
 		ltoa(buffer, BETA, 10);
 		puts(buffer);
 	}
+	if (!int_is_short) {
+		puts("L");
+	}
+#ifdef FT2
+	puts("-FT2");
+#endif
 	puts_nl(" now installed.");
 
 	if (debug) {
@@ -245,7 +269,12 @@ long startup(void)
 				puts(" at $");
 				puts_nl(buffer);
 			}
-			((void (*)(Virtual *))(driver->initialize))(driver->default_vwk);
+			if (!((long (*)(Virtual *))(driver->initialize))(driver->default_vwk)) {
+				/* Driver that fails initialization should be removed! */
+				if (debug) {
+				    puts_nl("  Failed initialization!");
+				}
+			}
 		}
 		element = element->next;
 	}
@@ -287,6 +316,11 @@ long startup(void)
 	old_fsmc = get_cookie("FSMC", 0);			/* Experimental */
 	set_cookie("FSMC", (long)&readable->fsmc_cookie);
 
+	if (nvdi_cookie) {
+		old_nvdi = get_cookie("NVDI", 0);
+		set_cookie("NVDI", (long)&readable->nvdi_cookie);
+	}
+
 	if (set_cookie("fVDI", (long)&readable->cookie) && debug)
 		puts_nl("Replacing previous cookie");
 
@@ -324,6 +358,8 @@ long remove_fvdi(void)
 			set_cookie("EdDI", old_eddi);
 		if (old_fsmc)
 			set_cookie("FSMC", old_fsmc);
+		if (old_nvdi)
+			set_cookie("NVDI", old_nvdi);
 		remove_xbra(34 * 4, "fVDI");		/* Trap #2 handler */
 		remove_xbra(46 * 4, "fVDI");		/* Trap #14 handler */
 		remove_xbra(10 * 4, "fVDI");		/* LineA handler */
