@@ -3,25 +3,21 @@
 NATIVE_CC = gcc
 
 ifeq ($(M68K_ATARI_MINT_CROSS),yes)
+ CROSSPREFIX = m68k-atari-mint
 
-CROSSPREFIX = m68k-atari-mint
-
-CC     = $(CROSSPREFIX)-gcc
-AS     = $(CROSSPREFIX)-as
-LD     = $(CROSSPREFIX)-ld
-AR     = $(CROSSPREFIX)-ar
-RANLIB = $(CROSSPREFIX)-ranlib
-STRIP  = $(CROSSPREFIX)-strip
-
+ CC     = $(CROSSPREFIX)-gcc
+ AS     = $(CROSSPREFIX)-as
+ LD     = $(CROSSPREFIX)-ld
+ AR     = $(CROSSPREFIX)-ar
+ RANLIB = $(CROSSPREFIX)-ranlib
+ STRIP  = $(CROSSPREFIX)-strip
 else
-
-CC     = gcc
-AS     = as
-LD     = ld
-AR     = ar
-RANLIB = ranlib
-STRIP  = strip
-
+ CC     = gcc
+ AS     = as
+ LD     = ld
+ AR     = ar
+ RANLIB = ranlib
+ STRIP  = strip
 endif
 
 # Debug build (mainly FreeType2 debugs here)
@@ -39,7 +35,7 @@ OPTS   = \
 
 # Set these to point to the correct directories for FreeType support!
 #stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
-#ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
+ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
 #libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
 #stdlib_srcdir  =
@@ -47,7 +43,7 @@ OPTS   = \
 #libkern_srcdir =
 
 ifeq ($(DEBUG),yes)
-FT2_DEBUG_OPTS = -I$(top_srcdir)/engine/ft2/devel 
+ FT2_DEBUG_OPTS = -I$(top_srcdir)/modules/ft2/devel 
 else
-FT2_DEBUG_OPTS =
+ FT2_DEBUG_OPTS =
 endif
