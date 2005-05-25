@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.4 2005-05-06 12:29:37 johan Exp $
+ * $Id: fvdi.h,v 1.5 2005-05-25 14:38:01 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -284,7 +284,7 @@ typedef struct Driver_ {
    short flags;				/* From FVDI.SYS (and elsewhere) 1 - resident */
    char *file_name;			/* From FVDI.SYS */
    char *name;				/* Identification string */
-/*   void (*initialize)(Virtual *vwk);		*//* Called after fVDI is initialized */
+/*   long (*initialize)(Virtual *vwk);		*//* Called after fVDI is initialized */
 /*   void (*setup)(long type, long value);	*//* Called to modify settings */
 /*   Virtual (*opnwk)(Virtual *vwk);	*//* Called on v_opnwk() */
 /*   void (*clswk)(Virtual *vwk);	*//* Called on v_clswk() */
@@ -296,6 +296,20 @@ typedef struct Driver_ {
    Device *device;
    void *private;			/* Info the driver wants to keep around */
 } Driver;
+
+typedef struct Module_ {
+   short id;				/* From FVDI.SYS (or elsewhere) */
+   short flags;				/* From FVDI.SYS (and elsewhere) 1 - resident */
+   char *file_name;			/* From FVDI.SYS */
+   char *name;				/* Identification string */
+/*   void (*initialize)(Virtual *vwk);		*//* Called after fVDI is initialized */
+/*   long (*setup)(long type, long value);	*//* Called to modify settings */
+/*   void (*shutdown)(Virtual *vwk);		*//* Called when shutting down */
+   void *initialize;
+   void *setup;
+   void *shutdown;
+   void *private;			/* Info the module wants to keep around */
+} Module;
 
 typedef struct function_ {
    	short retvals[2];
