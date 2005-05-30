@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.8 2005-04-25 19:56:44 johan Exp $
+* $Id: unimpl.s,v 1.9 2005-05-30 13:49:48 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -96,12 +96,15 @@ setting:
 
 	text
 
+  ifne 0
 	dc.b	0,0,"Normal IO",0
 * Normal mouse/keyboard functions
 vq_mouse:
 vq_key_s:
 	bra	redirect
+  endc
 
+  ifne 0
 	dc.b	0,0,"Vector exchange",0
 * Vector exchange functions
 vex_timv:
@@ -112,6 +115,7 @@ vex_wheelv:
 	tst.w	_no_vex
 	beq	redirect
 	done_return
+  endc
 
 	dc.b	0,0,"Miscellaneous",0
 vq_cellarray:
