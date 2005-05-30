@@ -1,3 +1,11 @@
+2005-05-30 - johan
+Improved dependency handling.
+Added interrupt handler for Natfeat events in the ARAnyM driver (irq option).
+An fVDI driver is now a module.
+Added an event() function for mouse/vblank support.
+Vertical blank handler when standalone (unless a vblank event occurs).
+vq_mouse, vq_key_s and vex_* support (requires event() to be used).
+
 2005-05-25 - johan
 ARAnyM driver now always passes OK clip data to native side.
 The driver initialize() function is allowed to return with failure (0),
