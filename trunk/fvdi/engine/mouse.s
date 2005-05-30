@@ -23,7 +23,11 @@ sven_mouse	equ	1		; Use Sven's timer draw code?
 	xref	_screen_wk,_old_curv,_old_timv
 
 	xdef	vsc_form,v_show_c,v_hide_c
+	xdef	vq_mouse,vq_key_s
+	xdef	vex_butv,vex_motv,vex_curv,vex_wheelv,vex_timv
 	xdef	_mouse_move,_mouse_timer
+	xdef	_do_nothing,_vector_call
+	xdef	_vbl_handler
 
 	xdef	lib_vsc_form,lib_v_show_c,lib_v_hide_c
 
@@ -253,6 +257,180 @@ lib_v_hide_c:
 	lbra	.not_shown,1
 
 
+	dc.b	0,"vq_mouse",0
+* vq_mouse - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_mouse:
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_mouse_position(a2),d0
+	move.l	ptsout(a0),a2
+	move.l	d0,(a2)
+
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+
+
+	dc.b	0,"vq_key_s",0
+* vq_key_s - Standard Trap function
+* Todo: This could use the p_kbshift system variable instead
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_key_s:
+	uses_d1
+	movem.l	d2/a0-a2,-(a7)
+	move.w	#-1,-(a7)	; Kbshift(-1)
+	move.w	#$0b,-(a7)
+	trap	#13
+	addq.l	#4,a7
+	movem.l	(a7)+,d2/a0-a2
+	used_d1
+	and.w	#$000f,d0
+	move.l	intout(a0),a2
+	move.w	d0,(a2)
+
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+
+	
+	dc.b	0,"vex_butv",0
+* vex_butv - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vex_butv:
+	uses_d1
+	
+	move.l	control(a1),a2
+	move.l	14(a2),d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_vector_button(a2),d1
+	move.l	d0,wk_vector_button(a2)
+	move.l	control(a1),a2
+	move.l	d1,18(a2)
+
+	used_d1
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+
+
+	dc.b	0,"vex_motv",0
+* vex_motv - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vex_motv:
+	uses_d1
+	
+	move.l	control(a1),a2
+	move.l	14(a2),d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_vector_motion(a2),d1
+	move.l	d0,wk_vector_motion(a2)
+	move.l	control(a1),a2
+	move.l	d1,18(a2)
+
+	used_d1
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+	
+	
+	dc.b	0,"vex_curv",0
+* vex_curv - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vex_curv:
+	uses_d1
+	
+	move.l	control(a1),a2
+	move.l	14(a2),d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_vector_draw(a2),d1
+	move.l	d0,wk_vector_draw(a2)
+	move.l	control(a1),a2
+	move.l	d1,18(a2)
+
+	used_d1
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+	
+	
+	dc.b	0,"vex_wheelv",0
+* vex_wheelv - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vex_wheelv:
+	uses_d1
+	
+	move.l	control(a1),a2
+	move.l	14(a2),d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_vector_wheel(a2),d1
+	move.l	d0,wk_vector_wheel(a2)
+	move.l	control(a1),a2
+	move.l	d1,18(a2)
+
+	used_d1
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+
+	
+	dc.b	0,"vex_timv",0
+* vex_timv - Standard Trap function
+* Todo:
+* In:   a1      Parameter block
+*       a0      VDI struct
+vex_timv:
+	uses_d1
+	
+	move.l	control(a1),a2
+	move.l	14(a2),d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_vector_vblank(a2),d1
+	move.l	d0,wk_vector_vblank(a2)
+	
+	tst.w	wk_vblank_frequency(a2)	; pos - Hz, neg - us
+	bmi	.microseconds
+	move.l	#2000,d0		; time_ms = (1000 + freq/2) / freq
+	add.w	wk_vblank_frequency(a2),d0
+	lsr.w	#1,d0
+	divu	wk_vblank_frequency(a2),d0
+	bra	.ms_calculated
+.microseconds:				; time_ms = (time_us + 500) / 1000
+	move.w	wk_vblank_frequency(a2),d0
+	neg.w	d0
+	ext.l	d0
+	add.w	#500,d0
+	divu	#1000,d0
+.ms_calculated:
+	
+	move.l	control(a1),a2
+	move.l	d1,18(a2)
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+
+	used_d1
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	wk_mouse_type(a2)
+	beq	redirect			; Temporary (needs a1)
+	done_return
+	
+	
 	dc.b	0,"mouse_move",0
 * mouse_move - Support function
 * Todo: ?
@@ -472,6 +650,46 @@ mouse_show:
 	addq.l	#2,a6
 	bra	.no_pixel
 
+
+	dc.b	0,"do_nothing",0
+* do_nothing - Support function
+* Todo: ?
+* In:	-
+_do_nothing:
+	rts
+
+
+	dc.b	0,0,"vector_call",0
+* vector_call - Support function
+* Todo: ?
+* In:	
+_vector_call:
+	movem.l	d1-d7/a0-a6,-(a7)
+	move.l	14*4+4(a7),d0
+	moveq	#0,d1
+	move.w	d0,d1
+	clr.w	d0
+	swap	d0
+	move.l	14*4+8(a7),a0
+	jsr	(a0)
+	swap	d0
+	move.w	d1,d0
+	movem.l	(a7)+,d1-d7/a0-a6
+	rts
+
+
+	dc.b	0,0,"vbl_handler",0
+* vbl_handler - Support function
+* Todo: Does this need to save all registers?
+* In:	
+_vbl_handler:
+	movem.l	d0-d7/a0-a6,-(a7)
+	move.l	_screen_wk,a0
+	move.l	wk_vector_vblank(a0),a0
+	jsr	(a0)
+	movem.l	(a7)+,d0-d7/a0-a6
+	rts
+	
 
 pointer_delay:
 	dc.w	0
