@@ -52,6 +52,7 @@ typedef struct _Funcs {
 	void CDECL (*free_block)(void *address);
 	void CDECL (*cache_flush)(void);
 	long CDECL (*misc)(long func, long par, const char *token);
+	long CDECL (*event)(long id_type, long data);
 } Funcs;
 
 typedef struct _Vars {
