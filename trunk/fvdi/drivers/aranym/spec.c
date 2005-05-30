@@ -2,8 +2,16 @@
 #include "relocate.h"
 #include "driver.h"
 
+/* Should try to get rid of this! */
+#include "os.h"
 
 int nf_initialize(void);
+
+/* Mouse event handling */
+extern void (*next_handler)(void);
+extern void event_trampoline(void);
+extern void CDECL event_init(void);
+extern void CDECL event_handler(void);
 
 long CDECL c_get_videoramaddress(void);
 void CDECL c_set_resolution(long width, long height, long depth, long freq);
@@ -113,6 +121,7 @@ short accel_c = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_E
 Mode *graphics_mode = &mode[1];
 
 short debug = 0;
+short irq = 0;
 
 extern void *c_write_pixel;
 extern void *c_read_pixel;
@@ -146,7 +155,8 @@ long set_scrninfo(const char **ptr);
 Option options[] = {
 	{"mode",       set_mode,          -1},  /* mode WIDTHxHEIGHTxDEPTH@FREQ */
 	{"scrninfo",   set_scrninfo,      -1},  /* scrninfo fb, make vq_scrninfo return values regarding actual fb layout */
-	{"debug",      &debug,             2}   /* debug, turn on debugging aids */
+	{"debug",      &debug,             2},  /* debug, turn on debugging aids */
+	{"irq",        &irq,               1}   /* irq, turn on IRQ handling of events */
 };
 
 
@@ -500,6 +510,11 @@ Virtual* CDECL opnwk(Virtual *vwk)
 
 	setup_wk(vwk);
 
+	if (irq) {
+		next_handler = Setexc(26, (long)event_trampoline);
+		event_init();
+	}
+
 	return 0;
 }
 
@@ -510,5 +525,7 @@ Virtual* CDECL opnwk(Virtual *vwk)
 void CDECL clswk(Virtual *vwk)
 {
 	c_closewk(vwk);
+
+	/* Get rid of the event_trampoline! */
 }
 
