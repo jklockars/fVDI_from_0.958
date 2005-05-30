@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.2 2005-05-25 14:11:29 johan Exp $
+ * $Id: globals.h,v 1.3 2005-05-30 13:54:58 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -21,6 +21,8 @@ extern List *driver_list;
 extern long old_gdos;
 
 extern short old_wk_handle;
+
+extern short vbl_handler_installed;
 
 extern long basepage;
 extern short key_pressed;

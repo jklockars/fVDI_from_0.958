@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.6 2005-05-06 12:29:37 johan Exp $
+ * $Id: function.h,v 1.7 2005-05-30 13:54:58 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -13,8 +13,12 @@
 extern Fontheader **linea_fonts(void);
 extern void linea_setup(Workstation *);
 
+extern long vector_call(void *vector, long data);
+
+extern void do_nothing(void);
 extern void mouse_move(void);
 extern void mouse_timer(void);
+extern void vbl_handler(void);
 
 extern void bad_or_non_fvdi_handle(void);
 
@@ -75,6 +79,9 @@ void lib_vdi_pp(void *, void *, void *, void *);
 
 extern void link_mouse_routines(void);
 extern void unlink_mouse_routines(void);
+extern void setup_vbl_handler(void);
+extern void shutdown_vbl_handler(void);
+
 extern void *lib_vst_color;
 extern void *lib_vst_font;
 extern void *lib_vst_point;
