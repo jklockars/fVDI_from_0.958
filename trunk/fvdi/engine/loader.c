@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.11 2005-05-25 14:36:07 johan Exp $
+ * $Id: loader.c,v 1.12 2005-05-30 13:43:39 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -106,7 +106,7 @@ static long set_arc_min(Virtual *vwk, const char **ptr);
 static long set_arc_max(Virtual *vwk, const char **ptr);
 static long load_palette(Virtual *vwk, const char **ptr);
 static long specify_cookie(Virtual *vwk, const char **ptr);
-static long module_load(Virtual *vwk, const char **ptr);
+static long use_module(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
@@ -146,22 +146,18 @@ static Option options[] = {
    {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
    {"standalone", &stand_alone,    1},  /* standalone, forces fVDI to refrain from relying on an underlying VDI */
    {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
-   {"module",     module_load,    -1}   /* module str, specify a module to load */
+   {"module",     use_module,     -1}   /* module str, specify a module to load */
 };
 
 
 /* Allocate for size of Driver since the module might be one. */
-long module_load(Virtual *vwk, const char **ptr)
+Module *init_module(Virtual *vwk, const char **ptr, List **list)
 {
    char token[TOKEN_SIZE], name[NAME_SIZE], *tmp;
    const char *opts;
    List *list_elem;
    Module *module;
 
-   if (!(*ptr = skip_space(*ptr))) {
-      error("Bad module specification", 0);
-      return -1;
-   }
    *ptr = get_token(*ptr, token, TOKEN_SIZE);
    copy(path, name);
    cat(token, name);
@@ -174,7 +170,7 @@ long module_load(Virtual *vwk, const char **ptr)
       copy(opts, token);
 
    if (!(tmp = (char *)malloc(sizeof(List) + sizeof(Driver) + length(name) + 1)))
-      return -1;
+      return 0;
 
    list_elem = (List *)tmp;
    module = (Module *)(tmp + sizeof(List));
@@ -189,15 +185,34 @@ long module_load(Virtual *vwk, const char **ptr)
    if (!load_driver(name, module, vwk, token)) {
       error("Failed to load module: ", name);
       free(tmp);
-      return -1;
+      return 0;
    } else {
-      if (!module_list)
-	 module_list = list_elem;
-      else {
-	 list_elem->next = module_list;
-	 module_list = list_elem;
+      if (list) {
+         if (!*list)
+	    *list = list_elem;
+         else {
+	    list_elem->next = *list;
+            *list = list_elem;
+         }
       }
    }
+
+   return module;
+}
+
+
+long use_module(Virtual *vwk, const char **ptr)
+{
+   Module *module;
+
+   if (!(*ptr = skip_space(*ptr))) {
+      error("Bad module specification", 0);
+      return -1;
+   }
+
+   module = init_module(vwk, ptr, &module_list);
+   if (!module)
+      return -1;
 
    return 1;
 }
@@ -896,40 +911,13 @@ int load_prefs(Virtual *vwk, char *sysname)
                error("Bad device driver specification: ", token);
                break;
             }
-            ptr = get_token(ptr, token, TOKEN_SIZE);
-            copy(path, name);
-            cat(token, name);
-            opts = ptr;
-            ptr = next_line(ptr);                 /* Rest of line is parameter data */
-            if (ptr) {                            /* Assumed no larger than a maximum length token */
-               copymem((char *)opts, (char *)token, ptr - opts);
-               token[ptr - opts] = '\0';
-            } else
-               copy(opts, token);
-            if (!(tmp = (char *)malloc(sizeof(List) + sizeof(Driver) + length(name) + 1)))
+
+            driver = (Driver *)init_module(vwk, &ptr, &driver_list);
+            if (!driver)
                break;
-            list_elem = (List *)tmp;
-            driver = (Driver *)(tmp + sizeof(List));
-            list_elem->next = 0;
-            list_elem->type = 1;
-            list_elem->value = driver;
-            driver->id = device;
-            driver->flags = 1;	                  /* Resident */
-            driver->file_name = tmp + sizeof(List) + sizeof(Driver);
-            copy(name, driver->file_name);
-            if (!load_driver(name, driver, vwk, token)) {
-               error("Failed to load device driver: ", name);
-               free(tmp);
-               break;
-            } else {
-               driver_loaded = 1;
-               if (!driver_list)
-                  driver_list = list_elem;
-               else {
-                  list_elem->next = driver_list;
-                  driver_list = list_elem;
-               }
-            }
+            driver->module.id = device;
+            driver->module.flags = 1;	                  /* Resident */
+            driver_loaded = 1;
          } else {       /* Load when needed */
             /* ........... */
          }
