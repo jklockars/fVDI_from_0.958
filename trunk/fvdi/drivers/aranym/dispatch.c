@@ -3,6 +3,7 @@
  */
 
 #include "fvdi.h"
+#include "relocate.h"
 
 /* NF API constants */
 #include "fvdidrv_nfapi.h"
@@ -10,6 +11,7 @@
 
 /* from ../common/. */
 extern Driver *me;
+extern Access *access;
 
 /* from spec.c */
 extern void CDECL (*get_colours_r)(Virtual *vwk, long colour, long *foreground, long *background);
@@ -220,4 +222,30 @@ long CDECL
 c_closewk(void)
 {
    return ARAnyM((NF_fVDI+FVDI_CLOSEWK));
+}
+
+void CDECL
+event_init(void)
+{
+   /* Tell native side to start sending events */
+   ARAnyM((NF_fVDI+FVDI_EVENT, 0));
+}
+
+void CDECL
+event_handler(void)
+{
+   long event[8];
+   int i;
+
+   ARAnyM((NF_fVDI+FVDI_EVENT, event));   /* Fetch events */
+   for(i = 0; i < (sizeof(event)/sizeof(event[0])); i += 2) {
+      if (!event[i])
+         break;
+      if ((event[i] & 0xffff) == 5) {   /* Vertical blank */
+         me->default_vwk->real_address->vblank.real = 1;
+         me->default_vwk->real_address->vblank.frequency = event[i + 1];
+      }
+      access->funcs.event(((long)me->module.id << 16) | (event[i] & 0xffff),
+                          event[i + 1]);
+   }
 }
