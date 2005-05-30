@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.14 2005-05-25 14:33:46 johan Exp $
+ * $Id: startup.c,v 1.15 2005-05-30 13:27:29 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -259,17 +259,17 @@ long startup(void)
 ****			bad list type
 #endif
 		driver = (Driver *)element->value;
-		if (driver->flags & 1) {
+		if (driver->module.flags & 1) {
 			if (!first_vwk)
 				first_vwk = driver->default_vwk;
 			if (debug) {
 				puts(" ");
-				puts(driver->name);
-				ltoa(buffer, (long)driver->initialize, 16);
+				puts(driver->module.name);
+				ltoa(buffer, (long)driver->module.initialize, 16);
 				puts(" at $");
 				puts_nl(buffer);
 			}
-			if (!((long (*)(Virtual *))(driver->initialize))(driver->default_vwk)) {
+			if (!((long (*)(Virtual *))(driver->module.initialize))(driver->default_vwk)) {
 				/* Driver that fails initialization should be removed! */
 				if (debug) {
 				    puts_nl("  Failed initialization!");
@@ -388,7 +388,7 @@ Driver *find_driver(long n)
 ****			bad list type
 #endif
 		driver = (Driver *)element->value;
-		if (((n > 0) && (driver->id == n)) || ((n <= 0) && (driver->id > -n)))
+		if (((n > 0) && (driver->module.id == n)) || ((n <= 0) && (driver->module.id > -n)))
 			return driver;
 		element = element->next;
 	}
@@ -409,16 +409,16 @@ long setup_fvdi(unsigned long type, long value)
 	if (type >> 16) {
 		driver = find_driver(type >> 16);
 		if (driver)
-			ret = ((long (*)(unsigned long, long))driver->setup)(type & 0xffff, value);
+			ret = ((long (*)(unsigned long, long))driver->module.setup)(type & 0xffff, value);
 	} else {
 		switch(type) {
 		case Q_NEXT_DRIVER:
 			if (driver = find_driver(-value))
-				ret = driver->id;
+				ret = driver->module.id;
 			break;
 		case Q_FILE:
 			if (driver = find_driver(value))
-				ret = (long)driver->file_name;
+				ret = (long)driver->module.file_name;
 			break;
 		case S_DEBUG:
 			if (value != -1)
