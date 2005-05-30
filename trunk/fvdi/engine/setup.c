@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.4 2005-05-06 12:29:37 johan Exp $
+ * $Id: setup.c,v 1.5 2005-05-30 13:32:16 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -35,9 +35,12 @@ Workstation *non_fvdi_wk = 0;
 
 short old_wk_handle = 0;   /* Was 1, [010109] */
 
+short vbl_handler_installed = 0;
+
 Workstation *screen_wk = 0;
 void *old_curv = 0;
 void *old_timv = 0;
+
 
 /*
  * Set up initial real and virtual workstations.
@@ -173,19 +176,27 @@ Virtual *initialize_vdi(void)
 /* Mouse */
    wk->mouse.type = 0;           /* Default to old VDI mouse */
    wk->mouse.hide = 0;
+   wk->mouse.buttons = 0;
    wk->mouse.position.x = 0;
    wk->mouse.position.y = 0;
+   wk->vector.motion = mouse_move;
+   wk->vector.draw   = do_nothing;
+   wk->vector.button = do_nothing;
+   wk->vector.wheel  = do_nothing;
+   wk->vector.vblank = mouse_timer;
+   wk->vblank.real = 0;
+   wk->vblank.frequency = 50;
    wk->r.set_palette = 0;
-   wk->r.get_colour = 0;
-   wk->r.set_pixel = 0;
-   wk->r.get_pixel = 0;
-   wk->r.line = &default_line;
-   wk->r.expand = &default_expand;
-   wk->r.fill = &default_fill;
+   wk->r.get_colour  = 0;
+   wk->r.set_pixel   = 0;
+   wk->r.get_pixel   = 0;
+   wk->r.line     = &default_line;
+   wk->r.expand   = &default_expand;
+   wk->r.fill     = &default_fill;
    wk->r.fillpoly = 0;
-   wk->r.blit = &default_blit;
-   wk->r.text = &default_text;
-   wk->r.mouse = 0;
+   wk->r.blit     = &default_blit;
+   wk->r.text     = &default_text;
+   wk->r.mouse    = 0;
 
    copymem(&default_functions[-1], &wk->function[-1], 257 * sizeof(Function));
    wk->opcode5_count = *(short *)((long)default_opcode5 - 2);
@@ -415,6 +426,49 @@ void unlink_mouse_routines(void)
    if (old_timv) {
       *(long *)&control[7] = (long)old_timv;
       vdi(old_wk_handle, 118, 0, 0);
+   }
+}
+
+
+void setup_vbl_handler(void)
+{
+   int n;
+   long addr;
+
+   n = get_l(0x452L) & 0xffffL;   /* nvbls */
+   addr = get_l(0x456);           /* vblqueue */
+   for(; n > 0; n--) {
+       if (get_l(addr) == 0) {
+           if (n != 1)            /* What about the last slot? Must be 0? */
+              set_l(addr + 4, 0);
+           set_l(addr, (long)vbl_handler);
+           vbl_handler_installed = 1;
+           break;
+       }
+       addr += 4;
+   }
+}
+
+
+void shutdown_vbl_handler(void)
+{
+   int n;
+   long addr;
+
+   n = get_l(0x452L) & 0xffffL;   /* nvbls */
+   addr = get_l(0x456);           /* vblqueue */
+   for(; n > 0; n--) {
+       if (get_l(addr) == (long)vbl_handler)
+           break;
+       addr += 4;
+   }
+   if (n) {
+      for(; n > 1; n--) {
+         set_l(addr, get_l(addr + 4));
+         addr += 4;
+      }
+      set_l(addr, 0L);
+      vbl_handler_installed = 0;
    }
 }
 
