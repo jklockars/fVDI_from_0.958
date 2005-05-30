@@ -36,10 +36,11 @@ SINCSRC = \
 	$(top_srcdir)/drivers/1_plane/1_expand.inc
 
 SSRC = \
-       ../common/c_common.s \
-       ../common/common.s \
-       ../common/clip.s \
-       ../common/lineachk.s
+	../common/c_common.s \
+	../common/common.s \
+	../common/clip.s \
+	../common/lineachk.s \
+	irq.s
 
 CSRC = \
 	../common/init.c \
@@ -60,11 +61,26 @@ $(SSRC_GNU): $(SINCSRC_GNU)
 # engine binary objects
 OBJECTS = $(SSRC_GNU:.gnu=.gnu.o) $(CSRC:.c=.o)
 
-$(TARGET): $(OBJECTS) $(LIBFILES)
+$(TARGET): depend $(OBJECTS) $(LIBFILES)
 	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
+
+depend: $(CSRC)
+#	"$(CC) -MM" does not seem able to keep track of the directory of the
+#	object file, so dependencies of files outside this directory are
+#	never taken into account later. makedepend does this correctly.
+#	Unfortunately, makedepend includes system headers in its
+#	dependency lists, but you can't get everything...
+#	$(CC) -MM $(CFLAGS) $(CSRC) > depend
+	makedepend -f- -- $(CFLAGS) $(CSRC) > depend 2> /dev/null
+	sed "s#\/usr[^ ]*\.h##g" < depend  > depend2
+	sed "s#^.*: *\$$##"      < depend2 > depend
+	rm depend2
 
 strip:
 	$(STRIP) --strip-all $(TARGET)
 
 clean: clean_gnu
 	rm -rf $(OBJECTS)
+	rm depend
+
+include depend
