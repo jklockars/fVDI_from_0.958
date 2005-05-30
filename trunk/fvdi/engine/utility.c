@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.14 2005-05-11 14:18:45 johan Exp $
+ * $Id: utility.c,v 1.15 2005-05-30 13:29:05 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -103,6 +103,12 @@ long get_protected_l(long addr)
    Super((void *)oldstack);
 
    return v;
+}
+
+
+void set_l(long addr, long value)
+{
+   *(long *)addr = value;
 }
 
 
@@ -1244,6 +1250,50 @@ long get_size(const char *name)
 }
 
 
+long event(long id_type, long data)
+{
+   long xy;
+
+   /* Really needs to do something about the id part */
+   switch(id_type & 0xffff) {
+   case 1:    /* Relative mouse movement */
+      if (data) {
+         xy = *(long *)&screen_wk->mouse.position.x;
+         data = (((xy >> 16) + (data >> 16)) << 16) |
+                ((xy + data) & 0xffff);
+         data = vector_call(screen_wk->vector.motion, data);
+         data = vector_call(screen_wk->vector.draw, data);
+      }
+      break;
+   case 2:    /* Absolute mouse movement */
+      xy = *(long *)&screen_wk->mouse.position.x;
+      if (data != xy) {
+         data = vector_call(screen_wk->vector.motion, data);
+         data = vector_call(screen_wk->vector.draw, data);
+      }
+      break;
+   case 3:    /* Button change */
+      if (data != screen_wk->mouse.buttons) {
+         screen_wk->mouse.buttons = data;
+         data = (data << 16) | (data & 0xffff);
+         data = vector_call(screen_wk->vector.button, data);
+      }
+      break;
+   case 4:    /* Wheel movement */
+      if (data) {
+         data = (data << 16) | (data & 0xffff);
+         data = vector_call(screen_wk->vector.wheel, data);
+      }
+      break;
+   case 5:    /* Vertical blank */
+      if (vbl_handler_installed)
+         shutdown_vbl_handler();
+      data = vector_call(screen_wk->vector.vblank, data);
+      break;
+   }
+}
+
+
 long init_utility(void)
 {
    long tmp;
@@ -1302,6 +1352,8 @@ long init_utility(void)
    real_access.funcs.free_block = free_block;
    real_access.funcs.cache_flush = cache_flush;
    real_access.funcs.misc = misc;
+
+   real_access.funcs.event = event;
 
    return 1;
 }
