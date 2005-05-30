@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.5 2005-05-25 14:38:01 johan Exp $
+ * $Id: fvdi.h,v 1.6 2005-05-30 13:57:47 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -279,24 +279,6 @@ typedef struct dev_ {
 #endif
 } Device;
 
-typedef struct Driver_ {
-   short id;				/* From FVDI.SYS */
-   short flags;				/* From FVDI.SYS (and elsewhere) 1 - resident */
-   char *file_name;			/* From FVDI.SYS */
-   char *name;				/* Identification string */
-/*   long (*initialize)(Virtual *vwk);		*//* Called after fVDI is initialized */
-/*   void (*setup)(long type, long value);	*//* Called to modify settings */
-/*   Virtual (*opnwk)(Virtual *vwk);	*//* Called on v_opnwk() */
-/*   void (*clswk)(Virtual *vwk);	*//* Called on v_clswk() */
-   void *initialize;
-   void *setup;
-   void *opnwk;
-   void *clswk;
-   Virtual *default_vwk;		/* Used directly by fVDI v_opnvwk */
-   Device *device;
-   void *private;			/* Info the driver wants to keep around */
-} Driver;
-
 typedef struct Module_ {
    short id;				/* From FVDI.SYS (or elsewhere) */
    short flags;				/* From FVDI.SYS (and elsewhere) 1 - resident */
@@ -310,6 +292,16 @@ typedef struct Module_ {
    void *shutdown;
    void *private;			/* Info the module wants to keep around */
 } Module;
+
+typedef struct Driver_ {
+   Module module;
+/*   Virtual (*opnwk)(Virtual *vwk);	*//* Called on v_opnwk() */
+/*   void    (*clswk)(Virtual *vwk);	*//* Called on v_clswk() */
+   void *opnwk;
+   void *clswk;
+   Virtual *default_vwk;		/* Used directly by fVDI v_opnvwk */
+   Device *device;
+} Driver;
 
 typedef struct function_ {
    	short retvals[2];
@@ -330,6 +322,7 @@ typedef struct MFDB_ {
 typedef struct Mouse_ {
    short type;
    short hide;
+   short buttons;
    struct position_ {
 	short x;
 	short y;
@@ -469,6 +462,17 @@ typedef struct wk_ {
 	short workstation_type;
    } various;
    Mouse mouse;
+   struct vector_ {
+	void *motion;
+	void *draw;
+	void *button;
+	void *wheel;
+	void *vblank;
+   } vector;
+   struct vblank_ {
+	short real;
+	short frequency;
+   } vblank;
    struct r_ {
    	void *set_palette;
    	void *get_colour;
