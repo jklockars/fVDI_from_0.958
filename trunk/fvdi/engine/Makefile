@@ -102,7 +102,7 @@ ifneq ($(ft2_srcdir),)
 
  ifeq ($(DEBUG),yes)
   CSRC+= \
-	../modules/ft2/ft2_ftdebug.c
+	$(top_srcdir)/modules/ft2/ft2_ftdebug.c
  endif
 endif
 
@@ -143,14 +143,14 @@ $(TARGET): depend $(OBJECTS) $(LIBFILES)
 	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 $(top_srcdir)/include/types.inc: $(top_srcdir)/include/fvdi.h
-	cd $(top_srcdir)/utility/structer && make
+	cd $(top_srcdir)/utility/structer; make
 	@echo "*****"\
 	  > $(top_srcdir)/include/types.inc
 	@echo "* fVDI structure declarations, by Johan Klockars"\
 	  >> $(top_srcdir)/include/types.inc
 	@echo "*"\
 	  >> $(top_srcdir)/include/types.inc
-	@echo -e "* \\044Id\\044"\
+	@echo "* \$$Id\$$"\
 	  >> $(top_srcdir)/include/types.inc
 	@echo "*"\
 	  >> $(top_srcdir)/include/types.inc
@@ -192,12 +192,22 @@ $(top_srcdir)/include/types.inc: $(top_srcdir)/include/fvdi.h
 	  >> $(top_srcdir)/include/types.inc
 
 depend: $(CSRC)
-	$(CC) -MM $(CFLAGS) $(CSRC) > depend
+#	"$(CC) -MM" does not seem able to keep track of the directory of the
+#	object file, so dependencies of files outside this directory are
+#	never taken into account later. makedepend does this correctly.
+#	Unfortunately, makedepend includes system headers in its
+#	dependency lists, but you can't get everything...
+#	$(CC) -MM $(CFLAGS) $(CSRC) > depend
+	makedepend -f- -- $(CFLAGS) $(CSRC) > depend 2> /dev/null
+	sed "s#\/usr[^ ]*\.h##g" < depend  > depend2
+	sed "s#^.*: *\$$##"      < depend2 > depend
+	rm depend2
 
 strip:
 	$(STRIP) --strip-all $(TARGET)
 
 clean: clean_gnu
 	rm -rf $(OBJECTS)
+	rm depend
 
 include depend
