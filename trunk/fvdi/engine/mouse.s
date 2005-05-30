@@ -19,6 +19,7 @@ sven_mouse	equ	1		; Use Sven's timer draw code?
 	include	"macros.inc"
 
 	xref	redirect
+	xref	_stand_alone
 	xref	_malloc,_free
 	xref	_screen_wk,_old_curv,_old_timv
 
@@ -269,7 +270,7 @@ vq_mouse:
 	move.l	d0,(a2)
 
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 
@@ -293,7 +294,7 @@ vq_key_s:
 	move.w	d0,(a2)
 
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 
@@ -316,7 +317,7 @@ vex_butv:
 
 	used_d1
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 
@@ -339,7 +340,7 @@ vex_motv:
 
 	used_d1
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 	
@@ -362,7 +363,7 @@ vex_curv:
 
 	used_d1
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 	
@@ -385,7 +386,7 @@ vex_wheelv:
 
 	used_d1
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 
@@ -426,7 +427,7 @@ vex_timv:
 
 	used_d1
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
-	tst.w	wk_mouse_type(a2)
+	tst.w	_stand_alone
 	beq	redirect			; Temporary (needs a1)
 	done_return
 	
