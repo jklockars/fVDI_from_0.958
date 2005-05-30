@@ -1,7 +1,7 @@
 /*
  * fVDI generic device driver initialization, by Johan Klockars
  *
- * $Id: init.c,v 1.6 2005-04-23 18:53:17 johan Exp $
+ * $Id: init.c,v 1.7 2005-05-30 13:03:25 johan Exp $
  *
  * Since it would be difficult to do without this file when
  * writing new device drivers, and to make it possible for
@@ -248,14 +248,14 @@ long CDECL init(Access *_access, Driver *driver, Virtual *vwk, char *opts)
 	 */
 	 
 	me = driver;			/* Seems to be needed */
-	driver->name = driver_name;
-	driver->initialize = initialize;
-	driver->setup = setup;
+	driver->module.name = driver_name;
+	driver->module.initialize = initialize;
+	driver->module.setup = setup;
 	driver->opnwk = opnwk;
 	driver->clswk = clswk;
 	driver->default_vwk = 0;	/* Set below */
 	driver->device = &device;
-	driver->private = 0;
+	driver->module.private = 0;
 
 
 	/*
