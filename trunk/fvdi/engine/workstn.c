@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.6 2005-05-06 12:29:37 johan Exp $
+ * $Id: workstn.c,v 1.7 2005-05-30 13:25:41 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -329,6 +329,9 @@ void v_opnwk(VDIpars *pars)
 	if (wk->mouse.type && !stand_alone)	/* Old mouse? */
 		link_mouse_routines();
 
+	if (stand_alone)
+		setup_vbl_handler();
+
 #if 0
 {
 	unsigned short *linea;
@@ -400,6 +403,7 @@ void v_clswk(Virtual *vwk, VDIpars *pars)
 
 	if (wk != non_fvdi_wk) {
 	    unlink_mouse_routines();
+	    shutdown_vbl_handler();
 
 	    screen_wk = 0;
  #if 0
