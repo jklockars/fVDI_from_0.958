@@ -3,7 +3,7 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.4 2005-05-09 20:47:53 johan Exp $
+ * $Id: utility.h,v 1.5 2005-05-30 13:55:55 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -18,6 +18,7 @@ long init_utility(void);
 long get_protected_l(long addr);
 void set_protected_l(long addr, long value);
 long get_l(long addr);
+void set_l(long addr, long value);
 
 /*
  * Cookie and XBRA access
