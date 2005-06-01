@@ -1,7 +1,7 @@
 *****
 * ARAnyM driver event trampoline
 *
-* $Id: irq.s,v 1.1 2005-05-30 13:06:12 johan Exp $
+* $Id: irq.s,v 1.2 2005-06-01 20:57:42 johan Exp $
 *
 * Copyright 2005, Johan Klockars
 * This software is licensed under the GNU General Public License.
@@ -16,7 +16,7 @@
 	
 	text
 
-* XBRA chain for IRQ level 2
+* XBRA chain for IRQ level 3
 	dc.b	"XBRA"
 	dc.b	"ARAf"
 next_handler:

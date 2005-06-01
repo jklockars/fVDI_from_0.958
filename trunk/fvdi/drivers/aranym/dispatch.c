@@ -228,13 +228,16 @@ void CDECL
 event_init(void)
 {
    /* Tell native side to start sending events */
-   ARAnyM((NF_fVDI+FVDI_EVENT, 0));
+   ARAnyM((NF_fVDI+FVDI_EVENT, 0L));
 }
 
 void CDECL
 event_handler(void)
 {
-   long event[8];
+   static long event[8];
+#if 0
+   static char buffer[10];
+#endif
    int i;
 
    ARAnyM((NF_fVDI+FVDI_EVENT, event));   /* Fetch events */
@@ -245,7 +248,21 @@ event_handler(void)
          me->default_vwk->real_address->vblank.real = 1;
          me->default_vwk->real_address->vblank.frequency = event[i + 1];
       }
+#if 0
+      access->funcs.puts("E");
+      access->funcs.ltoa(buffer, event[i], 16);
+      access->funcs.puts(buffer);
+      access->funcs.puts(",");
+      access->funcs.ltoa(buffer, event[i + 1], 16);
+      access->funcs.puts(buffer);
+#endif
       access->funcs.event(((long)me->module.id << 16) | (event[i] & 0xffff),
                           event[i + 1]);
+#if 0
+      access->funcs.puts(".");
+#endif
    }
+#if 0
+   access->funcs.puts("EOI\x0a\x0d");
+#endif
 }

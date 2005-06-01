@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.15 2005-05-30 13:29:05 johan Exp $
+ * $Id: utility.c,v 1.16 2005-06-01 20:59:01 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1281,7 +1281,6 @@ long event(long id_type, long data)
       break;
    case 4:    /* Wheel movement */
       if (data) {
-         data = (data << 16) | (data & 0xffff);
          data = vector_call(screen_wk->vector.wheel, data);
       }
       break;

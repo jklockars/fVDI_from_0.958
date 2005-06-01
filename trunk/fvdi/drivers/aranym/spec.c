@@ -11,7 +11,6 @@ int nf_initialize(void);
 extern void (*next_handler)(void);
 extern void event_trampoline(void);
 extern void CDECL event_init(void);
-extern void CDECL event_handler(void);
 
 long CDECL c_get_videoramaddress(void);
 void CDECL c_set_resolution(long width, long height, long depth, long freq);
@@ -511,7 +510,7 @@ Virtual* CDECL opnwk(Virtual *vwk)
 	setup_wk(vwk);
 
 	if (irq) {
-		next_handler = Setexc(26, (long)event_trampoline);
+		next_handler = Setexc(27, (long)event_trampoline);
 		event_init();
 	}
 

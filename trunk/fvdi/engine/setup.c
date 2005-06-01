@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.5 2005-05-30 13:32:16 johan Exp $
+ * $Id: setup.c,v 1.6 2005-06-01 20:59:00 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -441,6 +441,7 @@ void setup_vbl_handler(void)
        if (get_l(addr) == 0) {
            if (n != 1)            /* What about the last slot? Must be 0? */
               set_l(addr + 4, 0);
+           old_timv = do_nothing;
            set_l(addr, (long)vbl_handler);
            vbl_handler_installed = 1;
            break;

@@ -666,12 +666,12 @@ _do_nothing:
 * In:	
 _vector_call:
 	movem.l	d1-d7/a0-a6,-(a7)
-	move.l	14*4+4(a7),d0
+	move.l	14*4+8(a7),d0
 	moveq	#0,d1
 	move.w	d0,d1
 	clr.w	d0
 	swap	d0
-	move.l	14*4+8(a7),a0
+	move.l	14*4+4(a7),a0
 	jsr	(a0)
 	swap	d0
 	move.w	d1,d0
@@ -685,12 +685,17 @@ _vector_call:
 * In:	
 _vbl_handler:
 	movem.l	d0-d7/a0-a6,-(a7)
-	move.l	_screen_wk,a0
-	move.l	wk_vector_vblank(a0),a0
+	move.l	_screen_wk,d0
+	beq	.end_vbl
+	move.l	d0,a0
+	move.l	wk_vector_vblank(a0),d0
+	beq	.end_vbl
+	move.l	d0,a0
 	jsr	(a0)
+.end_vbl:
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
-	
+
 
 pointer_delay:
 	dc.w	0
