@@ -1,3 +1,7 @@
+2005-06-01 - johan
+Module initialization fails if module uses unsupported interface version.
+Various minor bug fixes for mouse/vblank support.
+
 2005-05-30 - johan
 Improved dependency handling.
 Added interrupt handler for Natfeat events in the ARAnyM driver (irq option).
