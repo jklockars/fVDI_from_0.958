@@ -1,7 +1,7 @@
 /*
  * fVDI generic device driver initialization, by Johan Klockars
  *
- * $Id: init.c,v 1.7 2005-05-30 13:03:25 johan Exp $
+ * $Id: init.c,v 1.8 2005-06-01 21:00:10 johan Exp $
  *
  * Since it would be difficult to do without this file when
  * writing new device drivers, and to make it possible for
@@ -96,7 +96,7 @@ void *fallback_blit;
 
 long CDECL init(Access *_access, Driver *driver, Virtual *vwk, char *);
 
-Locator locator = {MAGIC, 0x0010, init};
+Locator locator = {MAGIC, MODULE_IF_VER, init};
 
 Access *access;
 

@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.6 2005-05-30 13:57:47 johan Exp $
+ * $Id: fvdi.h,v 1.7 2005-06-01 21:00:34 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -35,6 +35,8 @@
 #define S_AESBUF	102
 #define S_CACHEIMG	103
 #define S_DOBLIT	104
+
+#define MODULE_IF_VER   0x0020
 
 struct fVDI_log {
    short active;

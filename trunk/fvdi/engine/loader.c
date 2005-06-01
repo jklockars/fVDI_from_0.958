@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.12 2005-05-30 13:43:39 johan Exp $
+ * $Id: loader.c,v 1.13 2005-06-01 20:59:56 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -690,14 +690,21 @@ int initialize(const unsigned char *addr, long size, Driver *driver, Virtual *vw
 {
    long i;
    int j;
+   Locator *locator;
 	
    for(i = 0; i < size - sizeof(MAGIC); i++) {
       for(j = 0; j < sizeof(MAGIC); j++) {
          if (addr[j] != MAGIC[j])
             break;
       }
-      if (j == sizeof(MAGIC))
-         return ((Locator *)addr)->init(&real_access, driver, vwk, opts);
+      if (j == sizeof(MAGIC)) {
+         locator = (Locator *)addr;
+         if ((locator->version & 0xfff0) < (MODULE_IF_VER & 0xfff0)) {
+            puts_nl("Module compiled with unsupported interface version.");
+            return 0;
+         }
+         return locator->init(&real_access, driver, vwk, opts);
+      }
       addr++;
    }
 
