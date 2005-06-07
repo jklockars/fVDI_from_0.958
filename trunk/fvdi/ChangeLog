@@ -1,3 +1,7 @@
+2005-06-07 - johan
+Support for forced mouse positioning.
+New option to suppress debug information for specific VDI functions.
+	
 2005-06-01 - johan
 Module initialization fails if module uses unsupported interface version.
 Various minor bug fixes for mouse/vblank support.
