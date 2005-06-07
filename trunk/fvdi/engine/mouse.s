@@ -290,7 +290,7 @@ vq_key_s:
 	movem.l	(a7)+,d2/a0-a2
 	used_d1
 	and.w	#$000f,d0
-	move.l	intout(a0),a2
+	move.l	intout(a1),a2
 	move.w	d0,(a2)
 
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
@@ -499,6 +499,11 @@ _mouse_timer:
 	bne	.move_hidden
 	moveq	#0,d2
 .move_hidden:
+	tst.w	wk_mouse_forced(a1)
+	beq	.not_forced
+	addq.w	#4,d2
+	clr.w	wk_mouse_forced(a1)
+.not_forced:
 	jsr	(a2)
 ;	tst.w	d0
 ;	beq	.no_error
