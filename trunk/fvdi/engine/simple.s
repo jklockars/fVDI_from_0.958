@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.6 2004-10-17 21:44:11 johan Exp $
+* $Id: simple.s,v 1.7 2005-06-07 22:16:16 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,6 +19,7 @@ HANDLES		equ	32		; Max number of handles
 
 	xref	_v_opnwk,_v_opnvwk,_v_clsvwk,_v_clswk
 	xref	_old_gdos
+	xref	_event
 
 	xref	_vq_chcells,_v_exit_cur,_v_enter_cur,_v_curup,_v_curdown
 	xref	_v_curright,_v_curleft,_v_curhome,_v_eeos,_v_eeol,_vs_curaddress
@@ -33,7 +34,7 @@ HANDLES		equ	32		; Max number of handles
 
 	xdef	vq_chcells,v_exit_cur,v_enter_cur,v_curup,v_curdown
 	xdef	v_curright,v_curleft,v_curhome,v_eeos,v_eeol,vs_curaddress
-	xdef	v_curtext,v_rvon,v_rvoff,vq_curaddress
+	xdef	v_curtext,v_rvon,v_rvoff,vq_curaddress,v_dspcur
 
 
 	text
@@ -716,6 +717,26 @@ vq_curaddress:
 	pea	(a0)
 	jsr	_vq_curaddress
 	add.w	#12,a7
+	movem.l	(a7)+,d2
+	used_d1
+	done_return
+
+	dc.b	0,"v_dspcur",0
+* v_dspcur - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_dspcur:
+	uses_d1
+	movem.l	d2,-(a7)
+	move.l	ptsin(a1),a2
+
+	move.l	(a2),-(a7)
+	move.w	#6,-(a7)		; Forced absolute mouse movement
+	move.w	#0,-(a7)
+	jsr	_event
+	addq.l	#8,a7
+	
 	movem.l	(a7)+,d2
 	used_d1
 	done_return

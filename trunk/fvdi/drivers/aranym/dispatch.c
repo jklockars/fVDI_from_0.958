@@ -89,7 +89,7 @@ c_write_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour)
 long CDECL
 c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
 {
-   if ((long)mouse > 3) {
+   if ((long)mouse > 7) {
    	long foreground;
    	long background;
    	get_colours_r(me->default_vwk, *(long*)&mouse->colour, &foreground, &background);

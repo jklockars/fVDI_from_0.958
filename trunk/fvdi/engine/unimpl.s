@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.9 2005-05-30 13:49:48 johan Exp $
+* $Id: unimpl.s,v 1.10 2005-06-07 22:14:37 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -29,8 +29,10 @@ transparent	equ	1		; Fall through?
 	xdef	vrq_locator,vrq_valuator,vrq_choice,vrq_string,vsin_mode
 	xdef	v_contourfill
 	xdef	vqin_mode
+  ifne 0
 	xdef	vex_timv,vex_butv,vex_motv,vex_curv,vex_wheelv
 	xdef	vq_mouse,vq_key_s
+  endc
 	xdef	v_cellarray,vq_cellarray
 	xdef	vst_name,vst_width,vst_charmap,vst_kern,v_getbitmap_info
 	xdef	v_getoutline,vst_scratch
@@ -38,7 +40,7 @@ transparent	equ	1		; Fall through?
 	xdef	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
 	xdef	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
 	xdef	v_set_app_buff
-	xdef	vq_tabstatus,v_hardcopy,v_dspcur,v_rmcur,v_form_adv
+	xdef	vq_tabstatus,v_hardcopy,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
 ;	xdef	v_rbox,v_rfbox
 	xdef	start_unimpl,end_unimpl
@@ -149,7 +151,6 @@ v_set_app_buff:
 	dc.b	0,0,"ESC",0
 vq_tabstatus:
 v_hardcopy:
-v_dspcur:
 v_rmcur:
 v_form_adv:
 v_output_window:

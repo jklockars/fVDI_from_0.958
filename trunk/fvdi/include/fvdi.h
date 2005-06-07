@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.7 2005-06-01 21:00:34 johan Exp $
+ * $Id: fvdi.h,v 1.8 2005-06-07 22:11:47 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -325,6 +325,7 @@ typedef struct Mouse_ {
    short type;
    short hide;
    short buttons;
+   short forced;
    struct position_ {
 	short x;
 	short y;

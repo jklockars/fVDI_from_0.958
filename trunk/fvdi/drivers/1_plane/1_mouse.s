@@ -12,7 +12,7 @@
 	dc.b	"mouse_draw"
 *	d0.w	x
 *	d1.w	y
-*	d2	0 - move shown  1 - move hidden  2 - hide  3 - show  >3 - change shape (pointer to mouse struct)
+*	d2	0 - move shown  1 - move hidden  2 - hide  3 - show  >7 - change shape (pointer to mouse struct)
 _mouse_draw:
 mouse_draw:
 	sub.w	hotspot_x,d0
@@ -32,7 +32,7 @@ mouse_draw:
 
 	swap	d0
 
-	cmp.l	#3,d2
+	cmp.l	#7,d2
 	bhi	.shape_setup
 	btst	#4,d0
 	beq	.skip_shape_setup
@@ -56,6 +56,10 @@ mouse_draw:
 	beq	.restore
 	cmp.w	#3,d2
 	beq	.draw
+	cmp.w	#4,d2		; Check for forced moves
+	beq	.move
+	cmp.w	#5,d2
+	beq	.finish
 .restore:
 	bsr	restore_mouse
 	bra	.finish
@@ -71,7 +75,7 @@ mouse_draw:
 	rts
 
 .in_use:
-	cmp.l	#3,d2
+	cmp.l	#7,d2
 	bhi	.wanted_shape
 	bset	d0,d2
 	or.l	#$ffff0000,d0

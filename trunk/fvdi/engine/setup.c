@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.6 2005-06-01 20:59:00 johan Exp $
+ * $Id: setup.c,v 1.7 2005-06-07 22:16:46 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -177,6 +177,7 @@ Virtual *initialize_vdi(void)
    wk->mouse.type = 0;           /* Default to old VDI mouse */
    wk->mouse.hide = 0;
    wk->mouse.buttons = 0;
+   wk->mouse.forced = 0;
    wk->mouse.position.x = 0;
    wk->mouse.position.y = 0;
    wk->vector.motion = mouse_move;

@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.16 2005-06-01 20:59:01 johan Exp $
+ * $Id: utility.c,v 1.17 2005-06-07 22:21:35 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1257,19 +1257,23 @@ long event(long id_type, long data)
    /* Really needs to do something about the id part */
    switch(id_type & 0xffff) {
    case 1:    /* Relative mouse movement */
-      if (data) {
-         xy = *(long *)&screen_wk->mouse.position.x;
-         data = (((xy >> 16) + (data >> 16)) << 16) |
-                ((xy + data) & 0xffff);
-         data = vector_call(screen_wk->vector.motion, data);
-         data = vector_call(screen_wk->vector.draw, data);
+      if (!screen_wk->mouse.forced) {
+         if (data) {
+            xy = *(long *)&screen_wk->mouse.position.x;
+            data = (((xy >> 16) + (data >> 16)) << 16) |
+                   ((xy + data) & 0xffff);
+            data = vector_call(screen_wk->vector.motion, data);
+            data = vector_call(screen_wk->vector.draw, data);
+         }
       }
       break;
    case 2:    /* Absolute mouse movement */
-      xy = *(long *)&screen_wk->mouse.position.x;
-      if (data != xy) {
-         data = vector_call(screen_wk->vector.motion, data);
-         data = vector_call(screen_wk->vector.draw, data);
+      if (!screen_wk->mouse.forced) {
+         xy = *(long *)&screen_wk->mouse.position.x;
+         if (data != xy) {
+            data = vector_call(screen_wk->vector.motion, data);
+            data = vector_call(screen_wk->vector.draw, data);
+         }
       }
       break;
    case 3:    /* Button change */
@@ -1288,6 +1292,14 @@ long event(long id_type, long data)
       if (vbl_handler_installed)
          shutdown_vbl_handler();
       data = vector_call(screen_wk->vector.vblank, data);
+      break;
+   case 6:    /* Forced absolute move */
+      xy = *(long *)&screen_wk->mouse.position.x;
+      if (data != xy) {
+         screen_wk->mouse.forced = 1;
+         data = vector_call(screen_wk->vector.motion, data);
+         data = vector_call(screen_wk->vector.draw, data);
+      }
       break;
    }
 }
