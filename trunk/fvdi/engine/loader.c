@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.13 2005-06-01 20:59:56 johan Exp $
+ * $Id: loader.c,v 1.14 2005-06-07 22:20:45 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -84,7 +84,8 @@ short interactive = 0;
 short stand_alone = 0;
 short nvdi_cookie = 0;
 short speedo_cookie = 0;
-
+char silent[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static char path[PATH_SIZE];
 
@@ -107,6 +108,7 @@ static long set_arc_max(Virtual *vwk, const char **ptr);
 static long load_palette(Virtual *vwk, const char **ptr);
 static long specify_cookie(Virtual *vwk, const char **ptr);
 static long use_module(Virtual *vwk, const char **ptr);
+static long set_silent(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
@@ -146,7 +148,8 @@ static Option options[] = {
    {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
    {"standalone", &stand_alone,    1},  /* standalone, forces fVDI to refrain from relying on an underlying VDI */
    {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
-   {"module",     use_module,     -1}   /* module str, specify a module to load */
+   {"module",     use_module,     -1},  /* module str, specify a module to load */
+   {"silent",     set_silent,     -1}   /* silent n, no debug for VDI call n */
 };
 
 
@@ -585,6 +588,26 @@ long load_palette(Virtual *vwk, const char **ptr)
    Fclose(file);
 
    vwk->real_address->screen.palette.colours = palette; /* Currently no other way */
+
+   return 1;
+}
+
+long set_silent(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   long call;
+   int i;
+   
+   if (!(*ptr = skip_space(*ptr)))
+      ;  /* *********** Error, somehow */
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   call = atol(token);
+   if ((call >= 0) && (call <= 255))
+      silent[call >> 3] ^= 1 << (call & 7);
+   else {
+      for(i = 0; i < 32; i++)
+         silent[i] = 0xff;
+   }
 
    return 1;
 }

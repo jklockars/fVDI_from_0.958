@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.17 2005-06-01 20:59:56 johan Exp $
+ * $Id: startup.c,v 1.18 2005-06-07 22:15:48 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0964
-#define BETA	10
+#define BETA	11
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -523,6 +523,10 @@ void vdi_debug(VDIpars *pars, char *vector)
    entered = 1;
    
    func = pars->control->function;
+   if (silent[func >> 3] & (1 << (func & 7))) {
+      entered = 0;
+      return;
+   }
    display = 0;
    if ((func == set[current]) || (func == 1984) || (func == 2001) || (func == 1969))
       display = 1;
