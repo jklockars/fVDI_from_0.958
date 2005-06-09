@@ -19,6 +19,7 @@ long CDECL c_get_height(void);
 void CDECL c_openwk(Virtual *vwk);
 void CDECL c_closewk(Virtual *vwk);
 long CDECL c_get_bpp(void);
+void CDECL c_get_component(int component, long *mask, long *shift, long *loss);
 
 /* color bit organization */
 char none[] = {0};
@@ -205,6 +206,30 @@ int set_bpp(int bpp)
 		break;
 	default:
 		bpp = 16;		/* Default as 16 bit */
+	}
+
+	/* Update various bitmasks */
+	if (bpp > 8) {
+		long r_mask,  g_mask,  b_mask;
+		long r_shift, g_shift, b_shift;
+		long r_loss,  g_loss,  b_loss;
+		int i;
+
+		/* Update R */
+		c_get_component(0, &r_mask, &r_shift, &r_loss);
+		for(i = 0; i < graphics_mode->bits.red[0]; i++) {
+			graphics_mode->bits.red[i + 1] = i + r_shift;
+		}
+		/* Update G */
+		c_get_component(1, &g_mask, &g_shift, &g_loss);
+		for(i = 0; i < graphics_mode->bits.green[0]; i++) {
+			graphics_mode->bits.green[i + 1] = i + g_shift;
+		}
+		/* Update B */
+		c_get_component(2, &b_mask, &b_shift, &b_loss);
+		for(i = 0; i < graphics_mode->bits.blue[0]; i++) {
+			graphics_mode->bits.blue[i + 1] = i + b_shift;
+		}
 	}
 
 	switch (bpp) {

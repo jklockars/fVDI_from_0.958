@@ -225,6 +225,12 @@ c_closewk(void)
 }
 
 void CDECL
+c_get_component(int component, long *mask, long *shift, long *loss)
+{
+   ARAnyM((NF_fVDI+FVDI_GETCOMPONENT, component, mask, shift, loss));
+}
+
+void CDECL
 event_init(void)
 {
    /* Tell native side to start sending events */
