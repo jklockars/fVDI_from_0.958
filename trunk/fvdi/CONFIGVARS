@@ -35,7 +35,7 @@ OPTS   = \
 
 # Set these to point to the correct directories for FreeType support!
 #stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
-ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
+#ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
 #libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
 #stdlib_srcdir  =

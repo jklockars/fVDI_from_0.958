@@ -1,3 +1,6 @@
+2006-06-08 - patrice
+Function to get real frame buffer bit organization in ARAnyM driver.
+	
 2005-06-07 - johan
 Support for forced mouse positioning.
 New option to suppress debug information for specific VDI functions.
