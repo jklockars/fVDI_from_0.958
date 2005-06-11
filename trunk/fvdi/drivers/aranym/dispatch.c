@@ -225,7 +225,7 @@ c_closewk(void)
 }
 
 void CDECL
-c_get_component(int component, long *mask, long *shift, long *loss)
+c_get_component(long component, long *mask, long *shift, long *loss)
 {
    ARAnyM((NF_fVDI+FVDI_GETCOMPONENT, component, mask, shift, loss));
 }

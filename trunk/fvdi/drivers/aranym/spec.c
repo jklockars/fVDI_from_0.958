@@ -19,7 +19,7 @@ long CDECL c_get_height(void);
 void CDECL c_openwk(Virtual *vwk);
 void CDECL c_closewk(Virtual *vwk);
 long CDECL c_get_bpp(void);
-void CDECL c_get_component(int component, long *mask, long *shift, long *loss);
+void CDECL c_get_component(long component, long *mask, long *shift, long *loss);
 
 /* color bit organization */
 char none[] = {0};
