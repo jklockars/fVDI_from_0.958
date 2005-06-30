@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.1 2005-05-09 20:56:16 johan Exp $
+ * $Id: ft2.c,v 1.2 2005-06-30 08:41:01 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -114,13 +114,13 @@ static void TTF_SetFTError(const char *msg, FT_Error error)
 	char buffer[1024];
 
 	err_msg = NULL;
-	for ( i=0; i<((sizeof ft_errors)/(sizeof ft_errors[0])); ++i ) {
-		if ( error == ft_errors[i].err_code ) {
+	for(i = 0; i < ((sizeof ft_errors) / (sizeof ft_errors[0])); ++i) {
+		if (error == ft_errors[i].err_code) {
 			err_msg = ft_errors[i].err_msg;
 			break;
 		}
 	}
-	if ( ! err_msg ) {
+	if (!err_msg) {
 		err_msg = "unknown FreeType error";
 	}
 	sprintf(buffer, "%s: %s", msg, err_msg);
@@ -132,25 +132,25 @@ static void TTF_SetFTError(const char *msg, FT_Error error)
 
 
 
-TTF_Font* TTF_OpenFontIndex( const char *file, int ptsize, long index )
+TTF_Font* TTF_OpenFontIndex(const char *file, int ptsize, long index)
 {
 	TTF_Font* font;
 
-	font = (TTF_Font*) malloc(sizeof *font);
-	if ( font == NULL ) {
-		TTF_SetError( "Out of memory" );
+	font = (TTF_Font *)malloc(sizeof *font);
+	if (font == NULL) {
+		TTF_SetError("Out of memory");
 		return NULL;
 	}
-	setmem( font, 0, sizeof( *font ) );
+	setmem(font, 0, sizeof(*font));
 
 	font->filename = strdup(file);
 	font->ptsize = ptsize;
 	font->index = index;
 
-	return TTF_FTOpen( font );
+	return TTF_FTOpen(font);
 }
 
-TTF_Font* TTF_OpenFont( const char *file, int ptsize )
+TTF_Font* TTF_OpenFont(const char *file, int ptsize)
 {
 	return TTF_OpenFontIndex(file, ptsize, 0);
 }
@@ -168,23 +168,23 @@ typedef struct {
 } FontheaderListItem;
 
 
-static FT_Error ft2_find_glyph( Fontheader* font, short ch, int want );
+static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want);
 
 
-void ft2_term( void )
+void ft2_term(void)
 {
-	FT_Done_FreeType( library );
+	FT_Done_FreeType(library);
 }
 
-int ft2_init( void )
+int ft2_init(void)
 {
 	FT_Error error;
-       	error = FT_Init_FreeType( &library );
-	if ( error )
+       	error = FT_Init_FreeType(&library);
+	if (error)
 		return -1;
 	
-	/* initialize Fontheader LRU cache */
-	listInit( &fonts );
+	/* Initialize Fontheader LRU cache */
+	listInit(&fonts);
 
 	return 0;
 }
@@ -196,32 +196,32 @@ int ft2_init( void )
 Fontheader *ft2_load_font(const char *filename)
 {
    Fontheader *font = (Fontheader *)malloc(sizeof(Fontheader));
-   if ( font ) {
+   if (font) {
 	   static id = 1121;
 	   FT_Error error;
 	   FT_Face face;
 
 	   /* Open the font and create ancillary data */
-	   error = FT_New_Face( library, filename, 0, &face );
-	   if( error ) {
-		   free( font );
+	   error = FT_New_Face(library, filename, 0, &face);
+	   if (error) {
+		   free(font);
 		   return NULL;
 	   }
 
-	   /* clear the structure */
-	   memset( font, 0, sizeof(Fontheader) );
+	   /* Clear the structure */
+	   memset(font, 0, sizeof(Fontheader));
 
 	   {
 		   char buf[255];
-		   strcpy( buf, face->family_name );
-		   strcat( buf, " " );
-		   strcat( buf, face->style_name );		/* FIXME: Concatenate? */
-		   strncpy( font->name, buf, 32);		/* family name would be the font name? */
+		   strcpy(buf, face->family_name);
+		   strcat(buf, " " );
+		   strcat(buf, face->style_name);		/* FIXME: Concatenate? */
+		   strncpy(font->name, buf, 32);		/* family name would be the font name? */
 	   }
 	   font->id = id++;					/* vector fonts have size = 0 */
 	   font->size = 0;					/* vector fonts have size = 0 */
 	   font->flags = 0x8000 /* ft2 font */ | (FT_IS_FIXED_WIDTH(face) ? 0x08 : 0);
-	   font->extra.unpacked.data = NULL /*face*/;
+	   font->extra.unpacked.data = NULL /* face */;
 	   font->extra.filename = strdup(filename);		/* font filename to load_glyphs on-demand */
 	   font->extra.index = 0;				/* index to load, FIXME: how to we load multiple of them */
 
@@ -231,15 +231,16 @@ Fontheader *ft2_load_font(const char *filename)
 	   access->funcs.puts(font->extra.filename);
 	   access->funcs.puts("\r\n");
 
-	   FT_Done_Face( face );
+	   FT_Done_Face(face);
    }
 
    return font;
 }
 
 
-static void ft2_close_face( Fontheader* font ) {
-	if ( ! font->extra.unpacked.data )
+static void ft2_close_face(Fontheader *font)
+{
+	if (!font->extra.unpacked.data)
 		return;
 
 #ifdef DEBUG_FONTS
@@ -247,24 +248,25 @@ static void ft2_close_face( Fontheader* font ) {
 		char buf[10];
 		ltoa(buf, (long)font->size, 10);
 		access->funcs.puts("FT2 close_face: ");
-		access->funcs.puts(font->extra.filename); access->funcs.puts("\r\n");
+		access->funcs.puts(font->extra.filename);
+		access->funcs.puts("\r\n");
 		access->funcs.puts(((FT_Face)font->extra.unpacked.data)->family_name);
 	       	access->funcs.puts(", size: ");
 	       	access->funcs.puts(buf); access->funcs.puts("\r\n");
 	}
 #endif
 
-	FT_Done_Face( (FT_Face)font->extra.unpacked.data );
+	FT_Done_Face((FT_Face)font->extra.unpacked.data);
 	font->extra.unpacked.data = NULL;
-
 }
 
-static Fontheader* ft2_open_face( Fontheader* font ) {
+static Fontheader* ft2_open_face(Fontheader *font)
+{
 	FT_Error error;
 	FT_Face face;
 	FT_Fixed scale;
 
-	if ( font->extra.unpacked.data )
+	if (font->extra.unpacked.data)
 		return font;
 
 #ifdef DEBUG_FONTS
@@ -276,10 +278,10 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 #endif
 
 	/* Open the font and create ancillary data */
-	error = FT_New_Face( library, font->extra.filename, 0, &face );
-	if( error ) {
-		// TTF_SetFTError( "Couldn't load font file", error);
-		// free( font );
+	error = FT_New_Face(library, font->extra.filename, 0, &face);
+	if (error) {
+		// TTF_SetFTError("Couldn't load font file", error);
+		// free(font);
 		return NULL;
 	}
 
@@ -289,38 +291,38 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 	}
 #endif
 
-	if ( font->extra.index != 0 ) {
-		if ( face->num_faces > font->extra.index ) {
-		  	FT_Done_Face( face );
-			error = FT_New_Face( library, font->extra.filename, font->extra.index, &face );
-			if( error ) {
-				// TTF_SetFTError( "Couldn't get font face", error);
-				// free( font );
+	if (font->extra.index != 0) {
+		if (face->num_faces > font->extra.index) {
+		  	FT_Done_Face(face);
+			error = FT_New_Face(library, font->extra.filename, font->extra.index, &face);
+			if (error) {
+				// TTF_SetFTError("Couldn't get font face", error);
+				// free(font);
 				return NULL;
 			}
 		} else {
-			// TTF_SetFTError( "No such font face", error);
-			// free( font );
+			// TTF_SetFTError("No such font face", error);
+			// free(font);
 			return NULL;
 		}
 	}
 
 	/* Make sure that our font face is scalable (global metrics) */
-	if ( ! FT_IS_SCALABLE(face) ) {
+	if (!FT_IS_SCALABLE(face)) {
 		// TTF_SetError("Font face is not scalable");
-		ft2_close_face( font );
+		ft2_close_face(font);
 		return NULL;
 	}
 
 	/* Set the character size and use default DPI (72) */
-	error = FT_Set_Char_Size( face, 0, font->size * 64, 0, 0 );
-	if( error ) {
-		// TTF_SetFTError( "Couldn't set font size", error );
-		ft2_close_face( font );
+	error = FT_Set_Char_Size(face, 0, font->size * 64, 0, 0);
+	if (error) {
+		// TTF_SetFTError("Couldn't set font size", error);
+		ft2_close_face(font);
 		return NULL;
 	}
 
-	/* required face loaded successfully */
+	/* Required face loaded successfully */
 	font->extra.unpacked.data = (void*)face;
 
 #ifdef DEBUG_FONTS
@@ -343,16 +345,16 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 	font->height  = font->distance.ascent + font->distance.descent + LINE_GAP;
 
 #if 1
-	/* this gives us weird values - perhaps caused by taking care of unussual characters out of Latin-1 charset */
+	/* This gives us weird values - perhaps caused by taking care of unusual characters out of Latin-1 charset */
 	font->widest.cell = FT_CEIL(FT_MulFix(face->bbox.xMax - face->bbox.xMin, face->size->metrics.x_scale));
 	font->widest.character = FT_CEIL(FT_MulFix(face->max_advance_width, scale));
 #else
-	if (0) { /* !!! needs the cache fields allocated which is not the case at this point */
-	       	/* scan the font for widest parts */
+	if (0) { /* !!! Needs the cache fields allocated which is not the case at this point */
+	       	/* Scan the font for widest parts */
 		short ch;
-		for( ch = 32; ch < 128; ch++ ) {
+		for(ch = 32; ch < 128; ch++) {
 			FT_Error error = ft2_find_glyph(font, ch, CACHED_METRICS);
-			if ( !error ) {
+			if (!error) {
 				c_glyph *glyph = font->extra.current;
 
 				font->widest.cell      = MAX(font->widest.cell, glyph->maxx - glyph->minx);
@@ -362,14 +364,14 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 	}
 #endif
 
-	/* fake for vqt_fontinfo() as some apps might rely on this */
+	/* Fake for vqt_fontinfo() as some apps might rely on this */
 	font->code.low = 0;
 	font->code.high = 255;
 
 	//FIXME: font->lineskip = FT_CEIL(FT_MulFix(face->height, scale));
 	//FIXME: font->underline_offset = FT_FLOOR(FT_MulFix(face->underline_position, scale));
 	font->underline = FT_FLOOR(FT_MulFix(face->underline_thickness, scale));
-	if ( font->underline < 1 ) {
+	if (font->underline < 1) {
 		font->underline = 1;
 	}
 
@@ -378,13 +380,13 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 		char buf[255];
 		access->funcs.puts("Font metrics:\n");
 		sprintf(buf,"\tascent = %d, descent = %d\n",
-				font->distance.ascent, font->distance.descent);
+		        font->distance.ascent, font->distance.descent);
 		access->funcs.puts(buf);
 		sprintf(buf,"\ttop = %d, bottom = %d\n",
-				font->distance.top, font->distance.bottom);
+		        font->distance.top, font->distance.bottom);
 		access->funcs.puts(buf);
 		sprintf(buf,"\tcell = %d, character = %d\n",
-				font->widest.cell, font->widest.character);
+		        font->widest.cell, font->widest.character);
 		access->funcs.puts(buf);
 	}
 #endif
@@ -398,7 +400,7 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 	// font->glyph_italics = 0.207f;
 	// font->glyph_italics *= font->height;
 
-	{ /* fixup to handle alignments better way */
+	{ /* Fixup to handle alignments better way */
 		int top = font->distance.top;
 		font->extra.distance.base    = -top;
 		font->extra.distance.half    = -top + font->distance.half;
@@ -414,36 +416,37 @@ static Fontheader* ft2_open_face( Fontheader* font ) {
 static Fontheader *ft2_dup_font(Fontheader *src, short ptsize)
 {
    Fontheader *font = (Fontheader *)malloc(sizeof(Fontheader));
-   if ( font ) {
-	   memcpy( font, src, sizeof(Fontheader));
-	   font->extra.filename = strdup( src->extra.filename );
+   if (font) {
+	   memcpy(font, src, sizeof(Fontheader));
+	   font->extra.filename = strdup(src->extra.filename);
 
-	   /* only for rendering fonts */
+	   /* Only for rendering fonts */
 	   font->extra.unpacked.data = NULL;
-	   font->extra.cache = malloc(sizeof(c_glyph)*256);	/* cache */
-	   memset( font->extra.cache, 0, sizeof(c_glyph)*256);	/* cache */
+	   font->extra.cache = malloc(sizeof(c_glyph) * 256);	/* cache */
+	   memset(font->extra.cache, 0, sizeof(c_glyph) * 256);	/* cache */
 	   font->extra.scratch = malloc(sizeof(c_glyph));	/* scratch */
-	   memset( font->extra.scratch, 0, sizeof(c_glyph));
+	   memset(font->extra.scratch, 0, sizeof(c_glyph));
 
 	   font->size = ptsize;
-	   font = ft2_open_face( font);
+	   font = ft2_open_face(font);
    }
+
    return font;
 }
 
 static void ft2_dispose_font(Fontheader *font)
 {
-	/* close the FreeType2 face */
-	ft2_close_face( font );
+	/* Close the FreeType2 face */
+	ft2_close_face(font);
 
-	/* dispose the data */
-	free( font->extra.filename);
-	free( font->extra.cache);
-	free( font->extra.scratch);
-	free( font);
+	/* Dispose of the data */
+	free(font->extra.filename);
+	free(font->extra.cache);
+	free(font->extra.scratch);
+	free(font);
 }
 
-static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int want )
+static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int want)
 {
 	FT_Face face;
 	FT_Error error;
@@ -452,17 +455,17 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 	FT_Outline* outline;
 
 	/* Open the face if needed */
-	if ( !font->extra.unpacked.data )
-		font = ft2_open_face( font );
+	if (!font->extra.unpacked.data)
+		font = ft2_open_face(font);
 
 	face = (FT_Face)font->extra.unpacked.data;
 
 	/* Load the glyph */
-	if ( ! cached->index ) {
-		cached->index = FT_Get_Char_Index( face, ch );
+	if (!cached->index) {
+		cached->index = FT_Get_Char_Index(face, ch);
 	}
-	error = FT_Load_Glyph( face, cached->index, FT_LOAD_DEFAULT );
-	if( error ) {
+	error = FT_Load_Glyph(face, cached->index, FT_LOAD_DEFAULT);
+	if (error) {
 		return error;
 	}
 
@@ -472,13 +475,13 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 	outline = &glyph->outline;
 
 	/* Get the glyph metrics if desired */
-	if ( (want & CACHED_METRICS) && !(cached->stored & CACHED_METRICS) ) {
+	if ((want & CACHED_METRICS) && !(cached->stored & CACHED_METRICS)) {
 		/* Get the bounding box */
 #if 1
 		FT_Glyph g;
 		FT_BBox bbox;
-		FT_Get_Glyph( glyph, &g);
-		FT_Glyph_Get_CBox( g, FT_GLYPH_BBOX_PIXELS, &bbox );
+		FT_Get_Glyph(glyph, &g);
+		FT_Glyph_Get_CBox(g, FT_GLYPH_BBOX_PIXELS, &bbox);
 
 		cached->minx = bbox.xMin;
 		cached->maxx = bbox.xMax;
@@ -500,53 +503,53 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 
 #if 0
 		/* Adjust for bold and italic text */
-		if( font->style & TTF_STYLE_BOLD ) {
+		if (font->style & TTF_STYLE_BOLD) {
 			cached->maxx += font->glyph_overhang;
 		}
-		if( font->style & TTF_STYLE_ITALIC ) {
+		if (font->style & TTF_STYLE_ITALIC) {
 			cached->maxx += (int)ceil(font->glyph_italics);
 		}
 #endif
 		cached->stored |= CACHED_METRICS;
 	}
 
-	if ( ((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP)) ) { 
+	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP))) { 
 		int i;
 		FT_Bitmap* src;
 		FT_Bitmap* dst;
 
 #if 0
 		/* Handle the italic style */
-		if( font->style & TTF_STYLE_ITALIC ) {
+		if (font->style & TTF_STYLE_ITALIC) {
 			FT_Matrix shear;
 
 			shear.xx = 1 << 16;
-			shear.xy = (int) ( font->glyph_italics * ( 1 << 16 ) ) / font->height;
+			shear.xy = (int) (font->glyph_italics * (1 << 16)) / font->height;
 			shear.yx = 0;
 			shear.yy = 1 << 16;
 
-			FT_Outline_Transform( outline, &shear );
+			FT_Outline_Transform(outline, &shear);
 		}
 #endif
 
 		/* Render the glyph */
-		error = FT_Render_Glyph( glyph, ft_render_mode_mono );
-		if( error ) {
+		error = FT_Render_Glyph(glyph, ft_render_mode_mono);
+		if (error) {
 			return error;
 		}
 
 		/* Copy over information to cache */
 		src = &glyph->bitmap;
 		dst = &cached->bitmap;
-		memcpy( dst, src, sizeof( *dst ) );
+		memcpy(dst, src, sizeof( *dst ));
 
 #if 0
 		/* Adjust for bold and italic text */
-		if( font->style & TTF_STYLE_BOLD ) {
+		if (font->style & TTF_STYLE_BOLD) {
 			int bump = font->glyph_overhang;
 			dst->width += bump;
 		}
-		if( font->style & TTF_STYLE_ITALIC ) {
+		if (font->style & TTF_STYLE_ITALIC) {
 			int bump = (int)ceil(font->glyph_italics);
 			dst->width += bump;
 		}
@@ -554,22 +557,23 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 		dst->pitch = (dst->width+7) >> 3;
 
 		if (dst->rows != 0) {
-			dst->buffer = malloc( dst->pitch * dst->rows );
-			if( !dst->buffer ) {
+			dst->buffer = malloc(dst->pitch * dst->rows);
+			if (!dst->buffer) {
 				return FT_Err_Out_Of_Memory;
 			}
-			setmem( dst->buffer, 0, dst->pitch * dst->rows );
+			setmem(dst->buffer, 0, dst->pitch * dst->rows);
 
-			for( i = 0; i < src->rows; i++ ) {
+			for(i = 0; i < src->rows; i++) {
 				int soffset = i * src->pitch;
 				int doffset = i * dst->pitch;
-				memcpy(dst->buffer+doffset, src->buffer+soffset, src->pitch);
+				memcpy(dst->buffer + doffset,
+				       src->buffer + soffset, src->pitch);
 			}
 		}
 
 #if 0
 		/* Handle the bold style */
-		if ( 0 && font->style & TTF_STYLE_BOLD ) {
+		if (0 && font->style & TTF_STYLE_BOLD) {
 			int row;
 			int col;
 			int offset;
@@ -582,15 +586,15 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 #define NUM_GRAYS       256
 
 			/* The pixmap is a little hard, we have to add and clamp */
-			for( row = dst->rows - 1; row >= 0; --row ) {
+			for(row = dst->rows - 1; row >= 0; --row) {
 				pixmap = (unsigned char*) dst->buffer + row * dst->pitch;
-				for( offset=1; offset <= font->glyph_overhang; ++offset ) {
-					for( col = dst->width - 1; col > 0; --col ) {
-						pixel = (pixmap[col] + pixmap[col-1]);
-						if( pixel > NUM_GRAYS - 1 ) {
+				for(offset = 1; offset <= font->glyph_overhang; ++offset) {
+					for(col = dst->width - 1; col > 0; --col) {
+						pixel = (pixmap[col] + pixmap[col - 1]);
+						if (pixel > NUM_GRAYS - 1) {
 							pixel = NUM_GRAYS - 1;
 						}
-						pixmap[col] = (unsigned char) pixel;
+						pixmap[col] = (unsigned char)pixel;
 					}
 				}
 			}
@@ -607,49 +611,49 @@ static FT_Error ft2_load_glyph( Fontheader* font, short ch, c_glyph* cached, int
 	return 0;
 }
 
-static void ft2_flush_glyph( c_glyph* glyph )
+static void ft2_flush_glyph(c_glyph* glyph)
 {
 	glyph->stored = 0;
 	glyph->index = 0;
-	if( glyph->bitmap.buffer ) {
-		free( glyph->bitmap.buffer );
+	if (glyph->bitmap.buffer) {
+		free(glyph->bitmap.buffer);
 		glyph->bitmap.buffer = 0;
 	}
 	glyph->cached = 0;
 }
 	
-static void ft2_flush_cache( Fontheader* font )
+static void ft2_flush_cache(Fontheader *font)
 {
 	int i;
 	int size = 256;
 
-	for( i = 0; i < size; ++i ) {
-		if( ((c_glyph*)font->extra.cache)[i].cached ) {
-			ft2_flush_glyph( &((c_glyph*)font->extra.cache)[i] );
+	for(i = 0; i < size; ++i) {
+		if (((c_glyph*)font->extra.cache)[i].cached) {
+			ft2_flush_glyph(&((c_glyph *)font->extra.cache)[i]);
 		}
 
 	}
-	if( ((c_glyph*)font->extra.scratch)->cached ) {
-		ft2_flush_glyph( font->extra.scratch );
+	if (((c_glyph *)font->extra.scratch)->cached) {
+		ft2_flush_glyph(font->extra.scratch);
 	}
-
 }
 
-static FT_Error ft2_find_glyph( Fontheader* font, short ch, int want )
+static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 {
 	int retval = 0;
 
-	if( ch < 256 ) {
-		font->extra.current = &((c_glyph*)font->extra.cache)[ch];
+	if (ch < 256) {
+		font->extra.current = &((c_glyph *)font->extra.cache)[ch];
 	} else {
-		if ( ((c_glyph*)font->extra.scratch)->cached != ch ) {
-			ft2_flush_glyph( font->extra.scratch );
+		if (((c_glyph *)font->extra.scratch)->cached != ch) {
+			ft2_flush_glyph(font->extra.scratch);
 		}
 		font->extra.current = font->extra.scratch;
 	}
-	if ( (((c_glyph*)font->extra.current)->stored & want) != want ) {
-		retval = ft2_load_glyph( font, ch, font->extra.current, want );
+	if ((((c_glyph *)font->extra.current)->stored & want) != want) {
+		retval = ft2_load_glyph(font, ch, font->extra.current, want);
 	}
+
 	return retval;
 }
 
@@ -672,55 +676,55 @@ int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
 	miny = maxy = 0;
 
 	/* Load each character and sum it's bounding box */
-	x= 0;
-	for ( ch=text; *ch; ++ch ) {
+	x = 0;
+	for(ch = text; *ch; ++ch) {
 #if 0
-		buf[ch-text] = *ch;
+		buf[ch - text] = *ch;
 #endif
 		error = ft2_find_glyph(font, *ch, CACHED_METRICS);
-		if ( error ) {
+		if (error) {
 			return -1;
 		}
 		glyph = font->extra.current;
 
 		z = x + glyph->minx;
-		if ( minx > z ) {
+		if (minx > z) {
 			minx = z;
 		}
 #if CAN_BOLD
-		if ( font->style & TTF_STYLE_BOLD ) {
+		if (font->style & TTF_STYLE_BOLD) {
 			x += font->glyph_overhang;
 		}
 #endif
-		if ( glyph->advance > glyph->maxx ) {
+		if (glyph->advance > glyph->maxx) {
 			z = x + glyph->advance;
 		} else {
 			z = x + glyph->maxx;
 		}
-		if ( maxx < z ) {
+		if (maxx < z) {
 			maxx = z;
 		}
 		x += glyph->advance;
 
 #if CACHE_YSIZE
-		if ( glyph->miny < miny ) {
+		if (glyph->miny < miny) {
 			miny = glyph->miny;
 		}
-		if ( glyph->maxy > maxy ) {
+		if (glyph->maxy > maxy) {
 			maxy = glyph->maxy;
 		}
 #endif
 	}
 
 #if 0
-	buf[ch-text] = '\0';
+	buf[ch - text] = '\0';
 #endif
 
 	/* Fill the bounds rectangle */
-	if ( w ) {
+	if (w) {
 		*w = (maxx - minx);
 	}
-	if ( h ) {
+	if (h) {
 #if CACHE_YSIZE
 #if 0 /* This is correct, but breaks many applications */
 		*h = (maxy - miny);
@@ -753,9 +757,9 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	int xstart;
 	int width;
 	int height;
-	const short* ch;
-	unsigned char* src;
-	unsigned char* dst;
+	const short *ch;
+	unsigned char *src;
+	unsigned char *dst;
 	unsigned char *dst_check;
 	int row, col;
 	c_glyph *glyph;
@@ -767,8 +771,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	FT_Face face;
 
 	/* Get the dimensions of the text surface */
-	if( ( ft2_text_size(font, text, &width, NULL) < 0 ) || !width ) {
-		// TTF_SetError( "Text has zero width" );
+	if ((ft2_text_size(font, text, &width, NULL) < 0) || !width) {
+		// TTF_SetError("Text has zero width");
 		return NULL;
 	}
 	height = font->height;
@@ -779,68 +783,70 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	textbuf->standard = 1;
 	textbuf->bitplanes = 1;
 	textbuf->wdwidth = (width + 15) >> 4; /* number of words per line */
-	textbuf->address = malloc( textbuf->wdwidth * 2 * textbuf->height);
-	if( textbuf->address == NULL ) {
+	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
+	if (textbuf->address == NULL) {
 		return NULL;
 	}
-	memset( textbuf->address, 0, textbuf->wdwidth * 2 * textbuf->height);
+	memset(textbuf->address, 0, textbuf->wdwidth * 2 * textbuf->height);
 
-	/* Adding bound checking to avoid all kinds of memory corruption errors
-	   that may occur. */
-	dst_check = (unsigned char*)textbuf->address + textbuf->wdwidth * 2 * textbuf->height;
+	/* Adding bounds checking to avoid all kinds of memory
+	 * corruption errors that may occur.
+	 */
+	dst_check = (unsigned char *)textbuf->address + textbuf->wdwidth * 2 * textbuf->height;
 
        	face = (FT_Face)font->extra.unpacked.data;
 
-	/* check kerning */
-	use_kerning = 0; // FIXME: FT_HAS_KERNING( face );
+	/* Check kerning */
+	use_kerning = 0; // FIXME: FT_HAS_KERNING(face);
 	
 	/* Load and render each character */
 	xstart = 0;
-	for( ch=text; *ch; ++ch ) {
+	for(ch = text; *ch; ++ch) {
 		short c = *ch;
 #if 0
 	int swapped;
 	swapped = TTF_byteswapped;
-		if ( c == UNICODE_BOM_NATIVE ) {
+		if (c == UNICODE_BOM_NATIVE) {
 			swapped = 0;
-			if ( text == ch ) {
+			if (text == ch) {
 				++text;
 			}
 			continue;
 		}
-		if ( c == UNICODE_BOM_SWAPPED ) {
+		if (c == UNICODE_BOM_SWAPPED) {
 			swapped = 1;
-			if ( text == ch ) {
+			if (text == ch) {
 				++text;
 			}
 			continue;
 		}
-		if ( swapped ) {
+		if (swapped) {
 			c = SDL_Swap16(c);
 		}
 #endif
 
-		error = ft2_find_glyph(font, c, CACHED_METRICS|CACHED_BITMAP);
-		if( error ) {
-			free( textbuf->address );
+		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_BITMAP);
+		if (error) {
+			free(textbuf->address);
 			return NULL;
 		}
 		glyph = font->extra.current;
 		current = &glyph->bitmap;
 		/* Ensure the width of the pixmap is correct. On some cases,
-		 * freetype may report a larger pixmap than possible.*/
+		 * freetype may report a larger pixmap than possible.
+		 */
 		width = current->width;
 		if (width > glyph->maxx - glyph->minx) {
 			width = glyph->maxx - glyph->minx;
 		}
-		/* do kerning, if possible AC-Patch */
-		if ( use_kerning && prev_index && glyph->index ) {
+		/* Do kerning, if possible AC-Patch */
+		if (use_kerning && prev_index && glyph->index) {
 			FT_Vector delta; 
-			FT_Get_Kerning( face, prev_index, glyph->index, ft_kerning_default, &delta ); 
+			FT_Get_Kerning(face, prev_index, glyph->index, ft_kerning_default, &delta); 
 			xstart += delta.x >> 6;
 		}
 		/* Compensate for wrap around bug with negative minx's */
-		if ( (ch == text) && (glyph->minx < 0) ) {
+		if ((ch == text) && (glyph->minx < 0)) {
 			xstart -= glyph->minx;
 		}
 		
@@ -848,38 +854,39 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			int offset = xstart + glyph->minx;
 			short shift = offset % 8;
 			unsigned char rmask = (1 << shift) - 1;
-			unsigned char lmask = ~ rmask;
+			unsigned char lmask = ~rmask;
 
-			for( row = 0; row < current->rows; ++row ) {
+			for(row = 0; row < current->rows; ++row) {
 				/* Make sure we don't go either over, or under the
 				 * limit */
-				if ( row+glyph->yoffset < 0 ) {
+				if (row + glyph->yoffset < 0) {
 					continue;
 				}
-				if ( row+glyph->yoffset >= textbuf->height ) {
+				if (row + glyph->yoffset >= textbuf->height) {
 					continue;
 				}
 
-				dst = (unsigned char*) textbuf->address +
-					(row+glyph->yoffset) * textbuf->wdwidth * 2 +
-					( offset >> 3 );
+				dst = (unsigned char *)textbuf->address +
+					(row + glyph->yoffset) * textbuf->wdwidth * 2 +
+					(offset >> 3);
 				src = current->buffer + row * current->pitch;
 
-				for ( col=(width+7)>>3; col>0; --col ) {
+				for(col = (width + 7) >> 3; col > 0; --col) {
 					unsigned char x = *src++;
-					*dst++ |= ( x & lmask ) >> shift;
+					*dst++ |= (x & lmask) >> shift;
 
-					/* sanity end of buffer check */
-					if ( dst >= dst_check ) break;
+					/* Sanity end of buffer check */
+					if (dst >= dst_check)
+						break;
 
-					*dst |= ( x & rmask ) << (8-shift);
+					*dst |= (x & rmask) << (8 - shift);
 				}
 			}
 		}
 
 		xstart += glyph->advance;
 #if CAN_BOLD
-		if ( font->style & TTF_STYLE_BOLD ) {
+		if (font->style & TTF_STYLE_BOLD) {
 			xstart += font->glyph_overhang;
 		}
 #endif
@@ -888,19 +895,20 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 
 #if 0
 	/* Handle the underline style */
-	if( 0 && font->style & TTF_STYLE_UNDERLINE ) {
+	if (0 && font->style & TTF_STYLE_UNDERLINE) {
 		row = font->ascent - font->underline_offset - 1;
-		if ( row >= textbuf->height) {
-			row = (textbuf->height-1) - font->underline_height;
+		if (row >= textbuf->height) {
+			row = (textbuf->height - 1) - font->underline_height;
 		}
 		dst = (unsigned char *)textbuf->address + row * textbuf->wdwidth * 2;
-		for ( row=font->underline_height; row>0; --row ) {
+		for (row = font->underline_height; row > 0; --row) {
 			/* 1 because 0 is the bg color */
-			setmem( dst, 1, textbuf->width );
+			setmem(dst, 1, textbuf->width);
 			dst += textbuf->wdwidth * 2;
 		}
 	}
 #endif
+
 	return textbuf;
 }
 
@@ -909,39 +917,41 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
  * different sizes of FreeType2 fonts loaded in the beginning
  * (which are maintained in the global font list normally).
  **/
-Fontheader *ft2_find_fontsize( Fontheader *font, short ptsize ) {
+Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
+{
 	Fontheader *f;
 	FontheaderListItem *i;
-	listForEach( FontheaderListItem*, i, &fonts ) {
-		if ( i->font->id == font->id && i->font->size == ptsize ) {
-			listRemove( (LINKABLE*)i );
-			listInsert( fonts.head.next, (LINKABLE*)i);
+
+	listForEach(FontheaderListItem*, i, &fonts) {
+		if (i->font->id == font->id && i->font->size == ptsize) {
+			listRemove((LINKABLE *)i);
+			listInsert(fonts.head.next, (LINKABLE *)i);
 			return i->font;
 		}
 	}
 
 	/* FIXME: handle maximum number of fonts in the cache here (configurable) */
-	if ( font_count > 10 ) {
-		FontheaderListItem *x = (FontheaderListItem*)listLast( &fonts );
-		listRemove( (LINKABLE*)x );
-		ft2_dispose_font( x->font );
-		free( x);
+	if (font_count > 10) {
+		FontheaderListItem *x = (FontheaderListItem *)listLast(&fonts);
+		listRemove((LINKABLE *)x);
+		ft2_dispose_font(x->font);
+		free(x);
 	} else {
 		font_count++;
 	}
 
-	f = ft2_dup_font( font, ptsize );
-	if ( f ) {
+	f = ft2_dup_font(font, ptsize);
+	if (f) {
 		i = malloc(sizeof(FontheaderListItem));
 		i->font = f;
-		listInsert( fonts.head.next, (LINKABLE*)i);
+		listInsert(fonts.head.next, (LINKABLE *)i);
 	}
 
 	return f;
 }
 
 
-long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long slen )
+long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long slen)
 {
 	Fontheader *font = vwk->text.current_font;
 	MFDB textbuf, *t;
@@ -965,10 +975,10 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 		}
 	}
 
-	/* terminate text */
+	/* Terminate text */
 	s[slen] = 0;
-	t = ft2_text_render( font, s, &textbuf); 
-	if ( t && t->address ) {
+	t = ft2_text_render(font, s, &textbuf); 
+	if (t && t->address) {
 		short colors[2];
 		short pxy[8];
 		short x = coords >> 16;
@@ -977,58 +987,62 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 		colors[1] = vwk->text.colour.background;
 		colors[0] = vwk->text.colour.foreground;
 
-		y += ((short*)&font->extra.distance)[vwk->text.alignment.vertical];
+		y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
 
 		pxy[0] = 0;
 		pxy[1] = 0;
-		pxy[2] = t->width-1;
-		pxy[3] = t->height-1;
+		pxy[2] = t->width - 1;
+		pxy[3] = t->height - 1;
 		pxy[4] = x;
 		pxy[5] = y;
-		pxy[6] = x+t->width-1;
-		pxy[7] = y+t->height-1;
+		pxy[6] = x + t->width - 1;
+		pxy[7] = y + t->height - 1;
 		
 		lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, t, NULL, colors);
-		free( t->address );
+		free(t->address);
 	}
 
-	/* dispose the FreeType2 objects */
-	// ft2_close_face( font );
+	/* Dispose of the FreeType2 objects */
+	// ft2_close_face(font);
+
 	return 1;
 }
 
 long ft2_char_width(Fontheader *font, long ch)
 {
-	short s[] = { ch, 0 };
+	short s[] = {ch, 0};
 	int width;
 	/* Get the dimensions of the text surface */
-	if( ( ft2_text_size(font, s, &width, NULL) < 0 ) || !width ) {
+	if ((ft2_text_size(font, s, &width, NULL) < 0) || !width) {
 		return 0;
 	}
+
 	return width;
 }
 
-long ft2_text_width(Fontheader *font, short *s, long slen )
+long ft2_text_width(Fontheader *font, short *s, long slen)
 {
 	int width;
-	/* terminate text */
+	/* Terminate text */
 	s[slen] = 0;
 	/* Get the dimensions of the text surface */
-	if( ( ft2_text_size(font, s, &width, NULL) < 0 ) || !width ) {
+	if ((ft2_text_size(font, s, &width, NULL) < 0) || !width) {
 		return 0;
 	}
-	return width;
 
+	return width;
 }
 
-Fontheader *ft2_vst_point(Virtual *vwk, long ptsize) {
+Fontheader *ft2_vst_point(Virtual *vwk, long ptsize)
+{
 	Fontheader *font = vwk->text.current_font;
-	if ( font->size == ptsize )
+	if (font->size == ptsize)
 		return font;
 
-	font = ft2_find_fontsize( font, ptsize );
-	/* dispose the FreeType2 objects */
-	// ft2_close_face( font );
+	font = ft2_find_fontsize(font, ptsize);
+	/* Dispose of the FreeType2 objects */
+	// ft2_close_face(font);
+
 	return font;
 
 }
@@ -1036,116 +1050,119 @@ Fontheader *ft2_vst_point(Virtual *vwk, long ptsize) {
 
 #if 0
 
-long ft2_height2point( long height ) {
+long ft2_height2point(long height)
+{
 	return face->size->metrics.y_scale;
 }
 
-Fontheader *ft2_vst_height(Virtual *vwk, long height) {
-	return ft2_vst_point( vwk, ft2_height2point( height ) );
+Fontheader *ft2_vst_height(Virtual *vwk, long height)
+{
+	return ft2_vst_point(vwk, ft2_height2point(height));
 }
 
 
 
 char *TTF_FontFaceStyleName(TTF_Font *font)
 {
-	return(font->face->style_name);
+	return font->face->style_name;
 }
-}
 
 
 
-void TTF_FTClose( TTF_Font* font ) {
-	if ( font->opened ) {
-		FT_Done_Face( font->face );
+void TTF_FTClose(TTF_Font *font)
+{
+	if (font->opened) {
+		FT_Done_Face(font->face);
 		font->opened = 0;
 	}
 }
 
-void TTF_CloseFont( TTF_Font* font )
+void TTF_CloseFont(TTF_Font *font)
 {
-	ft2_flush_cache( font );
-	TTF_FTClose( font );
-	free( font->filename );
-	free( font );
+	ft2_flush_cache(font);
+	TTF_FTClose(font);
+	free(font->filename);
+	free(font);
 }
 
 int TTF_FontHeight(TTF_Font *font)
 {
-	return(font->height);
+	return font->height;
 }
 
 int TTF_FontAscent(TTF_Font *font)
 {
-       return(font->ascent);
+       return font->ascent;
 }
 
 int TTF_FontDescent(TTF_Font *font)
 {
-	return(font->descent);
+	return font->descent;
 }
 
 int TTF_FontLineSkip(TTF_Font *font)
 {
-	return(font->lineskip);
+	return font->lineskip;
 }
 
 long TTF_FontFaces(TTF_Font *font)
 {
-	return(font->face->num_faces);
+	return font->face->num_faces;
 }
 
 int TTF_FontFaceIsFixedWidth(TTF_Font *font)
 {
-	return(FT_IS_FIXED_WIDTH(font->face));
+	return FT_IS_FIXED_WIDTH(font->face);
 }
 
 char *TTF_FontFaceFamilyName(TTF_Font *font)
 {
-	return(font->face->family_name);
+	return font->face->family_name;
 }
 
 char *TTF_FontFaceStyleName(TTF_Font *font)
 {
-	return(font->face->style_name);
+	return font->face->style_name;
 }
 
 int TTF_GlyphMetrics(TTF_Font *font, Uint16 ch,
-                     int* minx, int* maxx, int* miny, int* maxy, int* advance)
+                     int *minx, int *maxx, int *miny, int *maxy, int *advance)
 {
 	FT_Error error;
 
 	error = ft2_find_glyph(font, ch, CACHED_METRICS);
-	if ( error ) {
+	if (error) {
 		TTF_SetFTError("Couldn't find glyph", error);
 		return -1;
 	}
 
-	if ( minx ) {
+	if (minx) {
 		*minx = font->current->minx;
 	}
-	if ( maxx ) {
+	if (maxx) {
 		*maxx = font->current->maxx;
 	}
-	if ( miny ) {
+	if (miny) {
 		*miny = font->current->miny;
 	}
-	if ( maxy ) {
+	if (maxy) {
 		*maxy = font->current->maxy;
 	}
-	if ( advance ) {
+	if (advance) {
 		*advance = font->current->advance;
 	}
+
 	return 0;
 }
 
 
-void TTF_SetFontStyle( TTF_Font* font, int style )
+void TTF_SetFontStyle(TTF_Font* font, int style)
 {
 	font->style = style;
-	ft2_flush_cache( font );
+	ft2_flush_cache(font);
 }
 
-int TTF_GetFontStyle( TTF_Font* font )
+int TTF_GetFontStyle(TTF_Font* font)
 {
 	return font->style;
 }
@@ -1157,7 +1174,7 @@ static Uint16 *ASCII_to_UNICODE(Uint16 *unicode, const char *text, int len)
 {
 	int i;
 
-	for ( i=0; i < len; ++i ) {
+	for(i = 0; i < len; ++i) {
 		unicode[i] = ((const unsigned char *)text)[i];
 	}
 	unicode[i] = 0;
@@ -1173,8 +1190,8 @@ int TTF_SizeText(TTF_Font *font, const char *text, int *w, int *h)
 
 	/* Copy the Latin-1 text to a UNICODE text buffer */
 	unicode_len = strlen(text);
-	unicode_text = (Uint16 *)malloc((unicode_len+1)*(sizeof *unicode_text));
-	if ( unicode_text == NULL ) {
+	unicode_text = (Uint16 *)malloc((unicode_len + 1)*(sizeof *unicode_text));
+	if (unicode_text == NULL) {
 		TTF_SetError("Out of memory");
 		return -1;
 	}
@@ -1185,21 +1202,22 @@ int TTF_SizeText(TTF_Font *font, const char *text, int *w, int *h)
 
 	/* Free the text buffer and return */
 	free(unicode_text);
+
 	return status;
 }
 
 /* Convert the Latin-1 text to UNICODE and render it
 */
 MFDB *TTF_RenderText_Solid(TTF_Font *font,
-				const char *text, MFDB *textbuf)
+                           const char *text, MFDB *textbuf)
 {
 	Uint16 *unicode_text;
 	int unicode_len;
 
 	/* Copy the Latin-1 text to a UNICODE text buffer */
 	unicode_len = strlen(text);
-	unicode_text = (Uint16 *)malloc((unicode_len+1)*(sizeof *unicode_text));
-	if ( unicode_text == NULL ) {
+	unicode_text = (Uint16 *)malloc((unicode_len + 1)*(sizeof *unicode_text));
+	if (unicode_text == NULL) {
 		TTF_SetError("Out of memory");
 		return(NULL);
 	}
