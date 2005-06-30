@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.7 2005-05-09 20:47:53 johan Exp $
+* $Id: text_sq.s,v 1.8 2005-06-30 08:37:17 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -29,6 +29,8 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xdef	_lib_vst_color,_lib_vst_font,_lib_vst_point
 
 	xdef	_get_extent
+
+	xdef	vst_arbpt
 
 
 	text
@@ -272,6 +274,13 @@ lib_vst_font:
 *       a0      VDI struct
 vqt_name:
 	uses_d1
+	move.l	control(a1),a2
+	cmp.w	#1,subfunction(a2)
+	bne	.normal_vqt_name
+	cmp.w	#2,L_intin(a2)
+	bge	vqt_ext_name
+	
+.normal_vqt_name:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	move.l	intout(a1),a1
@@ -284,6 +293,24 @@ vqt_name:
 	move.w	d0,-2(a1)
 	used_d1
 	done_return
+
+vqt_ext_name:
+	move.l	control(a1),a2
+	move.w	#35,L_intout(a2)
+	
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	move.l	intout(a1),a1
+	pea	2(a1)
+	move.w	d0,-(a7)
+	move.l	a7,a1
+	bsr	lib_vqt_ext_name
+	addq.l	#2,a7
+	move.l	(a7)+,a1
+	move.w	d0,-2(a1)
+	used_d1
+	done_return
+
 
 * lib_vqt_name - Standard Library function
 * Todo: ?
@@ -309,19 +336,70 @@ lib_vqt_name:
 
 	move.l	2(a1),a1
 	move.w	font_id(a2),a0
+
+	move.w	#0,2*32(a1)	; Assume bitmap font
+	tst.w	font_flags(a2)
+	lbpl	.bitmap,5
+	move.w	#1,2*32(a1)	; Vector font!
+ label .bitmap,5
+
 	lea	font_name(a2),a2
 	moveq	#31,d1
 	moveq	#0,d0
-.name:
+ label .name,6
 	move.b	(a2)+,d0
 	move.w	d0,(a1)+
-	dbra	d1,.name
+	ldbra	d1,.name,6
 
+	move.l	a0,d0
+	rts
+
+
+* lib_vqt_ext_name - Standard Library function
+* Todo: Does not yet know about different kinds of vector fonts etc.
+* In:	a1	Parameters   id = lib_vqt_ext_name(number, name)
+*	a0	VDI struct
+lib_vqt_ext_name:
+	move.w	(a1),d0
+	move.l	vwk_real_address(a0),a2
+	tst.w	d0
+	lbeq	.not_ok,1
+	cmp.w	wk_writing_fonts(a2),d0
+	lbls	.ok,2
+ label .not_ok,1
+	moveq	#1,d0
+ label .ok,2
+	subq.w	#1,d0
+	move.l	wk_writing_first_font(a2),a2
+	lbra	.loopend,4
+ label .loop,3
+	move.l	font_next(a2),a2
+ label .loopend,4
+	ldbra	d0,.loop,3
+
+	move.l	2(a1),a1
+	move.w	font_id(a2),a0
+
+	move.w	#0,2*32(a1)	; Assume bitmap font
+	move.w	#$0101,2*33(a1)	;  and monospaced
 	tst.w	font_flags(a2)
-	lbpl	.end,5
-	move.w	#1,(a1)+	; Vector font!
+	lbpl	.bitmap,5
+	move.w	#1,2*32(a1)	; Vector font!
+	move.w	font_flags(a2),d0
+	and.w	#$0008,d0	; Top byte: 0 - proportional, 1 - monospaced 
+	lsl.w	#5,d0
+	move.b	#4,d0		; 1 - bitmap, 2 - speedo, 4 - FT, 8 - Type 1
+	move.w	d0,2*33(a1)
+ label .bitmap,5
+	
+	lea	font_name(a2),a2
+	moveq	#31,d1
+	moveq	#0,d0
+ label .name,6
+	move.b	(a2)+,d0
+	move.w	d0,(a1)+
+	ldbra	d1,.name,6
 
- label .end,5
 	move.l	a0,d0
 	rts
 
@@ -851,9 +929,15 @@ lib_vqt_width:
 *       a0      VDI struct
 vst_height:
 	uses_d1
+	move.l	a3,-(a7)
 	move.l	ptsin(a1),a2
 	move.w	2(a2),d0
-	move.l	a3,-(a7)
+	move.l	vwk_text_current_font(a0),a2
+
+* Some other method should be used for this!
+	tst.w	font_flags(a2)
+	lbmi	.external_vst_height,3
+
 	move.l	vwk_text_current_font(a0),a2
 	move.l	font_extra_first_size(a2),a2
 	move.l	a2,a3
@@ -883,6 +967,33 @@ vst_height:
 	add.w	font_distance_bottom(a3),d1
 	move.w	d1,(a2)+			; Height in pixels
 	move.l	d1,vwk_text_cell(a0)		; Cell w/h in vwk
+	move.l	(a7)+,a3
+	used_d1
+	done_return
+
+* Obviously this must really be different from vst_point!
+ label .external_vst_height,3
+	move.l	_external_vst_point,d2		; (Handle differently?)
+	beq	.no_external_vst_height		; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d2/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)			; VDI struct
+	jsr	(a3)
+	add.w	#3*4,a7
+	move.l	d0,a3
+	movem.l	(a7)+,d0-d2/a0-a2
+
+	move.l	(a7),a7				; Return to original stack
+	lbra	.found,2
+
+.no_external_vst_height:
 	move.l	(a7)+,a3
 	used_d1
 	done_return
@@ -928,6 +1039,67 @@ lib_vst_height:
 	move.l	d1,vwk_text_cell(a0)		; Cell w/h in vwk
 	move.l	(a7)+,a3
 	rts
+
+
+	dc.b	0,0,"vst_arbpt",0
+* vst_arbpt - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vst_arbpt:
+	uses_d1
+	move.l	a3,-(a7)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	move.l	vwk_text_current_font(a0),a2
+
+* Some other method should be used for this!
+	tst.w	font_flags(a2)
+	bpl	.no_external_vst_arbpt
+
+	move.l	_external_vst_point,d2		; (Handle differently?)
+	beq	.no_external_vst_arbpt		; Not really allowed!
+	move.l	d2,a3
+	
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	movem.l	d0-d2/a0-a2,-(a7)
+	move.l	_vdi_stack_size,-(a7)
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)			; VDI struct
+	jsr	(a3)
+	add.w	#3*4,a7
+	move.l	d0,a3
+	movem.l	(a7)+,d0-d2/a0-a2
+
+	move.l	(a7),a7				; Return to original stack
+
+	move.l	a3,vwk_text_current_font(a0)
+	movem.l	intout(a1),a1-a2		; Get ptsout too
+	move.w	font_widest_character(a3),d1
+	move.w	d1,(a2)+
+	swap	d1
+	move.w	font_distance_top(a3),d1
+;;	addq.w	#1,d1
+	move.w	d1,(a2)+			; Height in pixels
+	move.l	d1,vwk_text_character(a0)	; Character w/h in vwk
+	swap	d1
+	move.w	font_widest_cell(a3),d1
+	move.w	d1,(a2)+
+	swap	d1
+;	addq.w	#1,d1
+;	add.w	font_distance_bottom(a3),d1
+	move.w	font_height(a3),d1
+	move.w	d1,(a2)+			; Height in pixels
+	move.l	d1,vwk_text_cell(a0)		; Cell w/h in vwk
+	move.w	font_size(a3),(a1)
+
+.no_external_vst_arbpt:
+	move.l	(a7)+,a3
+	used_d1
+	done_return
 
 
 	dc.b	0,0,"vst_point",0
