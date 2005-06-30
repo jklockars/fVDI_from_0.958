@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.17 2005-06-07 22:21:35 johan Exp $
+ * $Id: utility.c,v 1.18 2005-06-30 08:21:06 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1199,13 +1199,15 @@ const char *skip_space(const char *ptr)
 
 const char *get_token(const char *ptr, char *buf, long n)
 {
-   if (*ptr != '\"') {    /* Get ordinary token */
+   if (*ptr == '=')            /* Assignment token? */
+      *buf++ = *ptr++;
+   else if (*ptr != '\"') {    /* Get ordinary token */
       while (--n) {
-         if (*ptr <= ' ')
+        if ((*ptr <= ' ') || (*ptr == '='))
             break;
          *buf++ = *ptr++;
       }
-   } else {               /* Get quoted token */
+   } else {                    /* Get quoted token */
       ptr++;
       while (--n) {
          if (((*ptr < ' ') && (*ptr != '\t')) || (*ptr == '\"'))
