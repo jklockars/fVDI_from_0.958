@@ -224,11 +224,13 @@ c_closewk(void)
    return ARAnyM((NF_fVDI+FVDI_CLOSEWK));
 }
 
+#if 0
 void CDECL
 c_get_component(long component, long *mask, long *shift, long *loss)
 {
    ARAnyM((NF_fVDI+FVDI_GETCOMPONENT, component, mask, shift, loss));
 }
+#endif
 
 void CDECL
 event_init(void)

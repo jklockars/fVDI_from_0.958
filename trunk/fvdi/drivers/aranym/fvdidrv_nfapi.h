@@ -33,8 +33,10 @@ enum {
 	FVDI_OPENWK,
 	FVDI_CLOSEWK,
 	FVDI_GETBPP,
-	FVDI_EVENT,
-	FVDI_GETCOMPONENT
+	FVDI_EVENT
+#if 0
+	, FVDI_GETCOMPONENT
+#endif
 };
 
 extern unsigned long nfFvdiDrvId;

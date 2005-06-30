@@ -19,7 +19,9 @@ long CDECL c_get_height(void);
 void CDECL c_openwk(Virtual *vwk);
 void CDECL c_closewk(Virtual *vwk);
 long CDECL c_get_bpp(void);
+#if 0
 void CDECL c_get_component(long component, long *mask, long *shift, long *loss);
+#endif
 
 /* color bit organization */
 char none[] = {0};
@@ -208,6 +210,7 @@ int set_bpp(int bpp)
 		bpp = 16;		/* Default as 16 bit */
 	}
 
+#if 0
 	/* Update various bitmasks */
 	if (bpp > 8) {
 		long r_mask,  g_mask,  b_mask;
@@ -231,6 +234,7 @@ int set_bpp(int bpp)
 			graphics_mode->bits.blue[i + 1] = i + b_shift;
 		}
 	}
+#endif
 
 	switch (bpp) {
 	case 16:
