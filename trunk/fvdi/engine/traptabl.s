@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.5 2005-04-25 19:56:44 johan Exp $
+* $Id: traptabl.s,v 1.6 2005-06-30 08:28:01 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -37,7 +37,7 @@ transparent	equ	1		; Fall through?
 	xref	vst_height,vst_point,v_cellarray,vq_cellarray
 	xref	vqt_xfntinfo,vst_name,vst_width,vst_charmap,vst_kern
 	xref	v_getbitmap_info,vqt_f_extent,v_ftext,v_getoutline,vst_scratch
-	xref	vst_error,vst_arbt,vqt_advance,vq_devinfo,v_savecache
+	xref	vst_error,vst_arbpt,vqt_advance,vq_devinfo,v_savecache
 	xref	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
 	xref	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
 	xref	v_set_app_buff,vq_chcells,v_exit_cur,v_enter_cur,v_curup
@@ -209,7 +209,7 @@ default_functions:
 	dc.l	vq_key_s
 	dc.w	0,0
 	dc.l	vs_clip
-	dc.w	0,33
+	dc.w	0,34
 	dc.l	vqt_name
 	dc.w	5,2
 	dc.l	vqt_font_info
@@ -279,7 +279,7 @@ default_functions:
 	dc.w	0,0
 	dc.l	vst_error
 	dc.w	0,0
-	dc.l	vst_arbt
+	dc.l	vst_arbpt
 	dc.w	0,0
 	dc.l	vqt_advance
 	dc.w	0,0
