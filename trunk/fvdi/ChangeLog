@@ -1,4 +1,15 @@
-2006-06-08 - patrice
+2005-06-29 - johan
+Changed vq_gdos response if requested.
+Made '=' a token separator for better FVDI.SYS handling.
+Implemented vst_arbpt (only allowed for vector fonts).
+Faked vst_height by making it equivalent to vst_point.
+vqt_name updated to report vector font information (assumes TrueType).
+Improved debug output.
+
+2005-06-11 - patrice
+Removed the function from last entry.
+
+2005-06-08 - patrice
 Function to get real frame buffer bit organization in ARAnyM driver.
 	
 2005-06-07 - johan
