@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.18 2005-06-07 22:15:48 johan Exp $
+ * $Id: startup.c,v 1.19 2005-06-30 08:29:07 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0964
-#define BETA	11
+#define BETA	12
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -539,25 +539,40 @@ void vdi_debug(VDIpars *pars, char *vector)
          access->funcs.puts(vector);
          buf[0] = ' ';
          access->funcs.ltoa(buf + 1, func, 10);
-         access->funcs.puts(buf);
-         access->funcs.puts("\x0a\x0d");
       } else {
          access->funcs.puts("VDI ");
          access->funcs.ltoa(buf, func, 10);
-         access->funcs.puts(buf);
-         access->funcs.puts("\x0a\x0d");
       }
+      access->funcs.puts(buf);
+      if (pars->control->subfunction) {
+         buf[0] = ' ';
+         access->funcs.ltoa(buf + 1, pars->control->subfunction, 10);
+         access->funcs.puts(buf);
+      }
+      access->funcs.puts("\x0a\x0d");
 
       if (pars->control->l_intin) {
          access->funcs.puts("  Int");
          access->funcs.ltoa(buf, pars->control->l_intin, 10);
          access->funcs.puts(buf);
          access->funcs.puts(" = ");
-         for(i = 0; i < MIN(pars->control->l_intin, 12); i++) {
-            access->funcs.ltoa(buf, pars->intin[i], 10);
-            access->funcs.puts(buf);
-            access->funcs.puts(" ");
-         }
+         if ((func == 8) || (func == 241) || (func ==  116) || (func == 117)) {
+            access->funcs.puts("\"");
+            for(i = 0; i < MIN(pars->control->l_intin, 72); i++) {
+              buf[0] = '.';
+              buf[1] = 0;
+              if ((pars->intin[i] >= 32) && (pars->intin[i] < 256))
+                 buf[0] = (char)pars->intin[i];
+               access->funcs.puts(buf);
+            }
+            access->funcs.puts("\"");
+         } else {
+            for(i = 0; i < MIN(pars->control->l_intin, 12); i++) {
+               access->funcs.ltoa(buf, pars->intin[i], 10);
+               access->funcs.puts(buf);
+               access->funcs.puts(" ");
+            }
+	 }
          access->funcs.puts("\x0a\x0d");
       }
 
@@ -606,10 +621,12 @@ void vdi_debug(VDIpars *pars, char *vector)
          }
       }
 
-      access->funcs.puts("Trap #2: ");
-      access->funcs.ltoa(buf, *(long *)0x88, 16);
-      access->funcs.puts(buf);
-      access->funcs.puts("\x0a\x0d");
+      if (debug > 3) {
+         access->funcs.puts("Trap #2: ");
+         access->funcs.ltoa(buf, *(long *)0x88, 16);
+         access->funcs.puts(buf);
+         access->funcs.puts("\x0a\x0d");
+      }
 
       count = old_count;
       if (interactive) {
