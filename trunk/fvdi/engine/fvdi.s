@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.5 2004-10-17 21:44:11 johan Exp $
+* $Id: fvdi.s,v 1.6 2005-06-30 08:31:48 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -47,6 +47,7 @@ fvdi_magic	equ	1969
 	xref	_recheck_mtask
 	xref	_debug,_xbiosfix
 	xref	_vdi_debug,_trap2_debug,_lineA_debug
+	xref	_vq_gdos_value
 
 	xdef	_init
 	xdef	_trap2_address,_trap2_temp
@@ -233,7 +234,13 @@ _trap2_temp:
 	rts
 
 .version1:
-	move.l	#'fVDI',d0		; A vq_gdos, report our name
+	move.b	_vq_gdos_value+0,d0	 ; A vq_gdos, report name
+	lsl.w	#8,d0
+	move.b	_vq_gdos_value+1,d0
+	swap	d0
+	move.b	_vq_gdos_value+2,d0
+	lsl.w	#8,d0
+	move.b	_vq_gdos_value+3,d0
 	rte
 
 .query1:
@@ -287,8 +294,8 @@ non_fvdi_ok:
 	lea	wk_function(a2),a2
 	lea	0(a2,d0.w),a2		; a2 - function address
 
-	move.w	(a2)+,4(a1)		; # ptsout
-	move.w	(a2)+,8(a1)		; # ptsin
+	move.w	(a2)+,L_ptsout(a1)
+	move.w	(a2)+,L_intout(a1)
 	move.l	(a2),a2			; a2 - function address
 
   ifne debug
@@ -364,7 +371,13 @@ no_vdi:
 	rts
 
 .version:
-	move.l	#'fVDI',d0		; A vq_gdos, report our name
+	move.b	_vq_gdos_value+0,d0	 ; A vq_gdos, report name
+	lsl.w	#8,d0
+	move.b	_vq_gdos_value+1,d0
+	swap	d0
+	move.b	_vq_gdos_value+2,d0
+	lsl.w	#8,d0
+	move.b	_vq_gdos_value+3,d0
 	rte
 
 .query:
