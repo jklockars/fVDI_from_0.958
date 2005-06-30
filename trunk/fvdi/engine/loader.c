@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.14 2005-06-07 22:20:45 johan Exp $
+ * $Id: loader.c,v 1.15 2005-06-30 08:33:01 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -86,6 +86,7 @@ short nvdi_cookie = 0;
 short speedo_cookie = 0;
 char silent[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+char vq_gdos_value[] = "fVDI";
 
 static char path[PATH_SIZE];
 
@@ -107,6 +108,7 @@ static long set_arc_min(Virtual *vwk, const char **ptr);
 static long set_arc_max(Virtual *vwk, const char **ptr);
 static long load_palette(Virtual *vwk, const char **ptr);
 static long specify_cookie(Virtual *vwk, const char **ptr);
+static long specify_vqgdos(Virtual *vwk, const char **ptr);
 static long use_module(Virtual *vwk, const char **ptr);
 static long set_silent(Virtual *vwk, const char **ptr);
 
@@ -148,6 +150,7 @@ static Option options[] = {
    {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
    {"standalone", &stand_alone,    1},  /* standalone, forces fVDI to refrain from relying on an underlying VDI */
    {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
+   {"vqgdos",     specify_vqgdos, -1},  /* vqgdos str, specify a vq_gdos reply */
    {"module",     use_module,     -1},  /* module str, specify a module to load */
    {"silent",     set_silent,     -1}   /* silent n, no debug for VDI call n */
 };
@@ -245,24 +248,57 @@ long specify_cookie(Virtual *vwk, const char **ptr)
    }
 
    *ptr = skip_space(*ptr);
-   *ptr = get_token(*ptr, token, TOKEN_SIZE);
-   if (equal(token, "=")) {
-      if (!(*ptr = skip_space(*ptr))) {
-         error("Bad cookie setting!", 0);
-         return -1;
-      }
+   if (**ptr == '=') {
       *ptr = get_token(*ptr, token, TOKEN_SIZE);
+      if (equal(token, "=")) {
+         if (!(*ptr = skip_space(*ptr))) {
+            error("Bad cookie setting!", 0);
+            return -1;
+         }
+         *ptr = get_token(*ptr, token, TOKEN_SIZE);
 
-      if (nvdi_val)
-	  nvdi_val   = (short)atol(token);
-      else if (speedo_val)
-	  speedo_val = (short)atol(token);
+         if (nvdi_val)
+	    nvdi_val   = (short)atol(token);
+         else if (speedo_val)
+	    speedo_val = (short)atol(token);
+      }
    }
 
    if (nvdi_val)
       nvdi_cookie = (short)nvdi_val;
    else if (speedo_val)
       speedo_cookie = (short)speedo_val;
+
+   return 1;
+}
+
+
+long specify_vqgdos(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   long value;
+
+   if (!(*ptr = skip_space(*ptr))) {
+      error("Bad vq_gdos setting!", 0);
+      return -1;
+   }
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+
+   if ((token[0] == '$') || ((token[0] >= '0') && (token[0] <= '9'))) {
+      value = atol(token);
+      vq_gdos_value[3] = (char)value;
+      value >>= 8;
+      vq_gdos_value[2] = (char)value;
+      value >>= 8;
+      vq_gdos_value[1] = (char)value;
+      value >>= 8;
+      vq_gdos_value[0] = (char)value;
+   } else {
+      vq_gdos_value[0] = token[0];
+      vq_gdos_value[1] = token[1];
+      vq_gdos_value[2] = token[2];
+      vq_gdos_value[3] = token[3];
+   }
 
    return 1;
 }
