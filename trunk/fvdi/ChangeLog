@@ -1,3 +1,7 @@
+2005-07-01 - johan
+Bug fixed and improved label handling for FVDI.SYS.
+Miscellaneous small fixes to make the RageII driver build with gcc.
+
 2005-06-29 - johan
 Changed vq_gdos response if requested.
 Made '=' a token separator for better FVDI.SYS handling.
