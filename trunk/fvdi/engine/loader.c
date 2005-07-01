@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.15 2005-06-30 08:33:01 johan Exp $
+ * $Id: loader.c,v 1.16 2005-07-01 09:53:12 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -95,6 +95,7 @@ static long load_fonts(Virtual *vwk, const char **ptr);
 static long wait_key(Virtual *vwk, const char **ptr);
 static long exit_key(Virtual *vwk, const char **ptr);
 static long swap_key(Virtual *vwk, const char **ptr);
+static long go_to(Virtual *vwk, const char **ptr);
 static long case_key(Virtual *vwk, const char **ptr);
 static long echo_text(Virtual *vwk, const char **ptr);
 static long set_pid(Virtual *vwk, const char **ptr);
@@ -121,6 +122,7 @@ static Option options[] = {
    {"setkey",     &key_pressed,    3},  /* setkey c, default to 'c' if no key was pressed */
    {"swapkey",    swap_key,       -1},  /* swapkey, swap current key with the extra one */
    {"casekey",    case_key,       -1},  /* casekey c label, go to :label if 'c' was pressed */
+   {"goto",       go_to,          -1},  /* goto label, go to :label */
    {"echo",       echo_text,      -1},  /* echo str, write some text to the display */
    {"booted",     &booted,         1},  /* booted, fVDI really runs from the AUTO folder */
    {"fakeboot",   &fakeboot,       1},  /* fakeboot, pretend that fVDI runs from the AUTO folder */
@@ -387,27 +389,37 @@ long swap_key(Virtual *vwk, const char **ptr)
    return 1;
 }
 
-long case_key(Virtual *vwk, const char **ptr)
+long go_to(Virtual *vwk, const char **ptr)
 {
    char token[TOKEN_SIZE];
    char label[TOKEN_SIZE + 1];
 
    if (!(*ptr = skip_space(*ptr)))
       ;  /* *********** Error, somehow */
-   *ptr = get_token(*ptr, token, TOKEN_SIZE);
-   if (key_pressed == token[0]) {
-      if (!(*ptr = skip_space(*ptr)))
-         ;  /* *********** Error, somehow */
-      *ptr = get_token(*ptr, label, TOKEN_SIZE);
-      cat(":", token);
+   label[0] = ':';
+   *ptr = get_token(*ptr, &label[1], TOKEN_SIZE);
 
-      while (ptr) {
-         *ptr = skip_space(*ptr);
-         *ptr = get_token(*ptr, token, TOKEN_SIZE);
-         if (equal(token, label))
-            break;
-      }
+   while (*ptr) {
+      *ptr = skip_space(*ptr);
+      *ptr = get_token(*ptr, token, TOKEN_SIZE);
+      if (equal(token, label))
+         break;
    }
+
+   return 1;
+}
+
+long case_key(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+
+   if (!(*ptr = skip_space(*ptr)))
+      ;  /* *********** Error, somehow */
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   if (key_pressed == token[0])
+      return go_to(vwk, ptr);
+   else
+      *ptr = next_line(*ptr);
 
    return 1;
 }
@@ -664,10 +676,13 @@ long check_token(Virtual *vwk, char *token, const char **ptr)
       xtoken++;
       normal = 0;
       break;
+   case ':':    /* Label */
+     return 1;
    default:
       normal = 1;
       break;
    }
+
    for(i = 0; i < sizeof(options) / sizeof(Option); i++) {
       if (equal(xtoken, options[i].name)) {
          switch (options[i].type) {
