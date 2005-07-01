@@ -1,7 +1,7 @@
 #
 # Makefile for C struct to assembly equ converter
 #
-# $Id: Makefile,v 1.2 2002-05-15 00:39:15 johan Exp $
+# $Id: Makefile,v 1.3 2005-07-01 09:51:44 johan Exp $
 #
 # Copyright 2002, Johan Klockars
 # This software is licensed under the GNU General Public License.
@@ -29,7 +29,7 @@ depend:		$(CSOURCES) $(CHEADERS)
 	$(CC) -MM $(CSOURCES) > depend
 
 clean:
-	rm -f $(TARGET) $(OBJECTS) $(FLEXOUT) $(BISONOUT) depend
+	rm -f $(OBJECTS) $(FLEXOUT) $(BISONOUT) depend
 
 
 $(BISONOUT):	struct.y

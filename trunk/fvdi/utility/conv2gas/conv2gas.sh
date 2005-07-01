@@ -14,6 +14,8 @@ sed "s%^\\([ \t]\+\\)ifne%\1.ifne%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 sed "s%^\\([ \t]\+\\)ifeq%\1.ifeq%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
+sed "s%^\\([ \t]\+\\)ifge%\1.ifge%" $file.tmp >$file.gnu
+mv $file.gnu $file.tmp
 sed "s%^\\([ \t]\+\\)else%\1.else%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 sed "s%^\\([ \t]\+\\)endc%\1.endif%" $file.tmp >$file.gnu
