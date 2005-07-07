@@ -43,7 +43,11 @@
 /* We are not a FreeMiNT kernel driver for now
  * -> we close the files immediately as we are done with the I/O operation.
  */
+#if 0
 #define KERNEL
+#else
+#undef KERNEL
+#endif
 
   /*************************************************************************/
   /*                                                                       */
