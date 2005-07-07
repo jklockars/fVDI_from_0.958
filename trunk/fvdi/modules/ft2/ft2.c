@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.2 2005-06-30 08:41:01 johan Exp $
+ * $Id: ft2.c,v 1.3 2005-07-07 07:08:33 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -54,7 +54,7 @@ typedef struct cached_glyph {
 #define CACHED_METRICS	0x10
 #define CACHED_BITMAP	0x01
 
-#if 1
+#if 0
 #define DEBUG_FONTS 1
 #endif
 
@@ -455,8 +455,9 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	FT_Outline* outline;
 
 	/* Open the face if needed */
-	if (!font->extra.unpacked.data)
+	if (!font->extra.unpacked.data) {
 		font = ft2_open_face(font);
+	}
 
 	face = (FT_Face)font->extra.unpacked.data;
 
@@ -782,7 +783,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	textbuf->height = height;
 	textbuf->standard = 1;
 	textbuf->bitplanes = 1;
-	textbuf->wdwidth = (width + 15) >> 4; /* number of words per line */
+	textbuf->wdwidth = (width + 15) >> 4; /* Number of words per line */
 	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
 	if (textbuf->address == NULL) {
 		return NULL;
@@ -876,8 +877,9 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 					*dst++ |= (x & lmask) >> shift;
 
 					/* Sanity end of buffer check */
-					if (dst >= dst_check)
+					if (dst >= dst_check) {
 						break;
+					}
 
 					*dst |= (x & rmask) << (8 - shift);
 				}
@@ -966,10 +968,10 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 #endif
 
 	/* FIXME: this should not happen once we have all the font id/size setup routines intercepted */
-	if ( ! font->size ) {
-		/* create a copy of the font for the particular size */
-		font = ft2_find_fontsize( font, 16 );
-		if ( !font ) {
+	if (!font->size) {
+		/* Create a copy of the font for the particular size */
+		font = ft2_find_fontsize(font, 16);
+		if (!font) {
 			access->funcs.puts("Cannot open face\r\n");
 			return 0;
 		}
@@ -1033,9 +1035,19 @@ long ft2_text_width(Fontheader *font, short *s, long slen)
 	return width;
 }
 
-Fontheader *ft2_vst_point(Virtual *vwk, long ptsize)
+Fontheader *ft2_vst_point(Virtual *vwk, long ptsize, unsigned short *sizes)
 {
 	Fontheader *font = vwk->text.current_font;
+
+        if (ptsize > 32000)
+		ptsize = 32000;
+
+	if (sizes) {
+		while(*(sizes + 1) <= ptsize)
+			sizes++;
+		ptsize = *sizes;
+	}
+
 	if (font->size == ptsize)
 		return font;
 
