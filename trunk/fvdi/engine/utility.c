@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.18 2005-06-30 08:21:06 johan Exp $
+ * $Id: utility.c,v 1.19 2005-07-07 06:54:57 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -511,7 +511,6 @@ int strncmp(const char *s1, const char *s2, size_t n)
 
 int memcmp(const void *s1, const void *s2, size_t n)
 {
-   char c1;
    char *s1c, *s2c;
    long ns;     /* size_t can't be negative */
 
@@ -581,7 +580,9 @@ int sprintf(char *str, const char *format, ...)
    va_list args;
    int mode = 0;
    char *s, *text, ch;
+#if 0
    long val_l;
+#endif
    int val_i;
    short val_s;
    char val_c;
@@ -1194,6 +1195,18 @@ const char *skip_space(const char *ptr)
          return ptr;
       ptr++;
    }
+}
+
+
+const char *skip_only_space(const char *ptr)
+{
+   if (!ptr)
+      return 0;
+   while ((*ptr == ' ') || (*ptr == '\t')) {
+      ptr++;
+   }
+
+   return ptr;
 }
 
 
