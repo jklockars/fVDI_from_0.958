@@ -1,6 +1,6 @@
 FVDI_LC.PRG
 .C	[-b4 -r6 -v -d1 -m0 -i..\include\ -rs -fm -j*e]
-.S	[-dlattice -d -m0 -i..\include\]
+.S	[-dlattice=1 -dgas=0 -d -m0 -i..\include\]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
 FVDI.S		(vdi.inc, types.inc, macros.dev)
@@ -16,9 +16,9 @@ DRAW.S		(vdi.inc, types.inc, macros.dev)
 TEXT.S		(vdi.inc, types.inc, macros.dev)
 TEXTRNDR.S	(vdi.inc, types.inc, macros.dev)
 BLIT.S		(vdi.inc, types.inc, macros.dev)
-;EXPAND.S	[-dlattice -d -m0 -i..\include\ -i..\drivers\include\ -i..\drivers\1_plane\]	(vdi.inc, types.inc, macros.dev)
+;EXPAND.S	[-dlattice=1 -dgas=0 -d -m0 -i..\include\ -i..\drivers\include\ -i..\drivers\1_plane\]	(vdi.inc, types.inc, macros.dev)
 VDI_MISC.S	(vdi.inc, types.inc, macros.dev)
-SUPPORT.S	[-dlattice -ma -i..\include\]	(vdi.inc, types.inc, macros.dev)
+SUPPORT.S	[-dlattice=1 -dgas=0 -ma -i..\include\]	(vdi.inc, types.inc, macros.dev)
 SYS_CALL.S
 expand.o
 startup.c	[-b0 -b4 -r6 -v -d1 -m0 -i..\include -rs -fm -j*e -Oloop,alias]	(fvdi.h, relocate.h)
