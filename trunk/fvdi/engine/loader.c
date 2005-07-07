@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.16 2005-07-01 09:53:12 johan Exp $
+ * $Id: loader.c,v 1.17 2005-07-07 06:56:39 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -35,7 +35,7 @@ int         ft2_init(void);
 Fontheader* ft2_load_font(const char *filename);
 long        ft2_char_width(Fontheader *font, long ch);
 long        ft2_text_width(Fontheader *font, short *s, long slen);
-Fontheader* ft2_vst_point(Virtual *vwk, long ptsize);
+Fontheader* ft2_vst_point(Virtual *vwk, long ptsize, short *sizes);
 long        ft2_text_render_default(Virtual *vwk, unsigned long coords,
                                     short *s, long slen);
 
@@ -43,7 +43,7 @@ int         (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
 long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = ft2_text_width;
 long        (*external_vqt_width)(Fontheader *font, long ch) = ft2_char_width;
-Fontheader* (*external_vst_point)(Virtual *vwk, long size) = ft2_vst_point;
+Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes) = ft2_vst_point;
 long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = ft2_text_render_default;
 #else
@@ -51,7 +51,7 @@ int         (*external_init)(void) = 0;
 Fontheader* (*external_load_font)(const char *font) = 0;
 long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = 0;
 long        (*external_vqt_width)(Fontheader *font, long ch) = 0;
-Fontheader* (*external_vst_point)(Virtual *vwk, long size) = 0;
+Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes) = 0;
 long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = 0;
 #endif
@@ -87,6 +87,9 @@ short speedo_cookie = 0;
 char silent[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 char vq_gdos_value[] = "fVDI";
+unsigned short sizes[16] = {8, 9, 10, 11, 12, 14, 18, 24, 36, 48, 0xffff};
+short size_count = 11;
+short size_user = 0;
 
 static char path[PATH_SIZE];
 
@@ -112,6 +115,7 @@ static long specify_cookie(Virtual *vwk, const char **ptr);
 static long specify_vqgdos(Virtual *vwk, const char **ptr);
 static long use_module(Virtual *vwk, const char **ptr);
 static long set_silent(Virtual *vwk, const char **ptr);
+static long set_size(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
@@ -154,7 +158,8 @@ static Option options[] = {
    {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
    {"vqgdos",     specify_vqgdos, -1},  /* vqgdos str, specify a vq_gdos reply */
    {"module",     use_module,     -1},  /* module str, specify a module to load */
-   {"silent",     set_silent,     -1}   /* silent n, no debug for VDI call n */
+   {"silent",     set_silent,     -1},  /* silent n, no debug for VDI call n */
+   {"size",       set_size,       -1}   /* size n, specify a default available font size */
 };
 
 
@@ -645,17 +650,58 @@ long set_silent(Virtual *vwk, const char **ptr)
    char token[TOKEN_SIZE];
    long call;
    int i;
-   
-   if (!(*ptr = skip_space(*ptr)))
-      ;  /* *********** Error, somehow */
-   *ptr = get_token(*ptr, token, TOKEN_SIZE);
-   call = atol(token);
-   if ((call >= 0) && (call <= 255))
-      silent[call >> 3] ^= 1 << (call & 7);
-   else {
-      for(i = 0; i < 32; i++)
-         silent[i] = 0xff;
-   }
+
+   do {
+      if (!(*ptr = skip_space(*ptr)))
+         ;  /* *********** Error, somehow */
+      *ptr = get_token(*ptr, token, TOKEN_SIZE);
+      call = atol(token);
+      if ((call >= 0) && (call <= 255))
+         silent[call >> 3] ^= 1 << (call & 7);
+      else {
+         for(i = 0; i < 32; i++)
+            silent[i] = 0xff;
+      }
+      *ptr = skip_only_space(*ptr);
+   } while (*ptr && (numeric(**ptr) || ((**ptr == '-') && numeric(*(*ptr + 1)))));
+
+   return 1;
+}
+
+long set_size(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   long size;
+   int i;
+
+   do {
+      if (!(*ptr = skip_space(*ptr)))
+         ;  /* *********** Error, somehow */
+      *ptr = get_token(*ptr, token, TOKEN_SIZE);
+      size = atol(token);
+      if ((size > 0) && (size <= 100) &&
+          (size_count < sizeof(sizes) / sizeof(sizes[0]))) {
+         if (!size_user) {
+            size_user = 1;
+            sizes[0] = 0xffff;
+            size_count = 1;
+         }
+	 for(i = size_count - 1; i >= 0; i--)
+            if (size == sizes[i])
+               break;
+         if (i < 0) {
+            for(i = size_count; i > 0; i--) {
+               if (size > sizes[i - 1]) {
+                  break;
+               }
+               sizes[i] = sizes[i - 1];
+            }
+            sizes[i] = size;
+            size_count++;
+         }
+      }
+      *ptr = skip_only_space(*ptr);
+   } while (*ptr && numeric(**ptr));
 
    return 1;
 }
@@ -893,8 +939,8 @@ long load_fonts(Virtual *vwk, const char **ptr)
       info.dta_name[12] = 0;
       copy(info.dta_name, pathtail);
 #else
-      info.d_name[12] = 0;
-      copy(info.d_name, pathtail);
+      info.d_fname[12] = 0;
+      copy(info.d_fname, pathtail);
 #endif
 		
       puts("   Load font: ");
@@ -920,15 +966,13 @@ int load_prefs(Virtual *vwk, char *sysname)
 {
    long file_size;
    char *buffer, token[TOKEN_SIZE], name[NAME_SIZE];
-   const char *ptr, *opts;
+   const char *ptr;
    int file;
    int device;
    int driver_loaded, font_loaded, system_font;
    Fontheader *new_font;
    char *after_path;
-   List *list_elem;
    Driver *driver;
-   char *tmp;
    int ret;
 
    copy(sysname, path);
