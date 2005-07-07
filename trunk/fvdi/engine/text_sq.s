@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.8 2005-06-30 08:37:17 johan Exp $
+* $Id: text_sq.s,v 1.9 2005-07-07 07:03:17 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -17,6 +17,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	xref	_vdi_stack_top,_vdi_stack_size
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
+	xref	_sizes
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
@@ -983,10 +984,12 @@ vst_height:
 
 	movem.l	d0-d2/a0-a2,-(a7)
 	move.l	_vdi_stack_size,-(a7)
+	move.l	#0,-(a7)
+	ext.l	d0
 	move.l	d0,-(a7)
 	move.l	a0,-(a7)			; VDI struct
 	jsr	(a3)
-	add.w	#3*4,a7
+	add.w	#4*4,a7
 	move.l	d0,a3
 	movem.l	(a7)+,d0-d2/a0-a2
 
@@ -1067,10 +1070,12 @@ vst_arbpt:
 
 	movem.l	d0-d2/a0-a2,-(a7)
 	move.l	_vdi_stack_size,-(a7)
+	move.l	#0,-(a7)
+	ext.l	d0
 	move.l	d0,-(a7)
 	move.l	a0,-(a7)			; VDI struct
 	jsr	(a3)
-	add.w	#3*4,a7
+	add.w	#4*4,a7
 	move.l	d0,a3
 	movem.l	(a7)+,d0-d2/a0-a2
 
@@ -1162,10 +1167,12 @@ vst_point:
 
 	movem.l	d0-d2/a0-a2,-(a7)
 	move.l	_vdi_stack_size,-(a7)
+	pea	_sizes
+	ext.l	d0
 	move.l	d0,-(a7)
 	move.l	a0,-(a7)			; VDI struct
 	jsr	(a3)
-	add.w	#3*4,a7
+	add.w	#4*4,a7
 	move.l	d0,a3
 	movem.l	(a7)+,d0-d2/a0-a2
 
