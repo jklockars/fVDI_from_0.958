@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (C functions), by Johan Klockars
 *
-* $Id: c_common.s,v 1.6 2005-04-23 18:53:17 johan Exp $
+* $Id: c_common.s,v 1.7 2005-07-10 00:14:30 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -126,6 +126,9 @@ c_get_pixel:
 *---------
 _c_line:
 c_line:
+	cmp.w		#$c0de,d0
+	beq		new_api_line
+old_api_line:
 	movem.l		d0-d2/a0-a2,-(a7)
 
 	move.l		d6,-(a7)
@@ -229,6 +232,36 @@ c_line:
 .line_done:
 	movem.l		(a7)+,d3-d4/d7/a6
 	movem.l		(a7)+,d0-d2/a0-a2
+	rts
+
+	
+new_api_line:
+	movem.l		d2-d7/a2-a6,-(a7)
+
+	move.l		4(a7),a0
+	move.l		8(a7),a1
+	move.l		drvline_x1(a1),d1
+	move.l		drvline_y1(a1),d2
+	move.l		drvline_x2(a1),d3
+	move.l		drvline_y2(a1),d4
+	move.l		drvline_pattern(a1),d5
+	move.l		drvline_colour(a1),d0
+	move.l		drvline_mode(a1),d6
+  ifne 0
+	bsr		old_api_line
+  else
+	move.l		d6,-(a7)
+	move.l		d0,-(a7)
+	move.l		d5,-(a7)
+	move.l		d4,-(a7)
+	move.l		d3,-(a7)
+	move.l		d2,-(a7)
+	move.l		d1,-(a7)
+	move.l		a0,-(a7)
+	ijsr		_line_draw_r
+	add.w		#32,a7
+  endc
+	movem.l		(a7)+,d2-d7/a2-a6
 	rts
 
 

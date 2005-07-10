@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.8 2005-06-07 22:11:47 johan Exp $
+ * $Id: fvdi.h,v 1.9 2005-07-10 00:13:18 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -54,6 +54,18 @@ typedef struct {
    void *varfunc;
    short type;
 } Option;
+
+
+typedef struct DrvLine_ {
+   long x1;
+   long y1;
+   long x2;
+   long y2;
+   long pattern;
+   long colour;
+   long mode;
+   long draw_last;
+} DrvLine;
 
 
 /* VDI structures */

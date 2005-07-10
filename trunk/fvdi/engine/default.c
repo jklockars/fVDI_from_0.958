@@ -1,7 +1,7 @@
 /*
  * fVDI default drawing function code
  *
- * $Id: default.c,v 1.1 2004-10-17 17:51:18 johan Exp $
+ * $Id: default.c,v 1.2 2005-07-10 00:11:49 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -11,6 +11,12 @@
  * based on code from the Graphics Gems series of books.
  */
 
+#include "fvdi.h"
+
+
+extern call_draw_line(Virtual *vwk, DrvLine *line);
+
+#if 0
 #define LEFT            1
 #define RIGHT           2
 #define BOTTOM          4
@@ -565,36 +571,56 @@ retry_set_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour,
 		}			
 	}
 }
+#endif
 
 
+#if 0
+	tst.l		d0
+	lbgt		.l1,1
+	lbmi		.l2,2
+	move.l		_fallback_line,d0
+	bra		give_up
+
+ label .l1,1
+	movem.l		(a7)+,d0-d2/a0-a2
+	rts
+#endif
+
+#if 0
 retry_line(Virtual *vwk, long x1, long y1, long x2, long y2,
            long pattern, long colour, long mode, long draw_last)
+#else
+long retry_line(Virtual *vwk, DrvLine *pars)
+#endif
 {
 	short *table, length, *index, moves;
 	short n;
-	short init_x, init_y;
+	short init_x, init_y, x2, y2;
 	short movepnt;
+	DrvLine line;
 
 	table = index = 0;
 	length = moves = 0;
 	if ((long)vwk & 1) {
-		if ((unsigned long)(y1 & 0xffff) > 1)
-			return -1;		/* Don't know about this kind of table operation */
-		table = (short *)x1;
-		length = (y1 >> 16) & 0xffff;
-		if ((y1 & 0xffff) == 1) {
-			index = (short *)y2;
-			moves = x2 & 0xffff;
+		if ((unsigned long)(pars->y1 & 0xffff) > 1)
+			return;		/* Don't know about this kind of table operation */
+		table = (short *)pars->x1;
+		length = (pars->y1 >> 16) & 0xffff;
+		if ((pars->y1 & 0xffff) == 1) {
+			index = (short *)pars->y2;
+			moves = pars->x2 & 0xffff;
 		}
 		vwk = (Virtual *)((long)vwk - 1);
 	} else
 		return;
 
-	x1 = *table++;
-	y1 = *table++;
+	/* Clear high words of coordinate unions? */
+	line.pattern = pars->pattern;
+	line.colour = pars->colour;
+	line.mode = pars->mode;
 
-	init_x = x1;
-	init_y = y1;
+	init_x = line.x1 = *table++;
+	init_y = line.y1 = *table++;
 
 	movepnt = -1;
 	if (index) {
@@ -615,25 +641,32 @@ retry_line(Virtual *vwk, long x1, long y1, long x2, long y2,
 				movepnt = (index[moves] + 4) / 2;
 			else
 				movepnt = -1;		/* Never again equal to n */
-			init_x = x1 = x2;
-			init_y = y1 = y2;
+			init_x = line.x1 = x2;
+			init_y = line.y1 = y2;
 			continue;
 		}
 
 		if (((n == length - 1) || (n == movepnt - 1)) &&
 		    ((x2 != init_x) || (y2 != init_y)))
-			draw_last = 1;		/* Draw last pixel in the line */
+			line.draw_last = 1;	/* Draw last pixel in the line */
 		else
-			draw_last = 0;		/* Do not draw last pixel in the line */
+			line.draw_last = 0;	/* Do not draw last pixel in the line */
 
+#if 0
 		c_draw_line(vwk, x1, y1, x2, y2, pattern, colour, mode, draw_last);
+#else
+		line.x2 = x2;
+		line.y2 = y2;
+		call_draw_line(vwk, &line);
+#endif
 
-		x1 = x2;
-		y1 = y2;
+		line.x1 = x2;
+		line.y1 = y2;
 	}
 }
 
 
+#if 0
 retry_fill(Virtual *vwk, long x, long y, long w, long h, short *pattern,
            long colour, long mode, long interior_style)
 {
@@ -657,6 +690,7 @@ retry_fill(Virtual *vwk, long x, long y, long w, long h, short *pattern,
 		c_fill_area(vwk, x, y, w, 1, pattern, colour, mode, interior_style);
 	}
 }
+#endif
 
 
 #if 0
@@ -857,7 +891,7 @@ _default_line:
 * In:	a0	VDI struct (odd address marks table operation)
 *	d0	Colours
 *	d1	x1 destination or table address
-*	d2	y1   - " -     or table length (high) and type (0 - y/x1/x2 spans)
+*	d2	y1   - "" -     or table length (high) and type (0 - y/x1/x2 spans)
 *	d3-d4.w	x2,y2 destination
 *	d5	Pointer to pattern
 *	d6	Mode
@@ -1015,4 +1049,3 @@ _default_fill:
 	bra	.end_pfill
 
 #endif
-
