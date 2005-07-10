@@ -1,7 +1,7 @@
 /*
  * fVDI circle/ellipse/pie/arc code
  *
- * $Id: conic.c,v 1.7 2005-04-23 19:03:13 johan Exp $
+ * $Id: conic.c,v 1.8 2005-07-10 00:06:24 johan Exp $
  *
  * Copyright 1999/2001-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -408,9 +408,9 @@ void rounded_box(Virtual *vwk, long gdp_code, short *coords)
 #endif
 	} else {
 #if 0
-		filled_poly(vwk, points, 21, *(long *)&fill_colour, pattern, points, vwk->mode, interior_style);
+		filled_poly(vwk, points, 21, *(long *)&fill_colour, pattern, &points[42], vwk->mode, interior_style);
 #else
-		fill_poly(vwk, points, 21, *(long *)&fill_colour, pattern, points, vwk->mode, interior_style);
+		fill_poly(vwk, points, 21, *(long *)&fill_colour, pattern, &points[42], vwk->mode, interior_style);
 #endif
 		if (vwk->fill.perimeter)
 #if 0
