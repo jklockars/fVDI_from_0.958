@@ -283,10 +283,28 @@ vq_mouse:
 vq_key_s:
 	uses_d1
 	movem.l	d2/a0-a2,-(a7)
+  ifne 1
 	move.w	#-1,-(a7)	; Kbshift(-1)
 	move.w	#$0b,-(a7)
 	trap	#13
 	addq.l	#4,a7
+  else
+|	move.b	0x116d1,d0
+	moveq	#0,d0
+  endc
+  ifne 0
+  move.l	d0,-(a7)
+  subq.l	#2,a7
+  and.w		#$000f,d0
+  add.b		#'A',d0
+  lsl.w		#8,d0
+  move.w	d0,(a7)
+  move.l	a7,-(a7)
+  jsr		_puts
+  addq.l	#4,a7
+  addq.l	#2,a7
+  move.l	(a7)+,d0
+  endc
 	movem.l	(a7)+,d2/a0-a2
 	used_d1
 	and.w	#$000f,d0
