@@ -3,7 +3,7 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.5 2005-05-30 13:55:55 johan Exp $
+ * $Id: utility.h,v 1.6 2005-07-10 00:13:55 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -76,6 +76,7 @@ void error(const char *text1, const char *text2);
  */
 const char *next_line(const char *ptr);
 const char *skip_space(const char *ptr);
+const char *skip_only_space(const char *ptr);
 const char *get_token(const char *ptr, char *buf, long n);
 
 /*
