@@ -1,6 +1,6 @@
 aranymlc.sys
 .C	[-b0 -b4 -r6 -v -d0 -m0 -rs -fm -i..\..\include\ -i..\include\ -j*e]
-.S	[-dlattice -d -m0 -i..\..\include\]
+.S	[-dlattice=1 -dgas=1 -d -m0 -i..\..\include\]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
 ..\COMMON\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include\ -i..\include\ -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h,../include/driver.h)

@@ -1,6 +1,6 @@
 16bit_lc.sys
 .C	[-b0 -b4 -r6 -v -d0 -m0 -rs -fm -i..\..\include -i..\ -j*e]
-.S	[-dmc68000 -dlattice -d -m0 -i..\..\include\]
+.S	[-dmc68000 -dlattice=1 -dgas=0 -d -m0 -i..\..\include\]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
 ..\COMMON\INIT.C	[-b0 -b4 -r6 -v -d1 -m0 -rs -fm -i..\..\include -i..\include -j*e -Oloop,alias]	(../../include/fvdi.h,../../include/relocate.h)

@@ -1,6 +1,6 @@
 1plane.sys
 .C	[-b4 -r6 -v -d0 -m0 -rs -fm -i..\..\include -i..\include -j*e]
-.S	[-dmc68000 -dlattice -d -m0 -i..\..\include\]
+.S	[-dmc68000 -dlattice=1 -dgas=0 -d -m0 -i..\..\include\]
 .L	[DRISYM TTMALLOC TTLOAD ADDSYM]
 =
 1_BLIT.O
