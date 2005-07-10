@@ -1,7 +1,12 @@
+2005-07-09 - johan
+Fixed bug that caused polygon fill to overwrite low memory.
+Fixed bug concerning filled rounded boxes.
+
 2005-07-06 - johan
 Added default size selection for vector fonts.
 Fixed bug that caused for example QED to fail to draw vector fonts.
 Fixes for Lattice C support.
+Began conversion to new driver interface.
 
 2005-07-01 - johan
 Bug fixed and improved label handling for FVDI.SYS.
