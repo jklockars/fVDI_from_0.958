@@ -1,7 +1,7 @@
 *****
 * fVDI drawing functions
 *
-* $Id: draw.s,v 1.8 2005-04-23 19:03:56 johan Exp $
+* $Id: draw.s,v 1.9 2005-07-10 00:08:52 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -24,6 +24,7 @@ transparent	equ	1		; Fall through?
 	xref	_filled_poly,_filled_poly_m,_ellipsearc,_wide_line,_calc_bez
 	xref	_arc_split,_arc_min,_arc_max
 	xref	_lib_v_bez,_rounded_box
+	xref	_retry_line
 
 	xdef	v_pline,v_circle,v_arc,v_ellipse,v_ellarc,v_pie,v_ellpie
 	xdef	v_pmarker
@@ -37,9 +38,81 @@ transparent	equ	1		; Fall through?
 	xdef	_c_pline
 	xdef	_v_bez_accel
 
+	xdef	_call_draw_line
+
 
 	text
 
+* This is meant to be called from C routines and new assembly routines.
+* Assumes called functions behave like C functions.
+* Saves d2/a2 in case some C compiler has different conventions (needed?).
+* call_draw_line(Virtual *vwk, DrvLine *line)
+_call_draw_line:
+	movem.l	d2/a2,-(a7)
+	move.l	2*4+4(a7),a0
+	move.l	2*4+8(a7),a1
+
+	move.l	a1,-(a7)
+	move.l	a0,-(a7)
+	move.w	#$c0de,d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_r_line(a2),a2
+	jsr	(a2)
+	tst.l	d0
+	lbgt	.call_dl_done,1
+	lbeq	.call_dl_fallback,2
+	jsr	_retry_line
+ label .call_dl_done,1
+	addq.l	#8,a7
+	
+	movem.l	(a7)+,d2/a2
+	rts
+
+* Should never get here, since driver is supposed to deal with this itself.
+* That's the only way to make use of any possible non-default fallback.
+ label .call_dl_fallback,2
+	bsr	_call_default_line
+	lbra	.call_dl_done,1
+
+* This is meant to be called from old assembly routines
+* which expect all registers to be save.
+call_draw_line:
+	movem.l	d0-d2/a0-a2,-(a7)
+	sub.w	#drvline_struct_size,a7
+	move.l	a7,a1
+	move.l	d1,drvline_x1(a1)
+	move.l	d2,drvline_y1(a1)
+	move.l	d3,drvline_x2(a1)
+	move.l	d4,drvline_y2(a1)
+	move.l	d5,drvline_pattern(a1)
+	move.l	d0,drvline_colour(a1)
+	move.l	d6,drvline_mode(a1)
+	move.l	#1,drvline_draw_last(a1)
+
+	move.l	a1,-(a7)
+	move.l	a0,-(a7)
+	move.w	#$c0de,d0
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_r_line(a2),a2
+	jsr	(a2)
+	tst.l	d0
+	lbgt	.call_dl_done,1
+	lbeq	.call_dl_fallback,2
+	jsr	_retry_line
+ label .call_dl_done,1
+	addq.l	#8,a7
+
+	add.w	#drvline_struct_size,a7
+	movem.l	(a7)+,d0-d2/a0-a2
+	rts	
+
+* Should never get here, since driver is supposed to deal with this itself.
+* That's the only way to make use of any possible non-default fallback.
+ label .call_dl_fallback,2
+	bsr	_call_default_line
+	lbra	.call_dl_done,1
+
+	
 * c_pline(vwk, numpts, colour, points)
 _c_pline:
 	move.l	a2,-(a7)
@@ -306,6 +379,18 @@ c_v_pline:
 	move.l	(a7)+,d2
 	rts
 
+
+_call_default_line:
+	move.l	4(a7),a0
+	move.l	8(a7),a1
+	move.l	drvline_x1(a1),d1
+	move.l	drvline_y1(a1),d2
+	move.l	drvline_x2(a1),d3
+	move.l	drvline_y2(a1),d4
+	move.l	drvline_pattern(a1),d5
+	move.l	drvline_colour(a1),d0
+	move.l	drvline_mode(a1),d6
+	bra	_default_line
 
 	dc.b	0,"default_line",0
 * _default_line - Pixel by pixel line routine
@@ -908,6 +993,13 @@ bezier_size:
 * In:	a1	Parameters  lib_v_bez_fill(num_pts, points, bezarr, extent, totpoints, totmoves)
 *	a0	VDI struct
 lib_v_bez_fill:
+  ifne 0
+	move.l	d2,-(a7)
+	move.l	a7,d2				; Give renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space
+	move.l	d2,-(a7)			; (Should be improved)
+  endc
+	
 	sub.w	#10,a7
 	move.l	a7,a2
 	movem.l	a0-a1,-(a7)
@@ -1097,6 +1189,11 @@ lib_v_bez_fill:
 	addq.l	#4,a7
 .no_free_f:
 	add.w	#10,a7
+
+  ifne 0
+	move.l	(a7),a7		; Return to original stack
+	move.l	(a7)+,d2
+  endc
 	rts
 
 .no_jumps:
@@ -1121,10 +1218,10 @@ lib_v_bez_fill:
 	move.l	a2,-(a7)
 	move.l	a0,-(a7)
 	jsr	_filled_poly
-	add.w	#28,a7
+	add.w	#20,a7
 
 	bsr	free_block
-	addq.l	#4,a7
+	add.w	#12,a7
 	bra	.no_poly
 		
 .normal_fill:
@@ -1221,10 +1318,10 @@ lib_v_fillarea:
 	move.l	(a1),-(a7)
 	move.l	a0,-(a7)
 	jsr	_filled_poly
-	add.w	#28,a7
+	add.w	#20,a7
 
 	bsr	free_block
-	addq.l	#4,a7
+	add.w	#12,a7
 
 .end_lib_v_fillarea:		; .end
 	movem.l	(a7)+,d2-d7
