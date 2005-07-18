@@ -288,9 +288,6 @@ vq_key_s:
 	move.w	#$0b,-(a7)
 	trap	#13
 	addq.l	#4,a7
-  else
-|	move.b	0x116d1,d0
-	moveq	#0,d0
   endc
   ifne 0
   move.l	d0,-(a7)
