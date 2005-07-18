@@ -1,7 +1,7 @@
 /*
  * C structure lexical analyzer
  *
- * $Id: struct.lex,v 1.2 2002-05-13 01:28:11 johan Exp $
+ * $Id: struct.lex,v 1.3 2005-07-18 06:42:07 johan Exp $
  *
  * Copyright 1997-2002, Johan Klockars
  * This software is licensed under the GNU General Public License.
@@ -41,9 +41,17 @@ identifier	[a-zA-Z_]+[a-zA-Z0-9_]*
 "struct"	{ DBE; yylval.line = lineno; return STRUCT; }
 "union"	{ DBE; yylval.line = lineno; return UNION; }
 "char"	{ DBE; yylval.line = lineno; return CHAR; }
+"unsigned char"	{ DBE; yylval.line = lineno; return CHAR; }
+"signed char"	{ DBE; yylval.line = lineno; return CHAR; }
 "short"	{ DBE; yylval.line = lineno; return SHORT; }
+"unsigned short"	{ DBE; yylval.line = lineno; return SHORT; }
+"signed short"	{ DBE; yylval.line = lineno; return SHORT; }
 "int"	{ DBE; yylval.line = lineno; return INT; }
+"unsigned int"	{ DBE; yylval.line = lineno; return INT; }
+"signed int"	{ DBE; yylval.line = lineno; return INT; }
 "long"	{ DBE; yylval.line = lineno; return LONG; }
+"unsigned long"	{ DBE; yylval.line = lineno; return LONG; }
+"signed long"	{ DBE; yylval.line = lineno; return LONG; }
 "typedef"	{ DBE; yylval.line = lineno; return TYPEDEF; }
 ";"	{ DBE; yylval.line = lineno; return ';'; }
 
