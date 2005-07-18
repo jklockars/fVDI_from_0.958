@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.7 2005-05-30 13:54:58 johan Exp $
+ * $Id: function.h,v 1.8 2005-07-18 06:38:23 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -95,6 +95,7 @@ extern void *lib_vsf_style;
 extern void *lib_vs_clip;
 extern void *lib_vr_trn_fm;
 extern void *lib_vrt_cpyfm;
+extern void *lib_vro_cpyfm;
 #if 0
 extern void lib_vst_color(Virtual *, short);
 extern void lib_vst_font(Virtual *, short);

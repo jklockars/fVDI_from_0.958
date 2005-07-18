@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.9 2005-05-06 12:29:37 johan Exp $
+* $Id: blit.s,v 1.10 2005-07-18 06:33:24 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,16 +19,18 @@ lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 	xref	expand_area
 	xref	_pattern_ptrs
 	xref	_default_line
+	xref	_vr_transfer_bits
 
 	xdef	v_bar,vr_recfl,vrt_cpyfm,vro_cpyfm
 	xdef	vr_trn_fm
+	xdef	vr_transfer_bits
 	xdef	v_get_pixel
 
 	xdef	lib_v_bar,lib_vr_recfl,lib_vrt_cpyfm,lib_vro_cpyfm
 	xdef	lib_vr_trn_fm
 	xdef	lib_v_get_pixel
 
-	xdef	_lib_vrt_cpyfm
+	xdef	_lib_vrt_cpyfm,_lib_vro_cpyfm
 	xdef	_lib_vr_trn_fm
 	xdef	_default_fill,_default_expand,_default_blit
 
@@ -700,6 +702,7 @@ vro_cpyfm:
 * Todo: ?
 * In:   a1      Parameters (mode, points, source, destination)
 *       a0      VDI struct
+_lib_vro_cpyfm:
 lib_vro_cpyfm:
 	uses_d1
 	movem.l	d2-d5/a3-a5,-(a7)
@@ -837,6 +840,34 @@ _default_blit:
 	rts
 
 
+	dc.b	0,"vr_transfer_bits",0
+* vr_transfer_bits - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vr_transfer_bits:
+	uses_d1
+	move.l	d2,-(a7)
+	
+	move.l	intin(a1),a2
+	moveq	#0,d0
+	move.w	0(a2),d0
+	move.l	d0,-(a7)
+	move.l	ptsin(a1),a2
+	pea	8(a2)
+	pea	0(a2)
+	move.l	control(a1),a2
+	move.l	18(a2),-(a7)
+	move.l	14(a2),-(a7)
+	move.l	a0,-(a7)
+	jsr	_vr_transfer_bits
+	add.w	#24,a7
+
+	move.l	(a7)+,d2
+	used_d1
+	done_return
+
+	
 	dc.b	0,0,"vr_trn_fm",0
 * vr_trn_fm - Standard Trap function
 * Todo: ?

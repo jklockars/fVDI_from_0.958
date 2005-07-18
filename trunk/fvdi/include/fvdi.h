@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.9 2005-07-10 00:13:18 johan Exp $
+ * $Id: fvdi.h,v 1.10 2005-07-18 06:39:21 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -97,69 +97,141 @@ typedef struct List_ {
    void *value;
 } List;
 
-typedef struct Fontextra_ {
-	struct distance1_ {	/* Calculated from the */
-		short base;	/*  values given with */
-		short half;	/*  the font for easier */
-		short ascent;	/*  text positioning */
-		short bottom;
-		short descent;
-		short top;
-	} distance;
-	struct unpacked_ {
-		char *data;	/* 'Unpacked' font data */
-		short format;	/* Byte/word per char */
-	} unpacked;
-	short *width_table;	/* Precalculated widths */
-	struct Fontheader_ *next_size;
-	struct Fontheader_ *first_size;
 
-	/* vector fonts */
-	char *filename;		/* Font filename for on-demand backends */
-	short index;		/* FreeType2 font index */
-	void *current;		/* Font current glyph */
-	void *cache;		/* Glyph cache */
-	void *scratch;		/* Glyph scratch .. */
+typedef struct {
+   short x1;
+   short y1;
+   short x2;
+   short y2;
+} RECT16;
+
+
+typedef struct {
+   unsigned short reservedc;
+   unsigned short red;
+   unsigned short green;
+   unsigned short blue;
+} COLOR_RGB;
+
+
+typedef struct {
+   unsigned short cyan;               
+   unsigned short magenta;            
+   unsigned short yellow;             
+   unsigned short black;              
+} COLOR_CMYK;
+
+
+typedef union {
+   COLOR_RGB  rgb;            
+   COLOR_CMYK cmyk;           
+} COLOR_ENTRY;
+
+
+typedef struct {
+   long magic;
+   long length;
+   long format;
+   long reserved;
+   long map_id;
+   long color_space;
+   long flags;
+   long no_colors;
+   long reserved1;
+   long reserved2;
+   long reserved3;
+   long reserved4;
+#if defined(__GNUC__) || defined (__LATTICE__)
+   COLOR_ENTRY colors[0];
+#else
+   COLOR_ENTRY colors[];
+#endif
+} COLOR_TAB;
+
+
+typedef struct {
+   long magic;		/* Structure ID 'cbtm' */
+   long length;		/* Structure length */
+   long format;		/* Structure format (0) */
+   long reserved;	/* Reserved (0) */
+   unsigned char *addr;	/* Adress of bitmap */
+   long width;		/* Width of a line in bytes */
+   long bits;		/* Bit depth */
+   unsigned long px_format;	/* Pixel format */
+   long xmin;		/* Minimum discrete x-coordinate of bitmap */
+   long ymin;		/* Minimum discrete y-coordinate of bitmap */
+   long xmax;		/* Maximum discrete x-coordinate of bitmap + 1 */
+   long ymax;		/* Maximum discrete y-coordinate if bitmap + 1 */
+   COLOR_TAB  *ctab;	/* Pointer to the palette or 0 */
+   void *itab;		/* Pointer to the inverse palette or 0 */
+   long reserved0;	/* Reserved (must be 0) */
+   long reserved1;	/* Reserved (must be 0) */
+} GCBITMAP;
+
+
+typedef struct Fontextra_ {
+   struct distance1_ {		/* Calculated from the */
+	short base;		/*  values given with */
+	short half;		/*  the font for easier */
+	short ascent;		/*  text positioning */
+	short bottom;
+	short descent;
+	short top;
+   } distance;
+   struct unpacked_ {
+	char *data;		/* 'Unpacked' font data */
+	short format;		/* Byte/word per char */
+   } unpacked;
+   short *width_table;		/* Precalculated widths */
+   struct Fontheader_ *next_size;
+   struct Fontheader_ *first_size;
+
+   /* Vector fonts */
+   char *filename;		/* Font filename for on-demand backends */
+   short index;			/* FreeType2 font index */
+   void *current;		/* Font current glyph */
+   void *cache;			/* Glyph cache */
+   void *scratch;		/* Glyph scratch .. */
 } Fontextra;
 
 
 typedef struct Fontheader_ {
-	short id;		/* Face identifier */
-	short size;		/* Font size in points */
-	char  name[32];		/* Face name */
-	struct code_ {
-		short low;	/* Lowest ASCII value in face */
-		short high;	/* Highest ASCII value in face */
-	} code;
-	struct distance_ {
-		short top;	/* Top line distance */
-		short ascent;	/* Ascent line distance */
-		short half;	/* Half line distance */
-		short descent;	/* Descent line distance */
-		short bottom;	/* Bottom line distance */
-	} distance;
-	struct widest_ {
-		short character;/* Width of widest char in font */
-		short cell;	/* Width of widest char cell in font */
-	} widest;
-	struct offset_ {
-		short left;	/* Left offset */
-		short right;	/* Right offset */
-	} offset;
-	short thickening; 	/* No. of pixels to widen chars */
-	short underline;	/* Width in pixels of underline */
-	short lightening; 	/* Mask used to drop pixels out */
-	short skewing;		/* Mask used to determine skewing */
-	short flags;		/* Font flags */
-	struct table_ {
-		short *horizontal; 	/* Pointer to horizontal offset table */
-		short *character;	/* Pointer to char offset table */
-	} table;
-	char  *data;		/* Pointer to font data */
-	short width;		/* Font width */
-	short height;		/* Font height */
-	struct Fontheader_ *next;	/* Pointer to next font */
-	Fontextra extra;
+   short id;			/* Face identifier */
+   short size;			/* Font size in points */
+   char  name[32];		/* Face name */
+   struct code_ {
+	short low;		/* Lowest ASCII value in face */
+	short high;		/* Highest ASCII value in face */
+   } code;
+   struct distance_ {
+	short top;		/* Top line distance */
+	short ascent;		/* Ascent line distance */
+	short half;		/* Half line distance */
+	short descent;		/* Descent line distance */
+	short bottom;		/* Bottom line distance */
+   } distance;
+   struct widest_ {
+	short character;	/* Width of widest char in font */
+	short cell;		/* Width of widest char cell in font */
+   } widest;
+   struct offset_ {
+	short left;		/* Left offset */
+	short right;		/* Right offset */
+   } offset;
+   short thickening;	 	/* No. of pixels to widen chars */
+   short underline;		/* Width in pixels of underline */
+   short lightening; 		/* Mask used to drop pixels out */
+   short skewing;		/* Mask used to determine skewing */
+   short flags;			/* Font flags */
+   struct table_ {
+	short *horizontal; 	/* Pointer to horizontal offset table */
+	short *character;	/* Pointer to char offset table */
+   } table;
+   char  *data;			/* Pointer to font data */
+   short width;			/* Font width */
+   short height;		/* Font height */
+   struct Fontheader_ *next;	/* Pointer to next font */
+   Fontextra extra;
 } Fontheader;
 
 typedef struct RGB_ {
