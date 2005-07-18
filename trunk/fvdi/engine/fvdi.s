@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.6 2005-06-30 08:31:48 johan Exp $
+* $Id: fvdi.s,v 1.7 2005-07-18 06:36:58 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -306,6 +306,17 @@ non_fvdi_ok:
 	cmp.l	#end_unimpl,a2
 	bcc	.normal			; >=
 .special:
+  ifne debug
+	cmp.w	#2,_debug
+	bls	.no_debug_special
+	movem.l	d0-d2/a0-a2,-(a7)
+	move.l	a2,-(a7)
+	move.l	d1,-(a7)
+	jsr	_vdi_debug
+	addq.l	#8,a7
+	movem.l	(a7)+,d0-d2/a0-a2
+.no_debug_special:
+  endc
 	move.l	d1,a1			; a1 - parameter block
 	jmp	(a2)			; Only reached for unimplemented functions
 
