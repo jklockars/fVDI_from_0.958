@@ -1,3 +1,9 @@
+2005-07-18 - johan
+Initial support for vr_transfer_bits.
+Debug printouts for non-implemented VDI functions.
+Signed/unsigned support for structer.
+fVDI engine version bumped to 0.964beta.
+	
 2005-07-09 - johan
 Fixed bug that caused polygon fill to overwrite low memory.
 Fixed bug concerning filled rounded boxes.
