@@ -1,7 +1,7 @@
 /*
  * fVDI default drawing function code
  *
- * $Id: default.c,v 1.3 2005-07-18 06:33:24 johan Exp $
+ * $Id: default.c,v 1.4 2005-07-26 21:39:06 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -664,6 +664,154 @@ long retry_line(Virtual *vwk, DrvLine *pars)
 		line.x1 = x2;
 		line.y1 = y2;
 	}
+}
+
+
+int colour_entry(Virtual *vwk, long subfunction, short *intin, short *intout)
+{
+  switch(subfunction) {
+  case 0:     /* v_color2value */
+    puts("v_color2value not yet supported\x0a\x0d");
+    return 2;
+  case 1:     /* v_value2color */
+    puts("v_value2color not yet supported\x0a\x0d");
+    return 6;
+  case 2:     /* v_color2nearest */
+    puts("v_color2nearest not yet supported\x0a\x0d");
+    return 6;
+  case 3:     /* vq_px_format */
+    puts("vq_px_format not yet supported\x0a\x0d");
+    *(long *)&intout[0] = 1;
+    *(long *)&intout[2] = 0x03421820;
+    return 4;
+  default:
+    puts("Unknown colour entry operation\x0a\x0d");
+    return 0;
+  }
+}
+
+
+int set_colour_table(Virtual *vwk, long subfunction, short *intin)
+{
+  switch(subfunction) {
+  case 0:     /* vs_ctab */
+    puts("vs_ctab not yet supported\x0a\x0d");
+    return 256;    /* Not really correct */
+  case 1:     /* vs_ctab_entry */
+    puts("vs_ctab_entry not yet supported\x0a\x0d");
+    return 1;      /* Seems to be the only possible value for non-failure */
+  case 2:     /* vs_dflt_ctab */
+    puts("vs_dflt_ctab not yet supported\x0a\x0d");
+    return 256;    /* Not really correct */
+  default:
+    puts("Unknown set colour table operation\x0a\x0d");
+    return 0;
+  }
+}
+
+
+int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
+{
+  switch(subfunction) {
+  case 0:     /* vq_ctab */
+    {
+      COLOR_TAB *ctab = (COLOR_TAB *)&intout[0];
+      int i;
+#if 1
+      long length = (int)((char *)&ctab->colors - (char *)&ctab->magic) +
+                   256 * sizeof(COLOR_ENTRY);
+#else
+      long length = 48 + 256 * 8;
+#endif
+      puts("vq_ctab not yet really supported\x0a\x0d");
+      if (length > *(long *)&intin[0]) {
+	char buf[10];
+	puts("  Too little space available for ctab (");
+	ltoa(buf, *(long *)&intin[0], 10);
+	puts(buf);
+	puts(" when ctab needs ");
+	ltoa(buf, length, 10);
+	puts(buf);
+	puts(")!\x0a\x0d");
+	return 0;
+      }
+      ctab->magic = str2long("ctab");
+      ctab->length = length;
+      ctab->format = 0;
+      ctab->reserved = 0;
+      ctab->map_id = 0xbadc0de1;
+      ctab->color_space = 1;
+      ctab->flags = 0;
+      ctab->no_colors = 256;
+      ctab->reserved1 = 0;
+      ctab->reserved2 = 0;
+      ctab->reserved3 = 0;
+      ctab->reserved4 = 0;
+      for(i = 0; i < 256; i++) {
+	ctab->colors[i].rgb.red   = i & 0xe0;
+	ctab->colors[i].rgb.green = (i & 0x1c) << 3;
+	ctab->colors[i].rgb.blue  = (i & 0x03) << 6;
+      }
+      return 256;    /* Depending on palette size */
+    }
+  case 1:     /* vq_ctab_entry */
+    puts("vq_ctab_entry not yet supported\x0a\x0d");
+    return 6;
+  case 2:     /* vq_ctab_id */
+    puts("vq_ctab_id not yet supported\x0a\x0d");
+    *(long *)&intout[0] = 0xbadc0de1;   /* Not really correct */
+    return 2;
+  case 3:     /* v_ctab_idx2vdi */
+    puts("v_ctab_idx2vdi not yet supported\x0a\x0d");
+    intout[0] = intin[0];    /* Not really correct */
+    return 1;
+  case 4:     /* v_ctab_vdi2idx */
+    puts("v_ctab_vdi2idx not yet supported\x0a\x0d");
+    intout[0] = intin[0];    /* Not really correct */
+    return 1;
+  case 5:     /* v_ctab_idx2value */
+    puts("v_ctab_idx2value not yet supported\x0a\x0d");
+    return 2;
+  case 6:     /* v_get_ctab_id */
+    puts("v_get_ctab_id not yet supported\x0a\x0d");
+    *(long *)&intout[0] = 0xbadc0de1;   /* Should always be different */
+    return 2;
+  case 7:     /* vq_dflt_ctab */
+    puts("vq_dflt_ctan not yet supported\x0a\x0d");
+    return 256;    /* Depending on palette size */
+  case 8:     /* v_create_ctab */
+    puts("v_create_ctab not yet supported\x0a\x0d");
+    return 2;
+  case 9:     /* v_delete_ctab */
+    puts("v_delete_ctab not yet supported\x0a\x0d");
+    intout[0] = 1;   /* OK */
+    return 1;
+  default:
+    puts("Unknown colour table operation\x0a\x0d");
+    return 0;
+  }
+}
+
+
+int inverse_table(Virtual *vwk, long subfunction, short *intin, short *intout)
+{
+  switch(subfunction) {
+  case 0:     /* v_create_itab */
+    {
+      COLOR_TAB *ctab = (COLOR_TAB *)*(long *)&intin[0];
+      int bits = intin[2];
+      puts("v_create_itab not yet supported\x0a\x0d");
+      *(long *)&intout[0] = 0xbadc0de1;
+      return 2;
+    }
+  case 1:     /* v_delete_itab */
+    puts("v_delete_itab not yet supported\x0a\x0d");
+    intout[0] = 1;   /* OK */
+    return 1;
+  default:
+    puts("Unknown inverse colour table operation\x0a\x0d");
+    return 0;
+  }
 }
 
 

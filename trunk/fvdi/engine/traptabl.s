@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.7 2005-07-18 06:33:24 johan Exp $
+* $Id: traptabl.s,v 1.8 2005-07-26 21:37:55 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -48,8 +48,10 @@ transparent	equ	1		; Fall through?
 	xref	v_circle,v_ellipse,v_ellarc,v_ellpie,v_rbox,v_rfbox
 	xref	v_justified
 	xref	vs_fg_color,vs_bg_color,vq_fg_color,vq_bg_color
+	xref	vs_x_color.vq_x_color
 	xref	special_5,special_11,v_bez_con
-	xref	vr_transfer_bits
+	xref	vr_transfer_bits,colour_entry
+	xref	set_colour_table,colour_table,inverse_table
 
 
 	data
@@ -242,8 +244,19 @@ default_functions:
 	dc.l	vq_fg_color
 	dc.w	0,6
 	dc.l	vq_bg_color
-	dc.l	0,nothing,0,nothing,0,nothing
-	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing
+	dc.w	0,0
+	dc.l	colour_entry
+	dc.w	0,1
+	dc.l	set_colour_table
+	dc.w	0,0
+	dc.l	colour_table
+	dc.w	0,0
+	dc.l	vs_x_color
+	dc.w	0,0
+	dc.l	inverse_table
+	dc.w	0,0
+	dc.l	vq_x_color
+	dc.l	0,nothing,0,nothing
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing
 	dc.l	0,nothing,0,nothing,0,nothing,0,nothing,0,nothing

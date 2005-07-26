@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.10 2005-07-18 06:33:24 johan Exp $
+* $Id: blit.s,v 1.11 2005-07-26 21:39:06 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,11 +19,13 @@ lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 	xref	expand_area
 	xref	_pattern_ptrs
 	xref	_default_line
-	xref	_vr_transfer_bits
+	xref	_vr_transfer_bits,_colour_entry
+	xref	_set_colour_table,_colour_table,_inverse_table
 
 	xdef	v_bar,vr_recfl,vrt_cpyfm,vro_cpyfm
 	xdef	vr_trn_fm
-	xdef	vr_transfer_bits
+	xdef	vr_transfer_bits,colour_entry
+	xdef	set_colour_table,colour_table,inverse_table
 	xdef	v_get_pixel
 
 	xdef	lib_v_bar,lib_vr_recfl,lib_vrt_cpyfm,lib_vro_cpyfm
@@ -864,6 +866,109 @@ vr_transfer_bits:
 	add.w	#24,a7
 
 	move.l	(a7)+,d2
+	used_d1
+	done_return
+
+
+	dc.b	0,"colour entry",0
+* *color* - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+colour_entry:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+
+	move.l	intout(a1),-(a7)
+	move.l	intin(a1),-(a7)
+	move.l	control(a1),a2
+	moveq	#0,d0
+	move.w	subfunction(a2),d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_colour_entry
+	add.w	#16,a7
+
+	movem.l	(a7)+,d2/a1
+	move.l	control(a1),a2
+	move.w	d0,L_intout(a2)
+	used_d1
+	done_return
+
+
+	dc.b	0,"set colour table",0
+* vs_*ctab* - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+set_colour_table:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+
+	move.l	intin(a1),-(a7)
+	move.l	control(a1),a2
+	moveq	#0,d0
+	move.w	subfunction(a2),d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_set_colour_table
+	add.w	#12,a7
+
+	movem.l	(a7)+,d2/a1
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+	used_d1
+	done_return
+
+
+	dc.b	0,"colour table",0
+* *ctab* - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+colour_table:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+
+	move.l	intout(a1),-(a7)
+	move.l	intin(a1),-(a7)
+	move.l	control(a1),a2
+	moveq	#0,d0
+	move.w	subfunction(a2),d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_colour_table
+	add.w	#16,a7
+
+	movem.l	(a7)+,d2/a1
+	move.l	control(a1),a2
+	move.w	d0,L_intout(a2)
+	used_d1
+	done_return
+
+
+	dc.b	0,0,"inverse table",0
+* *itab - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+inverse_table:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+
+	move.l	intout(a1),-(a7)
+	move.l	intin(a1),-(a7)
+	move.l	control(a1),a2
+	moveq	#0,d0
+	move.w	subfunction(a2),d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_inverse_table
+	add.w	#16,a7
+
+	movem.l	(a7)+,d2/a1
+	move.l	control(a1),a2
+	move.w	d0,L_intout(a2)
 	used_d1
 	done_return
 
