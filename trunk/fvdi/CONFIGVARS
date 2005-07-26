@@ -28,14 +28,16 @@ CPU    = 040
 
 # General compilation and optimization options (CFLAGS)
 OPTS   = \
-	-mshort \
 	-O2 -fomit-frame-pointer
+
+#	-mshort \
 
 
 
 # Set these to point to the correct directories for FreeType support!
 #stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
 #ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
+ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.10
 #libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
 #stdlib_srcdir  =
