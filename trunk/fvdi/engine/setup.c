@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.7 2005-06-07 22:16:46 johan Exp $
+ * $Id: setup.c,v 1.8 2005-07-26 21:17:03 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -126,7 +126,7 @@ Virtual *initialize_vdi(void)
    wk->writing.rotation.type = 0;
    wk->writing.justification = 0;
 /* */
-   wk->writing.size.possibilities = 3;	    /* Get these some real way! */
+   wk->writing.size.possibilities = 3;      /* Get these some real way! */
    wk->writing.size.height.min = 4;
    wk->writing.size.height.max = 13;
    wk->writing.size.width.min = 5;
@@ -134,8 +134,8 @@ Virtual *initialize_vdi(void)
 /* */
    wk->drawing.primitives.supported = 8;    /* Everything but rounded rectangles */
    wk->drawing.primitives.attributes = ((3 + 1) <<  0) + ((0 + 1) <<  3) + ((3 + 1) <<  6) +
-	                                    ((3 + 1) <<  9) + ((3 + 1) << 12) + ((0 + 1) << 15) +
-	                                    ((3L + 1) << 18) + ((0L + 0) << 21) + ((0L + 0) << 24) + ((2L + 1) << 27);
+                                       ((3 + 1) <<  9) + ((3 + 1) << 12) + ((0 + 1) << 15) +
+                                       ((3L + 1) << 18) + ((0L + 0) << 21) + ((0L + 0) << 24) + ((2L + 1) << 27);
    wk->drawing.rubber_banding = 0;
    wk->drawing.flood_fill = 0;
    wk->drawing.writing_modes = 4;
@@ -150,7 +150,7 @@ Virtual *initialize_vdi(void)
    wk->drawing.marker.size.width.max = 120;
    wk->drawing.line.types = 7;
    wk->drawing.line.wide.width.possibilities = 0;
-   wk->drawing.line.wide.width.max = 31;	/* Was 255 */
+   wk->drawing.line.wide.width.max = 31;        /* Was 255 */
    wk->drawing.line.wide.width.min = 1;
    wk->drawing.line.wide.types_possible = 1;
    wk->drawing.line.wide.writing_modes = 0;
@@ -164,7 +164,7 @@ Virtual *initialize_vdi(void)
 /* 16x16 op/s */
    wk->various.input_type = 0;
 /* Nedsvartning */
-   wk->various.max_ptsin = 1024;		/* Was -1 */
+   wk->various.max_ptsin = 1024;                /* Was -1 */
    wk->various.max_intin = -1;
    wk->various.buttons = 0;
    wk->various.cursor_movement = 0;
@@ -264,7 +264,7 @@ void setup_colours(Virtual *vwk)
    int handle;
    
    handle = vwk->standard_handle;
-	
+
    wk = vwk->real_address;
    size = wk->screen.palette.size;
    for(i = 0; i < size; i++) {
