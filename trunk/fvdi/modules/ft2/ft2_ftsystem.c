@@ -49,6 +49,25 @@
 #undef KERNEL
 #endif
 
+#ifndef KERNEL
+short keep_open = 0;
+#endif
+
+void ft_keep_open(void)
+{
+#ifndef KERNEL
+  keep_open = 1;
+#endif
+}
+
+/* This should go through all open files and close them */
+void ft_keep_closed(void)
+{
+#ifndef KERNEL
+  keep_open = 0;
+#endif
+}
+
   /*************************************************************************/
   /*                                                                       */
   /*                       MEMORY MANAGEMENT INTERFACE                     */
@@ -190,6 +209,16 @@
   {
 #ifdef KERNEL
     Fclose( STREAM_FILE( stream ) );
+#else
+ #if 0
+ #else
+#if 1
+    access->funcs.puts("FT2: close\r\n");
+#endif
+    if (STREAM_FILE(stream) != 0xbadc0de1) {
+      Fclose( STREAM_FILE( stream ) );
+    }
+ #endif
 #endif
 
     stream->descriptor.value   = 0;
@@ -231,12 +260,41 @@
 
     return (unsigned long)Fread( file, count, buffer );
 #else
+ #if 0
     unsigned long ret;
     int file = Fopen( stream->pathname.pointer, O_RDONLY );
     Fseek( offset, file, SEEK_SET );
     ret = (unsigned long)Fread( file, count, buffer );
     Fclose( file );
     return ret;
+ #else
+    unsigned long ret;
+#if 0
+    access->funcs.puts("FT2: io\r\n");
+#endif
+    if (stream->descriptor.value == 0xbadc0de1) {
+      int file = Fopen( stream->pathname.pointer, O_RDONLY );
+      Fseek( offset, file, SEEK_SET );
+      ret = (unsigned long)Fread( file, count, buffer );
+      if (!keep_open) {
+	Fclose( file );
+      } else {
+	stream->descriptor.value = file;
+      }
+      return ret;
+    } else {
+      int file = STREAM_FILE( stream );
+
+      Fseek( offset, file, SEEK_SET );
+
+      ret = (unsigned long)Fread( file, count, buffer );
+      if (!keep_open) {
+	Fclose( file);
+	stream->descriptor.value = 0xbadc0de1;
+      }
+      return ret;
+    }
+ #endif
 #endif
   }
 
@@ -266,7 +324,17 @@
 #ifdef KERNEL
     Fseek( 0, file, SEEK_SET );
 #else
+ #if 0
     Fclose( file );
+ #else
+#if 1
+    access->funcs.puts("FT2: open\r\n");
+#endif
+    if (!keep_open) {
+      Fclose( file );
+      file = 0xbadc0de1;
+    }
+ #endif
 #endif
 
     stream->descriptor.value   = file;

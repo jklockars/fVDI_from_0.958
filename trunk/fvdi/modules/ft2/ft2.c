@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.3 2005-07-07 07:08:33 johan Exp $
+ * $Id: ft2.c,v 1.4 2005-07-26 21:13:57 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -201,9 +201,11 @@ Fontheader *ft2_load_font(const char *filename)
 	   FT_Error error;
 	   FT_Face face;
 
+	   ft_keep_open();
 	   /* Open the font and create ancillary data */
 	   error = FT_New_Face(library, filename, 0, &face);
 	   if (error) {
+		   ft_keep_closed();
 		   free(font);
 		   return NULL;
 	   }
@@ -232,6 +234,7 @@ Fontheader *ft2_load_font(const char *filename)
 	   access->funcs.puts("\r\n");
 
 	   FT_Done_Face(face);
+	   ft_keep_closed();
    }
 
    return font;
