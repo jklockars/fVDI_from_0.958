@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.17 2005-07-07 06:56:39 johan Exp $
+ * $Id: loader.c,v 1.18 2005-07-26 21:07:14 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -15,12 +15,12 @@
 #include "function.h"
 #include "globals.h"
 
-#define BLOCKS		2		/* Default number of memory blocks to allocate for internal use */
-#define BLOCK_SIZE	10		/* Default size of those blocks, in kbyte */
+#define BLOCKS           2              /* Default number of memory blocks to allocate for internal use */
+#define BLOCK_SIZE      10              /* Default size of those blocks, in kbyte */
 
 #define MAGIC     "InitMagic"
 
-#define TOKEN_SIZE  160			/* Also used for driver option lines */
+#define TOKEN_SIZE  160                 /* Also used for driver option lines */
 #define PATH_SIZE   80
 #define NAME_SIZE   100
 
@@ -86,10 +86,12 @@ short nvdi_cookie = 0;
 short speedo_cookie = 0;
 char silent[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+char silentx[1] = {0};
 char vq_gdos_value[] = "fVDI";
 unsigned short sizes[16] = {8, 9, 10, 11, 12, 14, 18, 24, 36, 48, 0xffff};
 short size_count = 11;
 short size_user = 0;
+short old_malloc = 0;
 
 static char path[PATH_SIZE];
 
@@ -159,7 +161,8 @@ static Option options[] = {
    {"vqgdos",     specify_vqgdos, -1},  /* vqgdos str, specify a vq_gdos reply */
    {"module",     use_module,     -1},  /* module str, specify a module to load */
    {"silent",     set_silent,     -1},  /* silent n, no debug for VDI call n */
-   {"size",       set_size,       -1}   /* size n, specify a default available font size */
+   {"size",       set_size,       -1},  /* size n, specify a default available font size */
+   {"oldmalloc",   &old_malloc,    1}   /* oldmalloc, use only the standar Malloc/Free */
 };
 
 
@@ -191,7 +194,7 @@ Module *init_module(Virtual *vwk, const char **ptr, List **list)
    list_elem->type = 1;
    list_elem->value = module;
    module->id = -1;
-   module->flags = 1;	                  /* Resident */
+   module->flags = 1;                     /* Resident */
    module->file_name = tmp + sizeof(List) + sizeof(Driver);
    copy(name, module->file_name);
 
@@ -202,9 +205,9 @@ Module *init_module(Virtual *vwk, const char **ptr, List **list)
    } else {
       if (list) {
          if (!*list)
-	    *list = list_elem;
+            *list = list_elem;
          else {
-	    list_elem->next = *list;
+            list_elem->next = *list;
             *list = list_elem;
          }
       }
@@ -265,9 +268,9 @@ long specify_cookie(Virtual *vwk, const char **ptr)
          *ptr = get_token(*ptr, token, TOKEN_SIZE);
 
          if (nvdi_val)
-	    nvdi_val   = (short)atol(token);
+            nvdi_val   = (short)atol(token);
          else if (speedo_val)
-	    speedo_val = (short)atol(token);
+            speedo_val = (short)atol(token);
       }
    }
 
@@ -655,12 +658,20 @@ long set_silent(Virtual *vwk, const char **ptr)
       if (!(*ptr = skip_space(*ptr)))
          ;  /* *********** Error, somehow */
       *ptr = get_token(*ptr, token, TOKEN_SIZE);
-      call = atol(token);
-      if ((call >= 0) && (call <= 255))
-         silent[call >> 3] ^= 1 << (call & 7);
-      else {
-         for(i = 0; i < 32; i++)
+      if (equal(token, "oldallocation")) {
+         silentx[0] ^= 0x01;
+      } else if (equal(token, "allocation")) {
+         silentx[0] ^= 0x03;
+      } else {
+         call = atol(token);
+         if ((call >= 0) && (call <= 255))
+            silent[call >> 3] ^= 1 << (call & 7);
+         else {
+            for(i = 0; i < 32; i++)
             silent[i] = 0xff;
+         for(i = 0; i < 1; i++)
+            silentx[i] = 0xff;
+         }
       }
       *ptr = skip_only_space(*ptr);
    } while (*ptr && (numeric(**ptr) || ((**ptr == '-') && numeric(*(*ptr + 1)))));
@@ -686,7 +697,7 @@ long set_size(Virtual *vwk, const char **ptr)
             sizes[0] = 0xffff;
             size_count = 1;
          }
-	 for(i = size_count - 1; i >= 0; i--)
+         for(i = size_count - 1; i >= 0; i--)
             if (size == sizes[i])
                break;
          if (i < 0) {
@@ -811,7 +822,7 @@ int initialize(const unsigned char *addr, long size, Driver *driver, Virtual *vw
    long i;
    int j;
    Locator *locator;
-	
+
    for(i = 0; i < size - sizeof(MAGIC); i++) {
       for(j = 0; j < sizeof(MAGIC); j++) {
          if (addr[j] != MAGIC[j])
@@ -927,7 +938,7 @@ long load_fonts(Virtual *vwk, const char **ptr)
    puts("Fonts: ");
    puts_nl(fonts);
 
-   /* Initialize FreeType2 module */	
+   /* Initialize FreeType2 module */
    external_init();
 
    Fsetdta((void *)&info);
@@ -942,14 +953,14 @@ long load_fonts(Virtual *vwk, const char **ptr)
       info.d_fname[12] = 0;
       copy(info.d_fname, pathtail);
 #endif
-		
+
       puts("   Load font: ");
       puts_nl(fonts);
 
       if ((new_font = external_load_font(fonts))) {
-	 /* It's assumed that a device has been initialized (driver exists) */
-	 if (insert_font(&vwk->real_address->writing.first_font, new_font))
-	    vwk->real_address->writing.fonts++;
+         /* It's assumed that a device has been initialized (driver exists) */
+         if (insert_font(&vwk->real_address->writing.first_font, new_font))
+            vwk->real_address->writing.fonts++;
       }
 
       error = Fsnext();
@@ -1041,7 +1052,7 @@ int load_prefs(Virtual *vwk, char *sysname)
             if (!driver)
                break;
             driver->module.id = device;
-            driver->module.flags = 1;	                  /* Resident */
+            driver->module.flags = 1;                     /* Resident */
             driver_loaded = 1;
          } else {       /* Load when needed */
             /* ........... */
@@ -1082,15 +1093,15 @@ int load_prefs(Virtual *vwk, char *sysname)
       ptr = skip_space(ptr);
    }
 
-   if (driver_list) {			/* Some driver loaded? */
+   if (driver_list) {              /* Some driver loaded? */
       Fontheader **system_font, *header;
       long header_size = sizeof(Fontheader) - sizeof(Fontextra);
       Workstation *wk;
       List *tmp = driver_list;
-      while (tmp) {			/* For all drivers */
+      while (tmp) {                /* For all drivers */
          wk = ((Driver *)tmp->value)->default_vwk->real_address;
-         if (!wk->writing.first_font || (wk->writing.first_font->id != 1)) {	/* No system font? */
-            system_font = linea_fonts();					/*   Find one in the ROM */
+         if (!wk->writing.first_font || (wk->writing.first_font->id != 1)) {  /* No system font? */
+            system_font = linea_fonts();                                      /*   Find one in the ROM */
             if (!(header = (Fontheader *)malloc(sizeof(Fontheader) * 3)))
                break;
             copymem(system_font[0], &header[0], header_size);

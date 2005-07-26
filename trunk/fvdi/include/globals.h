@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.5 2005-07-10 00:13:55 johan Exp $
+ * $Id: globals.h,v 1.6 2005-07-26 21:07:58 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -100,8 +100,10 @@ extern short stand_alone;
 extern short nvdi_cookie;
 extern short speedo_cookie;
 extern char silent[];
+extern char silentx[];
 extern unsigned short sizes[];
 extern short size_count;
+extern short old_malloc;
 
 extern long pid_addr;
 

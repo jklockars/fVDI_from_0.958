@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.19 2005-07-07 06:54:57 johan Exp $
+ * $Id: utility.c,v 1.20 2005-07-26 21:07:14 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -323,7 +323,7 @@ void check_cookies(void)
    if ((addr = get_cookie("__NF", 0)) != -1) {
       nf_ptr = (NatFeatCookie *)addr;
       if (nf_ptr->magic != 0x20021021L)   /* NatFeat magic constant */
-	nf_ptr = 0;
+        nf_ptr = 0;
       else {
         nf_printf_id = nf_ptr->nfGetID("DEBUGPRINTF");
       }
@@ -591,50 +591,50 @@ int sprintf(char *str, const char *format, ...)
    va_start(args, format);
 #if 1
    while (ch = *format++) {
-       if (mode) {
-	   switch(ch) {
-	       case 's':
-		   text = va_arg(args, char *);
-		   while (*str++ = *text++)
-		       ;
-		   str--;
-		   mode = 0;
-		   break;
-	       case 'c':
-		   val_c = va_arg(args, int);    /* char promoted to int */
-		   *str++ = val_c;
-		   mode = 0;
-		   break;
-	       case 'd':
-		   if (mode == 2) {
-		       val_s = va_arg(args, int);    /* short promoted */
-		       ltoa(str, val_s, 10);
-		   } else {
-		       val_i = va_arg(args, int);
-		       ltoa(str, val_i, 10);
-		   }
-		   str += strlen(s);
-		   mode = 0;
-		   break;
-	       case 'h':
-		   mode = 2;
-		   break;
-	       case '%':
-		   *str++ = '%';
-		   mode = 0;
-		   break;
-	       default:
-		   *str++ = 'B';
-		   *str++ = 'A';
-		   *str++ = 'D';
-		   *str++ = '!';
-		   break;
-	   }
-       } else if (ch == '%') {
-	   mode = 1;
-       } else {
-	   *str++ = ch;
-       }
+      if (mode) {
+         switch(ch) {
+         case 's':
+            text = va_arg(args, char *);
+            while (*str++ = *text++)
+               ;
+            str--;
+            mode = 0;
+            break;
+         case 'c':
+            val_c = va_arg(args, int);    /* char promoted to int */
+            *str++ = val_c;
+            mode = 0;
+            break;
+         case 'd':
+            if (mode == 2) {
+               val_s = va_arg(args, int);    /* short promoted */
+               ltoa(str, val_s, 10);
+            } else {
+               val_i = va_arg(args, int);
+               ltoa(str, val_i, 10);
+            }
+            str += strlen(s);
+            mode = 0;
+            break;
+         case 'h':
+            mode = 2;
+            break;
+         case '%':
+            *str++ = '%';
+            mode = 0;
+            break;
+         default:
+            *str++ = 'B';
+            *str++ = 'A';
+            *str++ = 'D';
+            *str++ = '!';
+            break;
+         }
+      } else if (ch == '%') {
+         mode = 1;
+      } else {
+         *str++ = ch;
+      }
    }
    *str = 0;
 #else
@@ -947,8 +947,8 @@ void *fmalloc(long size, long type)
       *pid = basepage;
    }
    if (mint | magic) {
-      if (!(type & 0xfff8))	/* Simple type? */
-         type |= 0x4030;	/* Keep around, supervisor accessible */
+      if (!(type & 0xfff8))  /* Simple type? */
+         type |= 0x4030;     /* Keep around, supervisor accessible */
       new = (Circle *)Mxalloc(size + sizeof(Circle), type);
    } else {
       type &= 3;
@@ -962,7 +962,7 @@ void *fmalloc(long size, long type)
    }
    
    if ((long)new > 0) {
-      if (debug > 2) {
+      if ((debug > 2) && !(silentx[0] & 0x01)) {
          char buffer[10];
          ltoa(buffer, (long)new, 16);
          puts("Allocation at $");
@@ -991,14 +991,153 @@ void *fmalloc(long size, long type)
 }
 
 
+#if 0
+  static short block_space[] = {32, 76, 156, 316, 1008, 2028, 4068, 8148, 16308};
+#else
+  static short block_space[] = {16, 48, 112, 240, 496, 1008, 2028, 4068, 8148, 16308};
+#endif
+  static char *block_free[]  = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+  static char *block_used[]  = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+  static short free_blocks[] = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+  static short used_blocks[] = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+  static short allocated = 0;
+
+#define OS_MARGIN 64
+#define MIN_BLOCK 32
+#define LINK_SIZE (sizeof(Circle))
+#define MIN_KB_BLOCK
 void *malloc(long size)
 {
-   return fmalloc(size, 3);
+  int m, n;
+  const int sizes = sizeof(block_space) / sizeof(block_space[0]);
+  char *block, buf[10];
+  Circle *link, *next;
+
+#if 0
+  debug_out = -1;
+#endif
+
+#if 0
+  if (!block_space[0]) {
+    block_space[0] = MIN_BLOCK;
+    i = 0;
+    while (block_space[i++] < MIN_KB_BLOCK)
+      block_space[i] = (block_space[i - 1] + LINK_SIZE) * 2;
+  }
+#endif
+
+  if (old_malloc || (size > 16 * 1024 - OS_MARGIN - LINK_SIZE))
+    return fmalloc(size, 3);
+
+  /* This will always break eventually thanks to the if-statement above */
+  for(n = 0; n < sizes; n++) {
+    if (size <= block_space[n])
+      break;
+  }
+
+  if ((debug > 2) && !(silentx[0] & 0x02)) {
+    ltoa(buf, n, 10);
+    puts("Alloc: Need block of size ");
+    puts(buf);
+    puts("/");
+    ltoa(buf, size, 10);
+    puts(buf);
+    puts("\x0a\x0d");
+  }
+
+  if (!block_free[n]) {
+    for(m = n + 1; m < sizes; m++) {
+      if (block_free[m])
+        break;
+    }
+    if (m >= sizes) {
+      m = sizes - 1;
+      block_free[m] = fmalloc(16 * 1024 - OS_MARGIN, 3);
+      if (!block_free[m])
+        return 0;
+      if ((debug > 2) && !(silentx[0] & 0x02)) {
+        puts("       Malloc at ");
+        ltoa(buf, (long)block_free[m], 16);
+        puts(buf);
+        puts("\x0a\x0d");
+      }
+      link = (Circle *)block_free[m];
+      link->next = 0;
+      link->prev = 0;
+      link->size = m;
+      free_blocks[m]++;
+      allocated++;
+    }
+    for(; m > n; m--) {
+      if ((debug > 2) && !(silentx[0] & 0x02)) {
+        puts("       Splitting\x0a\x0d");
+      }
+      block_free[m - 1] = block_free[m];
+      link = (Circle *)block_free[m];
+      block_free[m] = (char *)link->next;
+      free_blocks[m]--;
+      next = (Circle *)(block_free[m - 1] + block_space[m - 1] + LINK_SIZE);
+      link->next = next;
+      link->prev = 0;
+      link->size = m - 1;
+      free_blocks[m - 1]++;
+      link = next;
+      link->next = 0;
+      link->prev = 0;
+      link->size = m - 1;
+      free_blocks[m - 1]++;
+    }
+  } else {
+    if ((debug > 2) && !(silentx[0] & 0x02)) {
+      puts("       Available\x0a\x0d");
+    }
+  }
+
+  block = block_free[n];
+  block_free[n] = (char *)((Circle *)block)->next;
+
+  if ((debug > 2) && !(silentx[0] & 0x02)) {
+    puts("       Allocating at ");
+    ltoa(buf, (long)block, 16);
+    puts(buf);
+    puts(" (next at ");
+    ltoa(buf, (long)block_free[n], 16);
+    puts(buf);
+    puts(")\x0a\x0d");
+  }
+
+  ((Circle *)block)->size = (((Circle *)block)->size & 0xffff) + (size << 16);
+
+  free_blocks[n]--;
+  used_blocks[n]++;
+
+  if ((debug > 2) && !(silentx[0] & 0x02)) {
+    puts("       ");
+    ltoa(buf, allocated, 10);
+    puts(buf);
+    puts(": ");
+    for(n = 0; n < sizes; n++) {
+      ltoa(buf, used_blocks[n], 10);
+      puts(buf);
+      puts("/");
+      ltoa(buf, free_blocks[n], 10);
+      puts(buf);
+      puts(" ");
+    }
+    puts("\x0a\x0d");
+  }
+
+#if 1
+  return block + sizeof(Circle);
+#else
+  return fmalloc(size, 3);
+#endif
 }
 
 
 void *realloc(void *addr, long new_size)
 {
+   Circle *current;
    long old_size;
    void *new;
 
@@ -1012,14 +1151,25 @@ void *realloc(void *addr, long new_size)
    new = malloc(new_size);
    if ((long)new <= 0)
       return 0;
-   old_size = ((Circle *)addr)[-1].size - sizeof(Circle);
+   current = &((Circle *)addr)[-1];
+   if (current->prev)
+      old_size = current->size - sizeof(Circle);
+   else
+      old_size = current->size >> 16;
+
    copymem_aligned(addr, new, old_size < new_size ? old_size : new_size);
    free(addr);
 
-   if (debug > 2) {
+   if ((debug > 2) && !(silentx[0] & 0x01)) {
       char buffer[10];
-      ltoa(buffer, old_size, 10);
       puts("Reallocation from size ");
+      ltoa(buffer, old_size, 10);
+      puts(buffer);
+      puts(" at $");
+      ltoa(buffer, (long)addr, 16);
+      puts(buffer);
+      puts(" to ");
+      ltoa(buffer, new_size, 10);
       puts_nl(buffer);
    }
 
@@ -1036,6 +1186,31 @@ long free(void *addr)
        return 0;
 
    current = &((Circle *)addr)[-1];
+
+   if (!current->prev) {
+     if ((debug > 2) && !(silentx[0] & 0x02)) {
+       char buf[10];
+       puts("Freeing at ");
+       ltoa(buf, (long)current, 16);
+       puts(buf);
+       puts("\x0a\x0d");
+     }
+     size = current->size & 0xffff;
+     current->next = (Circle *)block_free[size];
+     block_free[size] = (char *)current;
+     free_blocks[size]++;
+     used_blocks[size]--;
+     return 0;
+   } else {
+     if ((debug > 2) && !(silentx[0] & 0x01)) {
+       char buf[10];
+       puts("Standard free at ");
+       ltoa(buf, (long)current, 16);
+       puts(buf);
+       puts("\x0a\x0d");
+     }
+   }
+
    if (memlink) {
       current->prev->next = current->next;
       current->next->prev = current->prev;
@@ -1046,7 +1221,7 @@ long free(void *addr)
       bp = *pid;
       *pid = basepage;
    }
-   if (debug > 2) {
+   if ((debug > 2) && !(silentx[0] & 0x01)) {
       char buffer[10];
       ltoa(buffer, (long)current, 16);
       puts("Freeing at $");
