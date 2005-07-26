@@ -1,7 +1,7 @@
 *****
 * fVDI colour functions
 *
-* $Id: colours.s,v 1.4 2004-10-17 21:44:11 johan Exp $
+* $Id: colours.s,v 1.5 2005-07-26 21:40:08 johan Exp $
 *
 * Copyright 1997-2000, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,6 +19,7 @@ neg_pal_n	equ	9		; Number of negative palette entries
 	xref	redirect
 
 	xdef	vs_fg_color,vs_bg_color,vq_fg_color,vq_bg_color
+	xdef	vs_x_color,vq_x_color
 	xdef	vs_color,vq_color
 
 ;	xdef	lib_vsf_color,lib_vsf_interior,lib_vsf_style,lib_vsf_perimeter,lib_vsf_udpat,lib_vqf_attributes
@@ -154,6 +155,32 @@ vs_bg_color:
 	move.w	d0,(a2)
 	move.l	(a7)+,a3
 	used_d1
+	done_return
+
+
+	dc.b	0,"vs_x_color",0
+* vs_x_color - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vs_x_color:
+	moveq	#1,d0
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+	done_return
+
+
+	dc.b	0,"vq_x_color",0
+* vq_x_color - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_x_color:
+	move.l	intout(a1),a2
+	move.l	#1,(a2)+		; RGB_SPACE
+	move.w	#0,(a2)+		; Reserved
+	move.l	#0,(a2)+		; RGB
+	move.w	#0,(a2)+
 	done_return
 
 
