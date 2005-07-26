@@ -1,3 +1,13 @@
+2005-07-26 - johan
+New memory allocation algorithm that requests largish blocks from the OS
+at once, splits them into pieces to satisfy requests, and keeps released
+blocks around for reuse.
+FreeType support upgraded for version 2.1.10.
+Change to allow FreeType font files to be kept open for longer intervals
+under some circumstances.
+Partial vr_transfer_bits implementation.
+Fake implementations of the colour table related functions.
+
 2005-07-18 - johan
 Initial support for vr_transfer_bits.
 Debug printouts for non-implemented VDI functions.
