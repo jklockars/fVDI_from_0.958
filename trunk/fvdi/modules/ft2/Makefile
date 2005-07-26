@@ -69,11 +69,14 @@ ftmm.o: $(ft2_srcdir)/src/base/ftmm.c
 ftsynth.o: $(ft2_srcdir)/src/base/ftsynth.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+ftbitmap.o: $(ft2_srcdir)/src/base/ftbitmap.c
+	$(CC) -c $(CFLAGS) -o $@ $<
+
 #
 # FreeType2 library autohinting module
 #
-autohint.o: $(ft2_srcdir)/src/autohint/autohint.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+#autohint.o: $(ft2_srcdir)/src/autohint/autohint.c
+#	$(CC) -c $(CFLAGS) -o $@ $<
 
 #
 # FreeType2 library autohinting module extensions
@@ -177,9 +180,10 @@ pfr.o: $(ft2_srcdir)/src/pfr/pfr.c
 winfnt.o: $(ft2_srcdir)/src/winfonts/winfnt.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-BASEOBJ = ftinit.o ftbase.o ftglyph.o ftbbox.o ftmm.o ftsynth.o
+BASEOBJ = ftinit.o ftbase.o ftglyph.o ftbbox.o ftmm.o ftsynth.o ftbitmap.o
 
-AHINTOBJ = autohint.o autofit.o
+#AHINTOBJ = autohint.o autofit.o
+AHINTOBJ = autofit.o
 
 PSOBJ = psaux.o psnames.o pshinter.o
 
