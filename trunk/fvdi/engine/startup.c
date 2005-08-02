@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.23 2005-07-26 21:04:23 johan Exp $
+ * $Id: startup.c,v 1.24 2005-08-02 22:21:19 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0965
-#define BETA	3
+#define BETA	5
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -71,8 +71,9 @@ struct FSMC_cookie {
 };	/* fsmc_cookie = {"_FSM", 0x0100, -1}; */
 
 struct NVDI_cookie {
-	short version;  /*  0x0502 for version 5.02   */
-	long  date;     /*  0x18061990 for 1990-06-18 */
+	short version;  /* 0x0502 for version 5.02   */
+	long  date;     /* 0x18061990 for 1990-06-18 */
+	short flags;    /* 9*reserved, alert, reserved, linea, mouse, gemdos, error, gdos */
 };
 
 struct Readable_data {
@@ -127,23 +128,6 @@ long startup(void)
 		error("Could not allocate space for world-readable data.", 0);
 		return 0;
 	}
-	readable->cookie.version = VERSION;
-	readable->cookie.flags = 0;
-	readable->cookie.remove = remove_fvdi;
-	readable->cookie.setup = setup_fvdi;
-	readable->cookie.log = &super->fvdi_log;
-	if (!speedo_cookie) {
-		readable->fsmc_cookie.type = str2long("_FSM");
-		readable->fsmc_cookie.versions = 0x0100;
-	} else {
-		readable->fsmc_cookie.type = str2long("_SPD");
-		readable->fsmc_cookie.versions = speedo_cookie;
-		readable->fsmc_cookie.quality = 0xffff;
-	}
-	if (nvdi_cookie) {
-		readable->nvdi_cookie.version = nvdi_cookie;
-		readable->nvdi_cookie.date    = 0x13052005;
-	}
 
 	if (!(base_vwk = initialize_vdi())) {		/* Setup initial real and virtual workstations */
 		error("Error while initializing VDI.", 0);
@@ -153,6 +137,25 @@ long startup(void)
 	if (!load_prefs(base_vwk, SYSNAME)) {		/* Load preferences (and load all fonts and device drivers specified) */
 		error("Aborted while loading preferences.", 0);
 		return 0;
+	}
+
+	readable->cookie.version = VERSION;
+	readable->cookie.flags = 0;
+	readable->cookie.remove = remove_fvdi;
+	readable->cookie.setup = setup_fvdi;
+	readable->cookie.log = &super->fvdi_log;
+	if (!speedo_cookie) {
+		readable->fsmc_cookie.type = str2long("_FNT");  /* Was _FSM */
+		readable->fsmc_cookie.versions = 0x0100;
+	} else {
+		readable->fsmc_cookie.type = str2long("_SPD");
+		readable->fsmc_cookie.versions = speedo_cookie;
+		readable->fsmc_cookie.quality = 0xffff;
+	}
+	if (nvdi_cookie) {
+		readable->nvdi_cookie.version = nvdi_cookie;
+		readable->nvdi_cookie.date    = 0x13052005;
+		readable->nvdi_cookie.flags   = 0x0001;  /* GDOS support */
 	}
 
 	if (debug) {				/* Set up log table if asked for */
