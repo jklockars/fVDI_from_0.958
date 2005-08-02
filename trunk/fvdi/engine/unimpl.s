@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.11 2005-06-30 08:25:06 johan Exp $
+* $Id: unimpl.s,v 1.12 2005-08-02 22:18:53 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -34,11 +34,11 @@ transparent	equ	1		; Fall through?
 	xdef	vq_mouse,vq_key_s
   endc
 	xdef	v_cellarray,vq_cellarray
-	xdef	vst_name,vst_width,vst_charmap,vst_kern,v_getbitmap_info
+	xdef	vst_name,vst_width,vst_charmap
 	xdef	v_getoutline,vst_scratch
-	xdef	vst_error,vqt_advance,vq_devinfo,v_savecache
-	xdef	v_loadcache,v_flushcache,vst_setsize,vst_skew,vqt_cachesize
-	xdef	vqt_get_table,vqt_fontheader,vqt_trackkern,vqt_pairkern
+	xdef	vst_error,vq_devinfo,v_savecache
+	xdef	v_loadcache,v_flushcache,vst_setsize,vqt_cachesize
+	xdef	vqt_get_table,vqt_fontheader
 	xdef	v_set_app_buff
 	xdef	vq_tabstatus,v_hardcopy,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
@@ -127,23 +127,17 @@ vq_cellarray:
 vst_name:
 vst_width:
 vst_charmap:
-vst_kern:
-v_getbitmap_info:
 v_getoutline:
 vst_scratch:
 vst_error:
-vqt_advance:
 vq_devinfo:
 v_savecache:
 v_loadcache:
 v_flushcache:
 vst_setsize:
-vst_skew:
 vqt_cachesize:
 vqt_get_table:
 vqt_fontheader:
-vqt_trackkern:
-vqt_pairkern:
 v_set_app_buff:
 	done_return
 

@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.8 2005-07-26 21:37:55 johan Exp $
+* $Id: traptabl.s,v 1.9 2005-08-02 22:18:53 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -271,9 +271,9 @@ default_functions:
 	dc.l	vqt_fontheader
 	dc.w	0,0
 	dc.l	nothing
-	dc.w	0,0
+	dc.w	0,4
 	dc.l	vqt_trackkern
-	dc.w	0,0
+	dc.w	0,4
 	dc.l	vqt_pairkern
 	dc.w	0,0
 	dc.l	vst_charmap
@@ -281,7 +281,7 @@ default_functions:
 	dc.l	vst_kern		; also vst_track_offset
 	dc.w	0,0
 	dc.l	nothing
-	dc.w	0,0
+	dc.w	0,12
 	dc.l	v_getbitmap_info
 	dc.w	0,0
 	dc.l	vqt_f_extent
@@ -297,7 +297,7 @@ default_functions:
 	dc.l	vst_error
 	dc.w	0,0
 	dc.l	vst_arbpt
-	dc.w	0,0
+	dc.w	4,0
 	dc.l	vqt_advance
 	dc.w	0,0
 	dc.l	vq_devinfo		; also vq_ext_devinfo (sub 4242)
@@ -309,7 +309,7 @@ default_functions:
 	dc.l	v_flushcache
 	dc.w	0,0
 	dc.l	vst_setsize
-	dc.w	0,0
+	dc.w	0,1
 	dc.l	vst_skew
 	dc.w	0,0
 	dc.l	vqt_get_table

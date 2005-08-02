@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.9 2005-07-07 07:03:17 johan Exp $
+* $Id: text_sq.s,v 1.10 2005-08-02 22:18:53 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -33,8 +33,81 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	xdef	vst_arbpt
 
+	xdef	vqt_trackkern,vqt_pairkern,vst_kern,v_getbitmap_info
+	xdef	vqt_advance,vst_skew
+
 
 	text
+
+	dc.b	0,"vqt_xxxxkern",0
+* vqt_pair/trackkern - Standard Trap function
+* Todo: Everything...
+* In:   a1      Parameter block
+*       a0      VDI struct
+vqt_trackkern:
+vqt_pairkern:
+	move.l	intout(a1),a2
+	moveq	#0,d0
+	move.l	d0,(a2)+
+	move.l	d0,(a2)+
+	done_return
+
+
+	dc.b	0,"vst_kern",0
+* vqt_kern - Standard Trap function
+* Todo: Everything...
+* In:   a1      Parameter block
+*       a0      VDI struct
+vst_kern:
+	move.l	intout(a1),a2
+	moveq	#0,d0
+	move.l	d0,(a2)+
+	done_return
+
+
+	dc.b	0,"v_getbitmap_info",0
+* v_getbitmap_info - Standard Trap function
+* Todo: Everything...
+* In:   a1      Parameter block
+*       a0      VDI struct
+v_getbitmap_info:
+	move.l	intout(a1),a2
+	move.w	#6,(a2)+	; Width
+	move.w	#12,(a2)+	; Height
+	move.l	#$00080000,(a2)+ ; X advance
+	move.l	#$00100000,(a2)+ ; Y advance
+	move.l	#0,(a2)+	; X offset
+	move.l	#0,(a2)+	; Y offset
+	move.l	#v_getbitmap_info,(a2)+ ; Dummy bitmap pointer
+	done_return
+
+
+	dc.b	0,0,"vqt_advance",0
+* vqt_advance - Standard Trap function
+* Todo: Everything...
+* In:   a1      Parameter block
+*       a0      VDI struct
+vqt_advance:
+	move.l	ptsout(a1),a2
+	move.w	#8,(a2)+
+	move.w	#0,(a2)+
+	move.w	#0,(a2)+
+	move.w	#0,(a2)+
+	move.l	#$00080000,(a2)+
+	move.l	#0,(a2)+
+	done_return
+
+
+	dc.b	0,"vst_skew",0
+* vqt_skew - Standard Trap function
+* Todo: Everything...
+* In:   a1      Parameter block
+*       a0      VDI struct
+vst_skew:
+	move.l	intout(a1),a2
+	move.w	#0,(a2)+
+	done_return
+
 
 	dc.b	0,0,"vst_color",0
 * vst_color - Standard Trap function
