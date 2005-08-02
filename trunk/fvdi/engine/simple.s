@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.7 2005-06-07 22:16:16 johan Exp $
+* $Id: simple.s,v 1.8 2005-08-02 22:16:45 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -11,8 +11,6 @@
 transparent	equ	1		; Fall through?
 
 neg_pal_n	equ	9		; Number of negative palette entries
-
-HANDLES		equ	32		; Max number of handles
 
 	include	"vdi.inc"
 	include	"macros.inc"

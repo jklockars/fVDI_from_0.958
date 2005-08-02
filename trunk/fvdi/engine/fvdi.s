@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.7 2005-07-18 06:36:58 johan Exp $
+* $Id: fvdi.s,v 1.8 2005-08-02 22:16:44 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -278,7 +278,7 @@ dispatch_entry:
 	lea	_handle,a0
 	move.w	handle(a1),d0		; d0 - handle
 	cmp.w	#MAX_HANDLE,d0
-	bhi	large_handle
+	bhs	large_handle
 handle_ok:
 	add.w	d0,d0
 	add.w	d0,d0
@@ -399,17 +399,16 @@ no_vdi:
 * The supplied handle was too large,
 * but it might still be valid or simply not needed.
 large_handle:
-	move.l	_handle_link,d0		; Search through linked tables of handles
-	beq	bad_handle
-	move.l	d0,a0
-	move.w	handle(a1),d0
+	lea	_handle_link,a0		; Search through linked tables of handles
 	sub.w	#MAX_HANDLE,d0
+	bra	.test_handle
 .search_handle:
 	move.l	(a0),a0
 	cmp.w	-6(a0),d0		; In this handle table?
-	bls	handle_ok
+	blo	handle_ok
 	sub.w	-6(a0),d0
 	subq.l	#4,a0
+.test_handle:
 	tst.l	(a0)
 	bne	.search_handle
 

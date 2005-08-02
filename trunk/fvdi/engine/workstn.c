@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.7 2005-05-30 13:25:41 johan Exp $
+ * $Id: workstn.c,v 1.8 2005-08-02 22:16:45 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -14,7 +14,9 @@
 #include "globals.h"
 
 #define NEG_PAL_N	9	/* Number of negative palette entries */
-#define HANDLES		32	/* Max number of handles */
+
+
+Virtual **handle_link = 0;
 
 
 void
@@ -73,14 +75,80 @@ linea_setup(Workstation *wk)
 }
 
 
-/* Find a free handle */
-static short find_handle(void)
+/* Find virtual workstation entry for a handle */
+static Virtual** find_handle_entry(short hnd)
 {
-	short hnd;
+	short handles;
+	Virtual **link, **handle_table;
 
-	for(hnd = 1; hnd < HANDLES; hnd++)
-		if (handle[hnd] == non_fvdi_vwk)
+	handles = HANDLES;
+	if (hnd < handles)
+		return &handle[hnd];
+
+	link = handle_link;
+	while (link) {
+		hnd -= handles;
+		if (debug) {
+			puts("Looking for handle in extra table\x0a\x0d");
+		}
+		handles = (long)handle_table[-2];
+		if (hnd < handles)
+			return &handle_table[hnd];
+		link = (Virtual **)handle_table[-1];
+	}
+
+	return 0;
+}
+
+/* Find (or create, if necessary) a free handle */
+static short find_free_handle(Virtual ***handle_entry)
+{
+	short hnd, handles;
+	Virtual ***link, ***last, **handle_table;
+
+	handles = HANDLES;
+	for(hnd = 1; hnd < handles; hnd++) {
+		if (handle[hnd] == non_fvdi_vwk) {
+			*handle_entry = &handle[hnd];
 			return hnd;
+		}
+	}
+
+	link = &handle_link;
+	last = link;
+	while (handle_table = *link) {
+		if (debug) {
+			puts("Looking for free handle in extra table\x0a\x0d");
+		}
+		handles += (long)handle_table[-2];
+		for(; hnd < handles; hnd++) {
+			if (handle_table[hnd] == non_fvdi_vwk) {
+				*handle_entry = &handle[hnd];
+				return hnd;
+			}
+		}
+		last = link;
+		link = (Virtual ***)&handle_table[-1];
+	}
+
+	handle_table = (Virtual **)malloc(64 * sizeof(Virtual *));
+	if (handle_table) {
+		handles = *(long *)handle_table / sizeof(Virtual *) - 2;
+		if (debug) {
+			puts("Allocated space for ");
+			ltoa((char *)handle_table, handles, 10);
+			puts((char *)handle_table);
+			puts(" extra handles\x0a\x0d");
+		}
+		handle_table[0] = (Virtual *)((long)handles);
+		handle_table[1] = 0;
+		for(handles--; handles >= 0; handles--)
+			handle_table[handles] = non_fvdi_vwk;
+		*last = &handle_table[2];
+		*handle_entry = &handle_table[2];
+		return hnd;
+	}
+				
 	return 0;
 }
 
@@ -92,11 +160,11 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 	short hnd, width, height, bitplanes, lwidth, dummy, extra_size;
 	long size;
 	Workstation *wk, *new_wk;
-	Virtual *new_vwk;
+	Virtual *new_vwk, **handle_entry;
 	MFDB *mfdb;
 
 	pars->control->handle = 0;	/* Assume failure */
-	if (!(hnd = find_handle()))
+	if (!(hnd = find_free_handle(&handle_entry)))
 		return;
 
 	/* Check if really v_opnbm */
@@ -206,7 +274,7 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 	opnvwk_values(vwk, pars);		/* Return information about workstation */
 
 	pars->control->handle = vwk->standard_handle = hnd;
-	handle[hnd] = vwk;
+	*handle_entry = vwk;
 
 	/* Call various setup functions (most with supplied data) */
 #if 0
@@ -250,7 +318,7 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 void v_opnwk(VDIpars *pars)
 {
 	Driver *driver;
-	Virtual *vwk;
+	Virtual *vwk, **handle_entry;
 	Workstation *wk;
 #if 0
 	unsigned short *linea, width, height, bitplanes, hnd, oldhnd;
@@ -265,13 +333,13 @@ void v_opnwk(VDIpars *pars)
 		pars->control->handle = 0;	/* Assume failure */
 		vwk = 0;
 		if ((old_gdos != -2) &&		/* No pass-through without old GDOS */
-		    (hnd = find_handle()) &&
+		    (hnd = find_free_handle(&handle_entry)) &&
 		    (vwk = malloc(6)) &&
 		    (oldhnd = call_other(pars, 0))) {	/* Dummy handle for call */
 			vwk->real_address = non_fvdi_wk;
 			/* Mark as pass-through handle */
 			vwk->standard_handle = oldhnd | 0x8000;
-			handle[hnd] = vwk;
+			*handle_entry = vwk;
 			pars->control->handle = hnd;
 		} else if (vwk)
 			free(vwk);		/* Couldn't open */
@@ -347,6 +415,7 @@ void v_opnwk(VDIpars *pars)
 
 void v_clsvwk(Virtual *vwk, VDIpars *pars)
 {
+	Virtual **handle_entry;
 	short hnd;
 
 	hnd = vwk->standard_handle;
@@ -365,7 +434,13 @@ void v_clsvwk(Virtual *vwk, VDIpars *pars)
 	free(vwk);	/* This will work for off-screen bitmaps too, fortunately */
 
 	/* Reset VDI structure address to default */
-	handle[hnd] = non_fvdi_vwk;
+	handle_entry = find_handle_entry(hnd);
+	if (!handle_entry)
+		puts("Handle could not be found in tables!\x0a\x0d");
+	else if (*handle_entry != vwk)
+		puts("Wrong handle entry!\x0a\x0d");
+	else
+	        *handle_entry = non_fvdi_vwk;
 
 	return;
 }

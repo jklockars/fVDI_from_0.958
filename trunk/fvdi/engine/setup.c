@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.8 2005-07-26 21:17:03 johan Exp $
+ * $Id: setup.c,v 1.9 2005-08-02 22:16:44 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -15,7 +15,6 @@
 #include "function.h"
 #include "globals.h"
 
-#define HANDLES 32            /* Important things regarding this also in fvdi.s */
 #define WHITE 0
 #define BLACK 1
 #define MAX_OLD_HANDLE 16
@@ -28,7 +27,6 @@
 Virtual *default_virtual = 0;
 Virtual *screen_virtual = 0;
 Virtual *handle[HANDLES];
-Virtual **handle_link = 0;
 
 Virtual *non_fvdi_vwk = 0;     /* Only func ptrs, handle == -1 for bad else fall through */
 Workstation *non_fvdi_wk = 0;
