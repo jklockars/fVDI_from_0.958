@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.10 2005-07-18 06:39:21 johan Exp $
+ * $Id: fvdi.h,v 1.11 2005-08-02 22:22:10 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -38,6 +38,8 @@
 
 #define MODULE_IF_VER   0x0020
 
+#define HANDLES         32   /* Handles in default table (see also fvdi.s) */
+
 struct fVDI_log {
    short active;
    long *start;
@@ -54,18 +56,6 @@ typedef struct {
    void *varfunc;
    short type;
 } Option;
-
-
-typedef struct DrvLine_ {
-   long x1;
-   long y1;
-   long x2;
-   long y2;
-   long pattern;
-   long colour;
-   long mode;
-   long draw_last;
-} DrvLine;
 
 
 /* VDI structures */
@@ -169,6 +159,43 @@ typedef struct {
 } GCBITMAP;
 
 
+typedef struct RGB_ {
+   short red;
+   short green;
+   short blue;
+} RGB;
+
+typedef struct Colour_ {
+   RGB vdi;
+   RGB hw;
+   long real;
+} Colour;
+
+typedef struct Fgbg_ {
+   short background;
+   short foreground;
+} Fgbg;
+
+
+typedef struct DrvPalette_ {
+   long first_pen;
+   long count;
+   COLOR_RGB *requested;
+   Colour *palette;
+} DrvPalette;
+
+typedef struct DrvLine_ {
+   long x1;
+   long y1;
+   long x2;
+   long y2;
+   long pattern;
+   long colour;
+   long mode;
+   long draw_last;
+} DrvLine;
+
+
 typedef struct Fontextra_ {
    struct distance1_ {		/* Calculated from the */
 	short base;		/*  values given with */
@@ -233,23 +260,6 @@ typedef struct Fontheader_ {
    struct Fontheader_ *next;	/* Pointer to next font */
    Fontextra extra;
 } Fontheader;
-
-typedef struct RGB_ {
-   short red;
-   short green;
-   short blue;
-} RGB;
-
-typedef struct Colour_ {
-   RGB vdi;
-   RGB hw;
-   long real;
-} Colour;
-
-typedef struct Fgbg_ {
-   short background;
-   short foreground;
-} Fgbg;
 
 typedef struct vwk_ {
    struct wk_ *real_address;
