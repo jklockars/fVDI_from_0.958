@@ -1,3 +1,8 @@
+2005-07-02 - johan
+Fixed problem with large number of open virtual workstations.
+Fake implementations of a number of vector font functions.
+Some bug fixes and minor improvements.
+	
 2005-07-26 - johan
 New memory allocation algorithm that requests largish blocks from the OS
 at once, splits them into pieces to satisfy requests, and keeps released
@@ -12,7 +17,7 @@ Fake implementations of the colour table related functions.
 Initial support for vr_transfer_bits.
 Debug printouts for non-implemented VDI functions.
 Signed/unsigned support for structer.
-fVDI engine version bumped to 0.964beta.
+fVDI engine version bumped to 0.965beta.
 	
 2005-07-09 - johan
 Fixed bug that caused polygon fill to overwrite low memory.
