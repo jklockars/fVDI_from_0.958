@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.18 2005-07-26 21:07:14 johan Exp $
+ * $Id: loader.c,v 1.19 2005-08-02 22:46:59 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -935,8 +935,12 @@ long load_fonts(Virtual *vwk, const char **ptr)
 
    copy("*.*", pathtail);
    
+#if 0
    puts("Fonts: ");
    puts_nl(fonts);
+#else
+   puts_nl("");
+#endif
 
    /* Initialize FreeType2 module */
    external_init();
@@ -954,8 +958,10 @@ long load_fonts(Virtual *vwk, const char **ptr)
       copy(info.d_fname, pathtail);
 #endif
 
+#if 0
       puts("   Load font: ");
       puts_nl(fonts);
+#endif
 
       if ((new_font = external_load_font(fonts))) {
          /* It's assumed that a device has been initialized (driver exists) */
@@ -966,7 +972,9 @@ long load_fonts(Virtual *vwk, const char **ptr)
       error = Fsnext();
    }
 
+#if 0
    puts_nl("   Load fonts done");
+#endif
 }
 
 

@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.4 2005-07-26 21:13:57 johan Exp $
+ * $Id: ft2.c,v 1.5 2005-08-02 22:47:29 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -227,12 +227,15 @@ Fontheader *ft2_load_font(const char *filename)
 	   font->extra.filename = strdup(filename);		/* font filename to load_glyphs on-demand */
 	   font->extra.index = 0;				/* index to load, FIXME: how to we load multiple of them */
 
+#if 0
 	   access->funcs.puts("FT2 font name: ");
+#endif
 	   access->funcs.puts(font->name);
 	   access->funcs.puts("\r\n");
+#if 0
 	   access->funcs.puts(font->extra.filename);
 	   access->funcs.puts("\r\n");
-
+#endif
 	   FT_Done_Face(face);
 	   ft_keep_closed();
    }
