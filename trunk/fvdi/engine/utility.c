@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.20 2005-07-26 21:07:14 johan Exp $
+ * $Id: utility.c,v 1.21 2005-08-02 22:19:45 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -985,6 +985,7 @@ void *fmalloc(long size, long type)
          }
       }
       new->size = size + sizeof(Circle);
+      *(long *)&new[1] = size;
       return (void *)&new[1];
    } else
       return new;
@@ -1128,6 +1129,7 @@ void *malloc(long size)
   }
 
 #if 1
+  *(long *)(block + sizeof(Circle)) = block_space[n];
   return block + sizeof(Circle);
 #else
   return fmalloc(size, 3);
