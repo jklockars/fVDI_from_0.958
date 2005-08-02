@@ -266,7 +266,7 @@ lib_v_hide_c:
 vq_mouse:
 	move.l	vwk_real_address(a0),a2
 	move.l	wk_mouse_position(a2),d0
-	move.l	ptsout(a0),a2
+	move.l	ptsout(a1),a2
 	move.l	d0,(a2)
 
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
