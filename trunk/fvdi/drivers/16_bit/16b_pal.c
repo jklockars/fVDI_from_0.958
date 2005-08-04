@@ -1,7 +1,7 @@
 /* 
  * 16 bit palette handling routines, by Johan Klockars.
  *
- * $Id: 16b_pal.c,v 1.3 2002-07-10 22:13:39 johan Exp $
+ * $Id: 16b_pal.c,v 1.4 2005-08-04 10:17:10 johan Exp $
  *
  * This file is an example of how to write an
  * fVDI device driver routine in C.
@@ -52,7 +52,7 @@ c_get_colour(Virtual *vwk, long colour, short *foreground, short* background)
 
 
 void CDECL
-c_set_colours(Virtual *vwk, long start, long entries, short *requested, Colour palette[])
+c_set_colours(Virtual *vwk, long start, long entries, unsigned short *requested, Colour palette[])
 {
 	unsigned short colour;
 	unsigned short component;
@@ -63,19 +63,19 @@ c_set_colours(Virtual *vwk, long start, long entries, short *requested, Colour p
 		requested = (short *)((long)requested & 0xfffffffeL);
 		for(i = 0; i < entries; i++) {
 			requested++;				/* First word is reserved */
-			component = *requested++;
-			palette[start + i].vdi.red = component;
+			component = *requested++ >> 8;
+			palette[start + i].vdi.red = (component * 1000L) / 255;
 			palette[start + i].hw.red = component;	/* Not at all correct */
 			colour = component >> (16 - red_bits);	/* (component + (1 << (14 - red_bits))) */
 			tc_word = colour << green_bits;
-			component = *requested++;
-			palette[start + i].vdi.green = component;
+			component = *requested++ >> 8;
+			palette[start + i].vdi.green = (component * 1000L) / 255;
 			palette[start + i].hw.green = component;	/* Not at all correct */
 			colour = component >> (16 - green_bits);	/* (component + (1 << (14 - green_bits))) */
 			tc_word |= colour;
 			tc_word <<= blue_bits;
-			component = *requested++;
-			palette[start + i].vdi.blue = component;
+			component = *requested++ >> 8;
+			palette[start + i].vdi.blue = (component * 1000L) / 255;
 			palette[start + i].hw.blue = component;	/* Not at all correct */
 			colour = component >> (16 - blue_bits);		/* (component + (1 << (14 - blue_bits))) */
 			tc_word |= colour;

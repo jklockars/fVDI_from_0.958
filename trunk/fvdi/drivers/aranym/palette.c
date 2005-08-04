@@ -142,16 +142,17 @@ SETNAME(Virtual *vwk, long start, long entries, unsigned short *requested, Colou
 		requested = (short *)((long)requested & 0xfffffffeL);
 		for(i = 0; i < entries; i++) {
 			requested++;				/* First word is reserved */
-			component = *requested++;
-			palette[start + i].vdi.red = component;
-			palette[start + i].hw.red = component;	/* Not at all correct */
-			component = *requested++;
-			palette[start + i].vdi.green = component;
-			palette[start + i].hw.green = component;	/* Not at all correct */
-			component = *requested++;
-			palette[start + i].vdi.blue = component;
-			palette[start + i].hw.blue = component;	/* Not at all correct */
+			component = *requested++ >> 8;
+			palette[start + i].vdi.red = (component * 1000L) / 255;
+			palette[start + i].hw.red = component;
+			component = *requested++ >> 8;
+			palette[start + i].vdi.green = (component * 1000L) / 255;
+			palette[start + i].hw.green = component;
+			component = *requested++ >> 8;
+			palette[start + i].vdi.blue = (component * 1000L) / 255;
+			palette[start + i].hw.blue = component;
 
+			/* Would likely be better to have a different mode for this */
 			c_get_hw_colour(  start + i,
 					  palette[start + i].vdi.red,
 					  palette[start + i].vdi.green,
