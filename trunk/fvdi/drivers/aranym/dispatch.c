@@ -143,7 +143,6 @@ c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2,
             long pattern, long colour, long mode)
 {
    long rect[4];
-
    long foreground;
    long background;
    get_colours_r((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
@@ -159,7 +158,6 @@ c_fill_polygon(Virtual *vwk, short points[], long n,
                long colour, long mode, long interior_style)
 {
    long rect[4];
-
    long foreground;
    long background;
    get_colours_r((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
@@ -168,6 +166,48 @@ c_fill_polygon(Virtual *vwk, short points[], long n,
    return ARAnyM((NF_fVDI+FVDI_FILL_POLYGON, vwk, points, n, index, moves, pattern,
                   foreground, background,
                   mode, interior_style, (long)clipping(vwk, rect)));
+}
+
+long CDECL
+c_text_area(Virtual *vwk, short *text, long length, long dst_x, long dst_y, short *offsets)
+{
+   long rect[4];
+   long foreground;
+   long background;
+   long *font;
+   long w, h, mode;
+   int ret;
+
+   if (vwk->text.effects)
+     return 0;
+
+   if (offsets)
+     return 0;
+
+   font = (long *)vwk->text.current_font->extra.unpacked.data;
+   if (!font)			/* Must have unpacked data */
+     return 0;
+
+   w = vwk->text.current_font->widest.cell;	/* Used to be character, which was wrong */
+   if (w != 8)			/* Only that width allowed for now */
+     return 0;
+
+   get_colours_r(vwk, *(long *)&vwk->text.colour, &foreground, &background);
+
+   dst_y += (&vwk->text.current_font->extra.distance.base)[vwk->text.alignment.vertical];
+
+   h = vwk->text.current_font->height;
+
+   mode = vwk->mode;
+
+   /* Why is the cast needed for Lattice C? */
+   ret =  ARAnyM((NF_fVDI+FVDI_TEXT_AREA, vwk, text, length, dst_x, dst_y, font, w, h,
+                  foreground, background, mode, (long)clipping(vwk, rect)));
+
+   if (ret == -32)    // Unknown NatFeat?
+     return 0;
+
+   return ret;
 }
 
 long CDECL

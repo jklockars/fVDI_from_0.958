@@ -118,7 +118,7 @@ extern long tokenize(char *value);
 long wk_extend = 0;
 
 short accel_s = 0;
-short accel_c = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_EXPAND | A_FILLPOLY | A_SET_PAL | A_GET_COL;
+short accel_c = A_SET_PIX | A_GET_PIX | A_MOUSE | A_LINE | A_BLIT | A_FILL | A_EXPAND | A_FILLPOLY | A_SET_PAL | A_GET_COL | A_TEXT;
 
 Mode *graphics_mode = &mode[1];
 
@@ -132,6 +132,7 @@ extern void *c_expand_area;
 extern void *c_fill_area;
 extern void *c_fill_polygon;
 extern void *c_blit_area;
+extern void *c_text_area;
 extern void *c_mouse_draw;
 extern void *c_set_colours_8, *c_set_colours_16, *c_set_colours_32;
 extern void *c_get_colours_8, *c_get_colours_16, *c_get_colours_32;
@@ -144,7 +145,7 @@ void *expand_area_r = &c_expand_area;
 void *fill_area_r   = &c_fill_area;
 void *fill_poly_r   = &c_fill_polygon;
 void *blit_area_r   = &c_blit_area;
-void *text_area_r   = 0;
+void *text_area_r   = &c_text_area;;
 void *mouse_draw_r  = &c_mouse_draw;
 void *set_colours_r = &c_set_colours_16;
 void *get_colours_r = &c_get_colours_16;
