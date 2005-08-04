@@ -1,7 +1,7 @@
 /*
  * fVDI default drawing function code
  *
- * $Id: default.c,v 1.4 2005-07-26 21:39:06 johan Exp $
+ * $Id: default.c,v 1.5 2005-08-04 10:14:54 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -691,12 +691,49 @@ int colour_entry(Virtual *vwk, long subfunction, short *intin, short *intout)
 }
 
 
+extern int set_col_table(Virtual *vwk, long colours, long start, void *values);
+
 int set_colour_table(Virtual *vwk, long subfunction, short *intin)
 {
+  COLOR_TAB *ctab;
+
   switch(subfunction) {
   case 0:     /* vs_ctab */
-    puts("vs_ctab not yet supported\x0a\x0d");
-    return 256;    /* Not really correct */
+    ctab = (COLOR_TAB *)intin;
+#if 0
+    puts("vs_ctab still not verified\x0a\x0d");
+    {
+      long *lptr;
+      short *sptr;
+      int i, j;
+      char buf[10];
+
+      lptr = (long *)ctab;
+      for(i = 0; i < 6; i++) {
+	ltoa(buf, *lptr++, 16);
+	puts(buf);
+	puts(" ");
+      }
+      puts("\x0a\x0d");
+      for(i = 0; i < 6; i++) {
+	ltoa(buf, *lptr++, 16);
+	puts(buf);
+	puts(" ");
+      }
+      puts("\x0a\x0d");
+      sptr = (short *)&ctab->colors;
+      for(j = 0; j < 64; j++) {
+	for(i = 0; i < 16; i++) {
+	  ltoa(buf, *sptr++ & 0xffffL, 16);
+	  puts(buf);
+	  puts(" ");
+	}
+	puts("\x0a\x0d");
+      }
+    }
+#endif
+    set_col_table(vwk, ctab->no_colors, 0, &ctab->colors);
+    return vwk->real_address->screen.palette.size;    /* Not really correct */
   case 1:     /* vs_ctab_entry */
     puts("vs_ctab_entry not yet supported\x0a\x0d");
     return 1;      /* Seems to be the only possible value for non-failure */
@@ -762,12 +799,32 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
     *(long *)&intout[0] = 0xbadc0de1;   /* Not really correct */
     return 2;
   case 3:     /* v_ctab_idx2vdi */
-    puts("v_ctab_idx2vdi not yet supported\x0a\x0d");
-    intout[0] = intin[0];    /* Not really correct */
+    if (vwk->real_address->driver->device->clut != 1)
+      intout[0] = intin[0];
+    else if (intin[0] == vwk->real_address->screen.palette.size - 1)
+      intout[0] = 1;
+    else if ((intin[0] >= 16) && (intin[0] != 255))
+      intout[0] = intin[0];
+    else {
+      static signed char vdi_colours[] = {0,2,3,6,4,7,5,8,9,10,11,14,12,15,13,-1};
+      intout[0] = vdi_colours[intin[0]];
+      if (intout[0] < 0)
+	intout[0] = vwk->real_address->screen.palette.size - 1;
+    }
     return 1;
   case 4:     /* v_ctab_vdi2idx */
-    puts("v_ctab_vdi2idx not yet supported\x0a\x0d");
-    intout[0] = intin[0];    /* Not really correct */
+    if (vwk->real_address->driver->device->clut != 1)
+      intout[0] = intin[0];
+    else if (intin[0] == 255)
+      intout[0] = 15;
+    else if (intin[0] >= 16)
+      intout[0] = intin[0];
+    else {
+      static signed char tos_colours[] = {0,-1,1,2,4,6,3,5,7,8,9,10,12,14,11,13};
+      intout[0] = tos_colours[intin[0]];
+      if (intout[0] < 0)
+	intout[0] = vwk->real_address->screen.palette.size - 1;
+    }
     return 1;
   case 5:     /* v_ctab_idx2value */
     puts("v_ctab_idx2value not yet supported\x0a\x0d");

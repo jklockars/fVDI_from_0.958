@@ -1,7 +1,7 @@
 *****
 * fVDI colour functions
 *
-* $Id: colours.s,v 1.5 2005-07-26 21:40:08 johan Exp $
+* $Id: colours.s,v 1.6 2005-08-04 10:14:54 johan Exp $
 *
 * Copyright 1997-2000, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -25,9 +25,82 @@ neg_pal_n	equ	9		; Number of negative palette entries
 ;	xdef	lib_vsf_color,lib_vsf_interior,lib_vsf_style,lib_vsf_perimeter,lib_vsf_udpat,lib_vqf_attributes
 	xdef	lib_vs_color
 
+	xdef	_set_col_table
 
 	text
 
+* int set_col_table(Virtual *vwk, long colours, long start, void *values);
+_set_col_table:
+	movem.l	d2/a2-a3,-(a7)
+
+	move.l	3*4+4(a7),a0
+	move.l	vwk_palette(a0),d1
+	lbeq	.allocate,1
+	bclr	#0,d1
+	lbeq	.exists,4
+
+ label .allocate,1
+	move.l	vwk_real_address(a0),a2
+	move.w	wk_screen_palette_size(a2),d0
+	add.w	#neg_pal_n,d0		; Make room for negative indices
+	mulu	#colour_struct_size,d0	; Bytes for local colour index table
+
+	move.l	#3,-(a7)
+	move.l	d0,-(a7)
+	jsr	_malloc
+	addq.l	#8,a7
+
+	move.l	d0,d1
+	moveq	#0,d0
+	tst.l	d1
+	lbeq	.end,5
+
+	move.l	d1,a3
+	add.w	#neg_pal_n*colour_struct_size,a3	
+	move.l	3*4+4(a7),a0
+	move.l	vwk_palette(a0),d2
+	lbeq	.no_negs,3
+	and.w	#$fffe,d2
+		
+	move.l	d1,a3
+	sub.l	#neg_pal_n*colour_struct_size,d2
+	move.l	d2,a1
+	moveq	#neg_pal_n-1,d0
+ label .loop3,2
+	move.l	(a1)+,(a3)+		; Assume Colour is 16 bytes large
+	move.l	(a1)+,(a3)+
+	move.l	(a1)+,(a3)+
+	move.l	(a1)+,(a3)+
+	ldbra	d0,.loop3,2
+
+	move.l	d2,-(a7)
+	jsr	_free
+	addq.l	#4,a7
+
+ label .no_negs,3
+	move.l	a3,vwk_palette(a0)
+
+ label .exists,4
+	move.l	3*4+4(a7),a0
+	move.l	3*4+8(a7),d0		; Colours to set up
+	move.l	3*4+12(a7),d2		; First colour
+	move.l	3*4+16(a7),a1
+	
+	swap	d0
+	move.w	d2,d0
+	addq.l	#1,a1			; Odd for new style entries
+
+	move.l	vwk_real_address(a0),a2
+	move.l	wk_r_set_palette(a2),a3
+	move.l	vwk_palette(a0),a2
+	jsr	(a3)
+
+	moveq	#1,d0
+ label .end,5
+	movem.l	(a7)+,d2/a2-a3
+	rts
+
+	
 	dc.b	0,0,"vs_fg_color",0
 * vs_fg_color - Standard Trap function
 * Todo: ?
@@ -128,7 +201,7 @@ vs_bg_color:
 	move.l	d0,a3
 	movem.l	d2/a0-a2,-(a7)
 	move.l	#3,-(a7)
-	move.l	#neg_pal_n*colour_struct_size,-(a7)	; Only negative inidices
+	move.l	#neg_pal_n*colour_struct_size,-(a7)	; Only negative indices
 	jsr	_malloc
 	addq.l	#8,a7
 	movem.l	(a7)+,d2/a0-a2
