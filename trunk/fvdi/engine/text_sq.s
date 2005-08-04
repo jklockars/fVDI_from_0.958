@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.10 2005-08-02 22:18:53 johan Exp $
+* $Id: text_sq.s,v 1.11 2005-08-04 10:13:07 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -17,6 +17,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	xref	_vdi_stack_top,_vdi_stack_size
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
+	xref	_external_char_bitmap
 	xref	_sizes
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
@@ -71,6 +72,9 @@ vst_kern:
 * In:   a1      Parameter block
 *       a0      VDI struct
 v_getbitmap_info:
+	uses_d1
+	movem.l	d2/a3,-(a7)
+	
 	move.l	intout(a1),a2
 	move.w	#6,(a2)+	; Width
 	move.w	#12,(a2)+	; Height
@@ -78,7 +82,43 @@ v_getbitmap_info:
 	move.l	#$00100000,(a2)+ ; Y advance
 	move.l	#0,(a2)+	; X offset
 	move.l	#0,(a2)+	; Y offset
-	move.l	#v_getbitmap_info,(a2)+ ; Dummy bitmap pointer
+	move.l	#v_getbitmap_info,(a2) ; Dummy bitmap pointer
+
+
+	move.l	vwk_text_current_font(a0),a2
+
+* Some other method should be used for this!
+	tst.w	font_flags(a2)
+	bpl	.no_external_char_bitmap
+	move.l	_external_char_bitmap,d2	; (Handle differently?)
+	beq	.no_external_char_bitmap	; Not really allowed!
+	move.l	d2,a3
+
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	move.l	a1,-(a7)
+	move.l	_vdi_stack_size,-(a7)
+	move.l	intin(a1),a1
+	move.w	(a1),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a2,-(a7)			; Fontheader
+	jsr	(a3)
+	add.w	#3*4,a7
+	move.l	(a7)+,a1
+
+	move.l	(a7),a7				; Return to original stack
+
+	tst.l	d0
+	beq	.no_external_char_bitmap
+	move.l	intout(a1),a2
+	move.l	d0,20(a2)
+	
+.no_external_char_bitmap:
+	movem.l	(a7)+,d2/a3
+	used_d1
 	done_return
 
 

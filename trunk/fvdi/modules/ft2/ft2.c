@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.5 2005-08-02 22:47:29 johan Exp $
+ * $Id: ft2.c,v 1.6 2005-08-04 10:17:55 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -457,8 +457,8 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	FT_Face face;
 	FT_Error error;
 	FT_GlyphSlot glyph;
-	FT_Glyph_Metrics* metrics;
-	FT_Outline* outline;
+	FT_Glyph_Metrics *metrics;
+	FT_Outline *outline;
 
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
@@ -548,7 +548,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 		/* Copy over information to cache */
 		src = &glyph->bitmap;
 		dst = &cached->bitmap;
-		memcpy(dst, src, sizeof( *dst ));
+		memcpy(dst, src, sizeof(*dst));
 
 #if 0
 		/* Adjust for bold and italic text */
@@ -561,7 +561,11 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 			dst->width += bump;
 		}
 #endif
-		dst->pitch = (dst->width+7) >> 3;
+#if 0
+		dst->pitch = (dst->width + 7) >> 3;
+#else
+		dst->pitch = ((dst->width + 15) >> 4) * 2;   /* Only whole words */
+#endif
 
 		if (dst->rows != 0) {
 			dst->buffer = malloc(dst->pitch * dst->rows);
@@ -635,7 +639,7 @@ static void ft2_flush_cache(Fontheader *font)
 	int size = 256;
 
 	for(i = 0; i < size; ++i) {
-		if (((c_glyph*)font->extra.cache)[i].cached) {
+		if (((c_glyph *)font->extra.cache)[i].cached) {
 			ft2_flush_glyph(&((c_glyph *)font->extra.cache)[i]);
 		}
 
@@ -662,6 +666,14 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 	}
 
 	return retval;
+}
+
+void *ft2_char_bitmap(Fontheader *font, long ch)
+{
+  if (ft2_find_glyph(font, ch, CACHED_BITMAP))
+    return 0;
+
+  return ((c_glyph *)font->extra.current)->bitmap.buffer;
 }
 
 int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
@@ -839,7 +851,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 		glyph = font->extra.current;
 		current = &glyph->bitmap;
-		/* Ensure the width of the pixmap is correct. On some cases,
+		/* Ensure the width of the pixmap is correct. In some cases,
 		 * freetype may report a larger pixmap than possible.
 		 */
 		width = current->width;
@@ -1031,6 +1043,7 @@ long ft2_char_width(Fontheader *font, long ch)
 long ft2_text_width(Fontheader *font, short *s, long slen)
 {
 	int width;
+
 	/* Terminate text */
 	s[slen] = 0;
 	/* Get the dimensions of the text surface */
@@ -1208,7 +1221,7 @@ int TTF_SizeText(TTF_Font *font, const char *text, int *w, int *h)
 
 	/* Copy the Latin-1 text to a UNICODE text buffer */
 	unicode_len = strlen(text);
-	unicode_text = (Uint16 *)malloc((unicode_len + 1)*(sizeof *unicode_text));
+	unicode_text = (Uint16 *)malloc((unicode_len + 1) * (sizeof *unicode_text));
 	if (unicode_text == NULL) {
 		TTF_SetError("Out of memory");
 		return -1;
@@ -1234,7 +1247,7 @@ MFDB *TTF_RenderText_Solid(TTF_Font *font,
 
 	/* Copy the Latin-1 text to a UNICODE text buffer */
 	unicode_len = strlen(text);
-	unicode_text = (Uint16 *)malloc((unicode_len + 1)*(sizeof *unicode_text));
+	unicode_text = (Uint16 *)malloc((unicode_len + 1) * (sizeof *unicode_text));
 	if (unicode_text == NULL) {
 		TTF_SetError("Out of memory");
 		return(NULL);
