@@ -1,4 +1,9 @@
-2005-07-02 - johan
+2005-08-04 - johan
+Partial implementation of v_getbitmap_info.
+Implemented vs_ctab and vdi<->index conversions.
+Added text acceleration support to ARAnyM driver.
+
+2005-08-02 - johan
 Fixed problem with large number of open virtual workstations.
 Fake implementations of a number of vector font functions.
 Some bug fixes and minor improvements.
