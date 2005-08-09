@@ -94,6 +94,7 @@ CSRC = \
 	polygon.c \
 	setup.c \
 	workstn.c \
+	colour.c \
 	default.c
 
 ifneq ($(ft2_srcdir),)
@@ -161,7 +162,9 @@ $(top_srcdir)/include/types.inc: $(top_srcdir)/include/fvdi.h
 	  >> $(top_srcdir)/include/types.inc
 	@echo "*  Fontheader=font MFDB=mfdb Colour=colour RGB=rgb List=list \\"\
 	  >> $(top_srcdir)/include/types.inc
-	@echo "*  Driver=driver Mouse=mouse Device=dev DrvLine=drvline > types.inc"\
+	@echo "*  Driver=driver Mouse=mouse Device=dev DrvLine=drvline \\"\
+	  >> $(top_srcdir)/include/types.inc
+	@echo "*  DrvPalette=drvpalette > types.inc"\
 	  >> $(top_srcdir)/include/types.inc
 	@echo "*"\
 	  >> $(top_srcdir)/include/types.inc
@@ -189,7 +192,7 @@ $(top_srcdir)/include/types.inc: $(top_srcdir)/include/fvdi.h
 	  $(top_srcdir)/utility/structer/structer \
 	  Virtual=vwk Workstation=wk Fontheader=font MFDB=mfdb \
 	  Colour=colour RGB=rgb List=list Driver=driver \
-	  Mouse=mouse Device=dev DrvLine=drvline \
+	  Mouse=mouse Device=dev DrvLine=drvline DrvPalette=drvpalette \
 	  >> $(top_srcdir)/include/types.inc
 
 depend: $(CSRC)

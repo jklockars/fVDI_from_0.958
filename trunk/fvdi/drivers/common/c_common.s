@@ -1,7 +1,7 @@
 *****
 * fVDI->driver interface (C functions), by Johan Klockars
 *
-* $Id: c_common.s,v 1.7 2005-07-10 00:14:30 johan Exp $
+* $Id: c_common.s,v 1.8 2005-08-09 08:37:37 johan Exp $
 *
 * Most fVDI device drivers are expected to make use of this file.
 *
@@ -238,8 +238,8 @@ old_api_line:
 new_api_line:
 	movem.l		d2-d7/a2-a6,-(a7)
 
-	move.l		4(a7),a0
-	move.l		8(a7),a1
+	move.l		11*4+4(a7),a0
+	move.l		11*4+8(a7),a1
 	move.l		drvline_x1(a1),d1
 	move.l		drvline_y1(a1),d2
 	move.l		drvline_x2(a1),d3
@@ -586,6 +586,9 @@ c_mouse:
 *---------
 _c_set_palette:
 c_set_palette:
+	cmp.w		#$c0de,d0
+	beq		new_api_set_palette
+
 	movem.l		d0-d2/a0-a2,-(a7)
 
 	move.l		a2,-(a7)
@@ -601,6 +604,21 @@ c_set_palette:
 	ijsr		_set_colours_r
 	add.w		#20,a7
 
+	movem.l		(a7)+,d0-d2/a0-a2
+	rts
+
+new_api_set_palette:
+	movem.l		d0-d2/a0-a2,-(a7)
+
+	move.l		6*4+4(a7),a0
+	move.l		6*4+8(a7),a1
+	move.l		drvpalette_palette(a1),-(a7)
+	move.l		drvpalette_requested(a1),-(a7)
+	move.l		drvpalette_count(a1),-(a7)
+	move.l		drvpalette_first_pen(a1),-(a7)
+	move.l		a0,-(a7)
+	ijsr		_set_colours_r
+	add.w		#20,a7
 	movem.l		(a7)+,d0-d2/a0-a2
 	rts
 

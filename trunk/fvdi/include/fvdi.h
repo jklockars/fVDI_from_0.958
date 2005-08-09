@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.11 2005-08-02 22:22:10 johan Exp $
+ * $Id: fvdi.h,v 1.12 2005-08-09 08:37:37 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -97,7 +97,7 @@ typedef struct {
 
 
 typedef struct {
-   unsigned short reservedc;
+   unsigned short reserved;
    unsigned short red;
    unsigned short green;
    unsigned short blue;
@@ -131,10 +131,14 @@ typedef struct {
    long reserved2;
    long reserved3;
    long reserved4;
+#if 1
 #if defined(__GNUC__) || defined (__LATTICE__)
    COLOR_ENTRY colors[0];
 #else
    COLOR_ENTRY colors[];
+#endif
+#else
+   COLOR_ENTRY colors;   /* Really beginning of an array of COLOR_ENTRY */
 #endif
 } COLOR_TAB;
 
@@ -180,7 +184,7 @@ typedef struct Fgbg_ {
 typedef struct DrvPalette_ {
    long first_pen;
    long count;
-   COLOR_RGB *requested;
+   short *requested;
    Colour *palette;
 } DrvPalette;
 
