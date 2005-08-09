@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.9 2005-08-02 22:18:53 johan Exp $
+* $Id: traptabl.s,v 1.10 2005-08-09 08:28:25 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -52,6 +52,7 @@ transparent	equ	1		; Fall through?
 	xref	special_5,special_11,v_bez_con
 	xref	vr_transfer_bits,colour_entry
 	xref	set_colour_table,colour_table,inverse_table
+	xref	v_kill_outline
 
 
 	data
@@ -288,7 +289,7 @@ default_functions:
 	dc.w	0,0
 	dc.l	v_ftext
 	dc.w	0,0
-	dc.l	nothing
+	dc.l	v_kill_outline
 	dc.w	0,0
 	dc.l	v_getoutline
 	dc.w	0,0
@@ -364,9 +365,6 @@ default_opcode11:
 
 
   ifne 0
-*** This has no known number so far
-v_kill_outline
-
 *** Other NVDI things and such
 
 5,24

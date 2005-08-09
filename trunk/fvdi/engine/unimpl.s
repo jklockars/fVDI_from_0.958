@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.12 2005-08-02 22:18:53 johan Exp $
+* $Id: unimpl.s,v 1.13 2005-08-09 08:28:25 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -29,10 +29,6 @@ transparent	equ	1		; Fall through?
 	xdef	vrq_locator,vrq_valuator,vrq_choice,vrq_string,vsin_mode
 	xdef	v_contourfill
 	xdef	vqin_mode
-  ifne 0
-	xdef	vex_timv,vex_butv,vex_motv,vex_curv,vex_wheelv
-	xdef	vq_mouse,vq_key_s
-  endc
 	xdef	v_cellarray,vq_cellarray
 	xdef	vst_name,vst_width,vst_charmap
 	xdef	v_getoutline,vst_scratch
@@ -42,9 +38,9 @@ transparent	equ	1		; Fall through?
 	xdef	v_set_app_buff
 	xdef	vq_tabstatus,v_hardcopy,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
-;	xdef	v_rbox,v_rfbox
 	xdef	start_unimpl,end_unimpl
 	xdef	special_5,special_11
+	xdef	v_kill_outline
 
 
 	text
@@ -98,31 +94,14 @@ setting:
 
 	text
 
-  ifne 0
-	dc.b	0,0,"Normal IO",0
-* Normal mouse/keyboard functions
-vq_mouse:
-vq_key_s:
-	bra	redirect
-  endc
-
-  ifne 0
-	dc.b	0,0,"Vector exchange",0
-* Vector exchange functions
-vex_timv:
-vex_butv:
-vex_motv:
-vex_curv:
-vex_wheelv:
-	tst.w	_no_vex
-	beq	redirect
-	done_return
-  endc
-
 	dc.b	0,0,"Miscellaneous",0
 vq_cellarray:
 	bra	redirect
 
+	dc.b	0,"Outdated",0
+v_kill_outline:
+	done_return
+	
 	dc.b	0,"NVDI",0
 vst_name:
 vst_width:
