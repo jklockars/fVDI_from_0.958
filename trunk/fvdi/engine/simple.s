@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.9 2005-08-10 10:09:41 johan Exp $
+* $Id: simple.s,v 1.10 2005-08-10 10:12:27 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -25,9 +25,6 @@ transparent	equ	1		; Fall through?
 
 	xdef	v_opnwk,v_opnvwk,v_clsvwk,v_clswk
 	xdef	vs_clip,vswr_mode,vq_extnd
-  ifne 0
-	xdef	_opnvwk_values
-  endc
 
 	xdef	lib_vs_clip,lib_vswr_mode
 	xdef	_lib_vs_clip
@@ -311,189 +308,6 @@ vq_extnd:
 	used_d1
 	done_return
 	
-  ifne 0
-	move.l	intin(a1),a2
-	move.w	(a2),d0
-	move.l	intout(a1),a2
-	bne	.not_opnvwk
-	bsr	opnvwk_values
-	bra	.end_vq_extnd	; .end
-
-.not_opnvwk:
-	cmp.w	#2,d0
-	bne	.normal_extended
-	move.l	control(a1),a2
-	cmp.w	#1,10(a2)
-	beq	vq_scrninfo
-	move.l	intout(a1),a2
-.normal_extended:
-	move.l	a1,d0
-	move.l	vwk_real_address(a0),a1
-	move.w	wk_screen_type(a1),(a2)+
-	move.w	wk_screen_bkg_colours(a1),(a2)+
-	move.w	wk_writing_effects(a1),(a2)+	
-	move.w	wk_raster_scaling(a1),(a2)+
-	move.w	wk_screen_mfdb_bitplanes(a1),(a2)+
-	move.w	wk_screen_look_up_table(a1),(a2)+
-	move.w	wk_raster_performance(a1),(a2)+
-	move.w	wk_drawing_flood_fill(a1),(a2)+
-	move.w	wk_writing_rotation_type(a1),(a2)+
-	move.w	wk_drawing_writing_modes(a1),(a2)+
-	move.w	wk_various_input_type(a1),(a2)+
-	move.w	wk_writing_justification(a1),(a2)+
-	move.w	wk_various_inking(a1),(a2)+
-	move.w	wk_drawing_rubber_banding(a1),(a2)+
-	move.w	wk_various_max_ptsin(a1),(a2)+
-	move.w	wk_various_max_intin(a1),(a2)+
-	move.w	wk_various_buttons(a1),(a2)+
-	move.w	wk_drawing_line_wide_types_possible(a1),(a2)+
-	move.w	wk_drawing_line_wide_writing_modes(a1),(a2)+
-	move.w	vwk_clip_on(a0),(a2)+
-	move.l	d0,a1
-
-	move.w	#0,(a2)+		; No pixel sizes in the next few places
-
-	moveq	#27-20-1,d0
- label .loop1,1
-	move.w	#0,(a2)+
-	ldbra	d0,.loop1,1
-
-	move.w	#2,(a2)+		; Beziers!
-
-	moveq	#29-28-1,d0
- label .loop2,2
-	move.w	#0,(a2)+
-	ldbra	d0,.loop2,2
-
-	move.w	#0,(a2)+		; 1 - bitmap scale, 2 - new raster functions
-
-	move.w	#0,(a2)+
-
-	move.w	#1,(a2)+		; New style colour routines (at least some of them)
-
-	moveq	#39-32-1,d0
- label .loop3,3
-	move.w	#0,(a2)+
-	ldbra	d0,.loop3,3
-
-	move.w	#0,(a2)+		; Unusable left border
-	move.w	#0,(a2)+		;          upper
-	move.w	#0,(a2)+		;          right
-	move.w	#0,(a2)+		;          lower
-
-	move.w	#0,(a2)+
-
-	move.l	ptsout(a1),a1
-	move.w	vwk_clip_rectangle_x1,(a1)+
-	move.w	vwk_clip_rectangle_y1,(a1)+
-	move.w	vwk_clip_rectangle_x2,(a1)+
-	move.w	vwk_clip_rectangle_y2,(a1)+
-
-	moveq	#11-3-1,d0
- label .loop4,4
-	move.w	#0,(a1)+
-	ldbra	d0,.loop4,4
-
-.end_vq_extnd:		; .end:
-;	return
-	done_return
-
-_opnvwk_values:
-	move.l	a2,-(a7)
-	move.l	4+4(a7),a0
-	move.l	4+8(a7),a1
-	move.l	intout(a1),a2
-	bsr	opnvwk_values
-	move.l	(a7)+,a2
-	rts
-
-opnvwk_values:
-	uses_d1
-	movem.l	d2/a3,-(a7)
-	move.l	ptsout(a1),a1
-	move.l	vwk_real_address(a0),a0
-	move.l	wk_screen_coordinates_max_x(a0),(a2)+
-	move.w	wk_screen_coordinates_course(a0),(a2)+
-	move.l	wk_screen_pixel_width(a0),(a2)+
-	move.w	wk_writing_size_possibilities(a0),(a2)+
-	move.w	wk_drawing_line_types(a0),(a2)+
-	move.w	wk_drawing_line_wide_width_possibilities(a0),(a2)+
-	move.w	wk_drawing_marker_types(a0),(a2)+
-	move.w	wk_drawing_marker_size_possibilities(a0),(a2)+
-;	move.w	wk_writing_fonts(a0),(a2)+
-	move.w	#1,(a2)+
-	move.l	wk_drawing_fill_patterns(a0),(a2)+
-	move.w	wk_screen_palette_size(a0),(a2)+
-	move.w	wk_drawing_primitives_supported(a0),(a2)+
-
-	lea	10*2(a2),a3
-	move.l	wk_drawing_primitives_attributes(a0),d0
-	moveq	#9,d1
- label .loop,1
-	move.w	d0,d2
-	and.w	#$0007,d2
-	lbeq	.not_implemented,2
-	subq.w	#1,d2
-	move.w	d2,(a3)+
-	moveq	#10,d2
-	sub.w	d1,d2
-	move.w	d2,-(2+10*2)(a3)
- label .not_implemented,2
-	lsr.l	#3,d0
-	ldbeq	d1,.loop,1
-	lea	2*10*2(a2),a2
-	cmp.l	a2,a3
-	beq	.no_marker
-	move.w	#-1,-(2+10*2)(a3)
-.no_marker:
-
-	move.w	wk_screen_colour(a0),(a2)+
-	move.w	wk_writing_rotation_possible(a0),(a2)+
-	move.w	wk_drawing_fill_possible(a0),(a2)+
-	move.w	wk_drawing_cellarray_available(a0),(a2)+
-	move.w	wk_screen_palette_possibilities(a0),(a2)+
-	move.l	wk_various_cursor_movement(a0),(a2)+	; Also number_entry
-	move.l	wk_various_selection(a0),(a2)+		; Also typing
-	move.w	wk_various_workstation_type(a0),(a2)+
-
-	move.w	wk_writing_size_width_min(a0),(a1)+
-	move.w	wk_writing_size_height_min(a0),(a1)+
-	move.w	wk_writing_size_width_max(a0),(a1)+
-	move.w	wk_writing_size_height_max(a0),(a1)+
-	move.w	wk_drawing_line_wide_width_min(a0),(a1)+
-	move.w	#0,(a1)+
-	move.w	wk_drawing_line_wide_width_max(a0),(a1)+
-	move.w	#0,(a1)+
-	move.w	wk_drawing_marker_size_width_min(a0),(a1)+
-	move.w	wk_drawing_marker_size_height_min(a0),(a1)+
-	move.w	wk_drawing_marker_size_width_max(a0),(a1)+
-	move.w	wk_drawing_marker_size_height_max(a0),(a1)+
-
-	movem.l	(a7)+,d2/a3
-	used_d1
-	rts
-
-vq_scrninfo:
-	move.w	#0,4(a2)		; # ptsout
-	move.w	#272,8(a2)		; # intout
-	move.l	intout(a1),a2
-
-	move.l	vwk_real_address(a0),a0		; a0 no longer -> VDI struct
-	move.l	wk_driver(a0),a1
-	move.l	driver_device(a1),a1
-
-	move.w	#271,d0
- label .loop,1
-	move.w	(a1)+,(a2)+
-	ldbra	d0,.loop,1
-	sub.w	#271*2+2,a2
-
-	move.l	wk_screen_mfdb_address(a0),dev_address(a2)
-	move.w	wk_screen_wrap(a0),dev_byte_width(a2)
-
-	done_return
-  endc
-
 
 	dc.b	0,"vq_chcells",0
 * vq_chcells - Standard Trap function
