@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.8 2005-08-02 22:16:45 johan Exp $
+ * $Id: workstn.c,v 1.9 2005-08-10 10:09:41 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -17,6 +17,9 @@
 
 
 Virtual **handle_link = 0;
+
+int lib_vq_extnd(Virtual *vwk, long subfunction, long flag,
+		 short *intout, short *ptsout);
 
 
 void
@@ -271,7 +274,12 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 	vwk->fill.user.pattern.extra = 0;
 	vwk->fill.user.multiplane = 0;
 
+#if 0
 	opnvwk_values(vwk, pars);		/* Return information about workstation */
+#else
+	/* Return information about workstation */
+	lib_vq_extnd(vwk, 0, 0, pars->intout, pars->ptsout);
+#endif
 
 	pars->control->handle = vwk->standard_handle = hnd;
 	*handle_entry = vwk;
@@ -499,3 +507,134 @@ void v_clswk(Virtual *vwk, VDIpars *pars)
 	return;
 }
 
+
+int lib_vq_extnd(Virtual *vwk, long subfunction, long flag,
+		 short *intout, short *ptsout)
+{
+  Workstation *wk = vwk->real_address;
+
+  if ((flag == 2) && (subfunction == 1)) {
+    copymem_aligned(wk->driver->device, intout, sizeof(Device));
+    ((Device *)intout)->address = wk->screen.mfdb.address;
+    ((Device *)intout)->byte_width = wk->screen.wrap;
+    return 1;
+  } else if (flag) {
+    *intout++ = wk->screen.type;
+    *intout++ = wk->screen.bkg_colours;
+    *intout++ = wk->writing.effects;
+    *intout++ = wk->raster.scaling;
+    *intout++ = wk->screen.mfdb.bitplanes;
+    *intout++ = wk->screen.look_up_table;
+    *intout++ = wk->raster.performance;
+    *intout++ = wk->drawing.flood_fill;
+    *intout++ = wk->writing.rotation.type;
+    *intout++ = wk->drawing.writing_modes;
+    *intout++ = wk->various.input_type;
+    *intout++ = wk->writing.justification;
+    *intout++ = wk->various.inking;
+    *intout++ = wk->drawing.rubber_banding;
+    *intout++ = wk->various.max_ptsin;
+    *intout++ = wk->various.max_intin;
+    *intout++ = wk->various.buttons;
+    *intout++ = wk->drawing.line.wide.types_possible;
+    *intout++ = wk->drawing.line.wide.writing_modes;
+    *intout++ = vwk->clip.on;  /* 19 - originally reserved from here on */
+    *intout++ = 0;   /* No pixel sizes below (1 - 0.1 um, 2 - 0.01, 3 - 0.001 */
+    *intout++ = 0;   /* Pixel width */
+    *intout++ = 0;   /* Pixel height */
+    *intout++ = 0;   /* Horizontal dpi */
+    *intout++ = 0;   /* Vertical dpi */
+    *intout++ = 0;   /* Bit image rotation on printer (PC-GEM/3) */
+    *intout++ = 0;   /* AES buffer address (PC-GEM/3) */
+    *intout++ = 0;   /*         -    "    -           */
+    *intout++ = 2;   /* Beziers! */
+    *intout++ = 0;   /* Unused */
+    *intout++ = 0;   /* 1 - bitmap scale, 2 - new raster functions, 4 - vr_clip_rects_xxx */
+    *intout++ = 0;   /* 9 from here used to be reserved */
+    *intout++ = 1;   /* New style colour routines (at least some of them) */
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;
+    *intout++ = 0;   /* Unusable left border */
+    *intout++ = 0;   /*          upper       */
+    *intout++ = 0;   /*          right       */
+    *intout++ = 0;   /*          lower       */
+    *intout++ = 0;   /* Paper format (default/A3/A4/A5/B5/letter/half/legal/double/broad */
+
+    *ptsout++ = vwk->clip.rectangle.x1;
+    *ptsout++ = vwk->clip.rectangle.y1;
+    *ptsout++ = vwk->clip.rectangle.x2;
+    *ptsout++ = vwk->clip.rectangle.y2;
+    *ptsout++ = 0;   /* Reserved from here on */
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+    *ptsout++ = 0;
+
+    return 0;
+  } else {
+    long attributes;
+    int i, n;
+    *intout++ = wk->screen.coordinates.max_x;
+    *intout++ = wk->screen.coordinates.max_y;
+    *intout++ = wk->screen.coordinates.course;
+    *intout++ = wk->screen.pixel.width;
+    *intout++ = wk->screen.pixel.height;
+    *intout++ = wk->writing.size.possibilities;
+    *intout++ = wk->drawing.line.types;
+    *intout++ = wk->drawing.line.wide.width.possibilities;
+    *intout++ = wk->drawing.marker.types;
+    *intout++ = wk->drawing.marker.size.possibilities;
+    *intout++ = 1;     /* Fonts */
+    *intout++ = wk->drawing.fill.patterns;
+    *intout++ = wk->drawing.fill.hatches;
+    *intout++ = wk->screen.palette.size;
+    *intout++ = wk->drawing.primitives.supported;
+
+    attributes = wk->drawing.primitives.attributes;
+    n = 0;
+    for(i = 9; i >= 0; i--) {
+      if (attributes & 0x07) {
+	n++;
+	intout[i]      = 10 - i;
+	intout[i + 10] = (attributes & 0x07) - 1;
+      }
+      attributes >>= 3;
+    }
+    if (n < 10)
+      intout[i + n] = -1;
+    intout += 2 * 10;
+
+    *intout++ = wk->screen.colour;
+    *intout++ = wk->writing.rotation.possible;
+    *intout++ = wk->drawing.fill.possible;
+    *intout++ = wk->drawing.cellarray.available;
+    *intout++ = wk->screen.palette.possibilities;
+    *intout++ = wk->various.cursor_movement;
+    *intout++ = wk->various.number_entry;
+    *intout++ = wk->various.selection;
+    *intout++ = wk->various.typing;
+    *intout++ = wk->various.workstation_type;
+
+    *ptsout++ = wk->writing.size.width.min;
+    *ptsout++ = wk->writing.size.height.min;
+    *ptsout++ = wk->writing.size.width.max;
+    *ptsout++ = wk->writing.size.height.max;
+    *ptsout++ = wk->drawing.line.wide.width.min;
+    *ptsout++ = 0;
+    *ptsout++ = wk->drawing.line.wide.width.max;
+    *ptsout++ = 0;
+    *ptsout++ = wk->drawing.marker.size.width.min;
+    *ptsout++ = wk->drawing.marker.size.height.min;
+    *ptsout++ = wk->drawing.marker.size.width.max;
+    *ptsout++ = wk->drawing.marker.size.height.max;
+    return 0;
+  }
+}

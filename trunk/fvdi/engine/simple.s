@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.8 2005-08-02 22:16:45 johan Exp $
+* $Id: simple.s,v 1.9 2005-08-10 10:09:41 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -9,8 +9,6 @@
 *****
 
 transparent	equ	1		; Fall through?
-
-neg_pal_n	equ	9		; Number of negative palette entries
 
 	include	"vdi.inc"
 	include	"macros.inc"
@@ -23,9 +21,13 @@ neg_pal_n	equ	9		; Number of negative palette entries
 	xref	_v_curright,_v_curleft,_v_curhome,_v_eeos,_v_eeol,_vs_curaddress
 	xref	_v_curtext,_v_rvon,_v_rvoff,_vq_curaddress
 
+	xref	_lib_vq_extnd
+
 	xdef	v_opnwk,v_opnvwk,v_clsvwk,v_clswk
 	xdef	vs_clip,vswr_mode,vq_extnd
+  ifne 0
 	xdef	_opnvwk_values
+  endc
 
 	xdef	lib_vs_clip,lib_vswr_mode
 	xdef	_lib_vs_clip
@@ -279,6 +281,37 @@ lib_vswr_mode:
 * In:   a1      Parameter block
 *       a0      VDI struct
 vq_extnd:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+	
+	move.l	ptsout(a1),a2
+	move.l	a2,-(a7)
+	move.l	intout(a1),a2
+	move.l	a2,-(a7)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	control(a1),a2
+	move.w	subfunction(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vq_extnd
+	add.w	#20,a7
+
+	movem.l	(a7)+,d2/a1
+	tst.w	d0
+	lbeq	.end,1
+	move.l	control(a1),a2	; vq_scrninfo
+	move.w	#0,L_ptsout(a2)
+	move.w	#272,L_intout(a2)
+	
+ label .end,1
+	used_d1
+	done_return
+	
+  ifne 0
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	move.l	intout(a1),a2
@@ -459,6 +492,7 @@ vq_scrninfo:
 	move.w	wk_screen_wrap(a0),dev_byte_width(a2)
 
 	done_return
+  endc
 
 
 	dc.b	0,"vq_chcells",0
