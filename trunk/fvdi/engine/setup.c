@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.9 2005-08-02 22:16:44 johan Exp $
+ * $Id: setup.c,v 1.10 2005-08-10 10:07:18 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -130,10 +130,10 @@ Virtual *initialize_vdi(void)
    wk->writing.size.width.min = 5;
    wk->writing.size.width.max = 7;
 /* */
-   wk->drawing.primitives.supported = 8;    /* Everything but rounded rectangles */
+   wk->drawing.primitives.supported = 10;    /* Everything */
    wk->drawing.primitives.attributes = ((3 + 1) <<  0) + ((0 + 1) <<  3) + ((3 + 1) <<  6) +
                                        ((3 + 1) <<  9) + ((3 + 1) << 12) + ((0 + 1) << 15) +
-                                       ((3L + 1) << 18) + ((0L + 0) << 21) + ((0L + 0) << 24) + ((2L + 1) << 27);
+                                       ((3L + 1) << 18) + ((0L + 1) << 21) + ((0L + 1) << 24) + ((2L + 1) << 27);
    wk->drawing.rubber_banding = 0;
    wk->drawing.flood_fill = 0;
    wk->drawing.writing_modes = 4;
