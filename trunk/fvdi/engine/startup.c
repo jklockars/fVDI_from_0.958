@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.28 2005-08-10 10:06:42 johan Exp $
+ * $Id: startup.c,v 1.29 2005-09-26 14:17:48 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0965
-#define BETA	9
+#define BETA	11
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -705,6 +705,43 @@ void vdi_debug(VDIpars *pars, char *vector)
    }
    entered = 0;
 }
+
+
+void display_output(VDIpars *pars)
+{
+  char buf[10];
+  int i;
+
+  if (pars->control->l_intin) {
+    access->funcs.puts("  Intout");
+    access->funcs.ltoa(buf, pars->control->l_intout, 10);
+    access->funcs.puts(buf);
+    access->funcs.puts(" = ");
+    for(i = 0; i < MIN(pars->control->l_intout, 12); i++) {
+      access->funcs.ltoa(buf, pars->intout[i], 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" ");
+    }
+  }
+  access->funcs.puts("\x0a\x0d");
+
+  if (pars->control->l_ptsout) {
+    access->funcs.puts("  Ptsout");
+    access->funcs.ltoa(buf, pars->control->l_ptsout, 10);
+    access->funcs.puts(buf);
+    access->funcs.puts(" = ");
+    for(i = 0; i < MIN(pars->control->l_ptsout * 2, 12); i += 2) {
+      access->funcs.ltoa(buf, pars->ptsout[i], 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(",");
+      access->funcs.ltoa(buf, pars->ptsout[i + 1], 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" ");
+    }
+    access->funcs.puts("\x0a\x0d");
+  }
+}
+
 
 void trap2_debug(long type, VDIpars *pars, long *stack)
 {
