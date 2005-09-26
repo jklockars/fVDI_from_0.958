@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.21 2005-08-02 22:19:45 johan Exp $
+ * $Id: utility.c,v 1.22 2005-09-26 14:15:28 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1448,6 +1448,9 @@ long event(long id_type, long data)
 
    /* Really needs to do something about the id part */
    switch(id_type & 0xffff) {
+   case 0:    /* Initialize */
+      stand_alone = 1;
+      break;
    case 1:    /* Relative mouse movement */
       if (!screen_wk->mouse.forced) {
          if (data) {
