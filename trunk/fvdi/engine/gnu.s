@@ -13,7 +13,33 @@
 	xdef	_Fsetdta,_Fsfirst
 
 	xdef	_lib_vdi_s,_lib_vdi_sp,_lib_vdi_spppp,_lib_vdi_pp
+
+	xdef	_set_stack_call,_set_stack_call_p
+
+	
 	text
+
+* long set_stack_call(new_stack, stack_size, function, par1, par2, par3, par4)
+* Calls with new stack function(par1, par2, par3, par4)
+_set_stack_call_p:
+_set_stack_call:
+	move.l	a7,a0		; Set new stack and remember old
+	move.l	4(a7),a7
+	move.l	a0,-(a7)
+
+	move.l	8(a0),-(a7)
+	lea	4*4+16(a0),a1	; Copy 4 longs worth of actual parameters
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	12(a0),a1
+	jsr	(a1)
+	add.w	#20,a7
+
+	move.l	(a7),a7		; Return to original stack
+	rts
+
 
  ifne 0
 _lib_vdi_s:
