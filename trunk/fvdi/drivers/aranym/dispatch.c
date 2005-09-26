@@ -272,11 +272,18 @@ c_get_component(long component, long *mask, long *shift, long *loss)
 }
 #endif
 
-void CDECL
+long CDECL
+event_query(void)
+{
+   /* Ask native side if it wants to send events */
+   return ARAnyM((NF_fVDI+FVDI_EVENT, 0L));
+}
+
+long CDECL
 event_init(void)
 {
-   /* Tell native side to start sending events */
-   ARAnyM((NF_fVDI+FVDI_EVENT, 0L));
+   /* Tell native side to start sending events, if possible */
+   return ARAnyM((NF_fVDI+FVDI_EVENT, 1L));
 }
 
 void CDECL

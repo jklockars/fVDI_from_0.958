@@ -10,7 +10,8 @@ int nf_initialize(void);
 /* Mouse event handling */
 extern void (*next_handler)(void);
 extern void event_trampoline(void);
-extern void CDECL event_init(void);
+extern long CDECL event_query(void);
+extern long CDECL event_init(void);
 
 long CDECL c_get_videoramaddress(void);
 void CDECL c_set_resolution(long width, long height, long depth, long freq);
@@ -478,6 +479,13 @@ long CDECL initialize(Virtual *vwk)
 
 	setup_wk(vwk);
 
+	if (event_query()) {
+		irq = 1;
+		access->funcs.event(((long)me->module.id << 16) | 0, 0);
+	} else {
+		irq = 0;
+	}
+
 	if (debug > 2) {
 		char buf[10];
 		access->funcs.puts("  fb_base  = $");
@@ -541,7 +549,10 @@ Virtual* CDECL opnwk(Virtual *vwk)
 
 	if (irq) {
 		next_handler = Setexc(27, (long)event_trampoline);
-		event_init();
+		if (event_init() != 1) {
+			irq = 0;
+			Setexc(27, (long)next_handler);
+		}
 	}
 
 	return 0;
