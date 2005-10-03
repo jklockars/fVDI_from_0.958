@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.6 2005-07-26 21:07:58 johan Exp $
+ * $Id: globals.h,v 1.7 2005-10-03 22:52:59 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -74,6 +74,9 @@ extern long *pid;
 #if 1
 extern Workstation *screen_wk;    /* Used in tokenize() */
 #endif
+
+extern char *vdi_stack_top;
+extern long vdi_stack_size;
 
 /*
  * Option values
