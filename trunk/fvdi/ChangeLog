@@ -1,3 +1,18 @@
+2005-09-24 - johan
+The 16 bit driver can now be built using gcc.
+
+2005-09-20 - johan
+The ARAnyM driver now queries the host about the type of mouse cursor
+handling to use, and informs the engine if the host takes care of moves.
+
+2005-08-14 - johan
+Some debug code addded to text functions to try to figure out what was
+going wrong with the old vector font size limitation.
+	
+2005-08-12 - johan
+Made it possible for C functions to call with separate stack.
+Converted a bunch of text functions to C.
+
 2005-08-10 - johan
 All vq_extnd variants converted to C.
 
