@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.6 2005-08-04 10:17:55 johan Exp $
+ * $Id: ft2.c,v 1.7 2005-10-03 22:54:54 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -1062,10 +1062,41 @@ Fontheader *ft2_vst_point(Virtual *vwk, long ptsize, unsigned short *sizes)
 		ptsize = 32000;
 
 	if (sizes) {
+#if 0
 		while(*(sizes + 1) <= ptsize)
 			sizes++;
 		ptsize = *sizes;
+#else
+		char buf[10];
+		puts("Searching ");
+		ltoa(buf, (long)sizes, 16);
+		puts(buf);
+		puts(" for ");
+		ltoa(buf, ptsize, 10);
+		puts(buf);
+		puts(": ");
+		
+		while(*(sizes + 1) <= ptsize) {
+		  ltoa(buf, *(sizes + 1), 10);
+		  puts(buf);
+		  puts(" ");
+			sizes++;
+		}
+		ptsize = *sizes;
+		ltoa(buf, ptsize, 10);
+		puts(buf);
+		puts("\x0a\x0d");
+#endif
 	}
+#if 0
+	else {
+	  char buf[10];
+	  puts("No search for size ");
+	  ltoa(buf, ptsize, 10);
+	  puts(buf);
+	  puts("\x0a\x0d");
+	}
+#endif
 
 	if (font->size == ptsize)
 		return font;
