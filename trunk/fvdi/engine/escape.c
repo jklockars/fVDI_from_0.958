@@ -1,7 +1,7 @@
 /*
  * fVDI console functions
  *
- * $Id: escape.c,v 1.3 2004-10-24 13:01:11 johan Exp $
+ * $Id: escape.c,v 1.4 2005-10-03 22:51:42 johan Exp $
  *
  * Copyright 2002-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -170,7 +170,7 @@ v_curtext(Virtual *vwk, short* text, long length)
    Workstation *wk = vwk->real_address;
    long colour = get_colour(vwk, vwk->console.reversed);
    short points[8];
-   get_extent(vwk, length, text, points);
+   lib_vqt_extent(vwk, length, text, points);
    draw_text(vwk, vwk->console.pos.x, vwk->console.pos.y, text, length, colour);
    if (vwk->console.pos.x + points[4] >= wk->screen.coordinates.max_x - vwk->text.cell.width)
       vwk->console.pos.x = wk->screen.coordinates.max_x + 1 - vwk->text.cell.width;

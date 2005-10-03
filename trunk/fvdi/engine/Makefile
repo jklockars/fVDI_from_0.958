@@ -95,6 +95,7 @@ CSRC = \
 	setup.c \
 	workstn.c \
 	colour.c \
+	textlib.c \
 	default.c
 
 ifneq ($(ft2_srcdir),)

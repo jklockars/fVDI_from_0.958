@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.11 2005-08-04 10:13:07 johan Exp $
+* $Id: text_sq.s,v 1.12 2005-10-03 22:51:42 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,18 +19,17 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
 	xref	_external_char_bitmap
 	xref	_sizes
+	xref	_lib_vqt_name
+	xref	_display_output
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
 	xdef	vst_load_fonts,vst_unload_fonts,vqt_width
 	xdef	vqt_f_extent,vqt_xfntinfo
 
-	xdef	lib_vst_color,lib_vst_effects,lib_vst_alignment,lib_vst_rotation,lib_vst_font
-	xdef	lib_vqt_name,lib_vqt_font_info,lib_vst_point,lib_vst_height,lib_vqt_attributes,lib_vqt_extent
+	xdef	lib_vst_effects,lib_vst_alignment,lib_vst_rotation
+	xdef	lib_vqt_font_info,lib_vst_height,lib_vqt_attributes,lib_vqt_extent
 	xdef	lib_vst_load_fonts,lib_vst_unload_fonts,lib_vqt_width,lib_vqt_xfntinfo
-	xdef	_lib_vst_color,_lib_vst_font,_lib_vst_point
-
-	xdef	_get_extent
 
 	xdef	vst_arbpt
 
@@ -167,6 +166,7 @@ vst_color:
 	move.w	d0,(a2)
 	done_return
 
+  ifne 0
 * lib_vst_color - Standard Library function
 * Todo: -
 * In:	a1	Parameters   colour_set = lib_vst_color(colour)
@@ -181,6 +181,7 @@ lib_vst_color:
  label .ok,1
 	move.w	d0,vwk_text_colour_foreground(a0)
 	rts
+  endc
 
 
 	dc.b	0,0,"vst_effects",0
@@ -198,6 +199,7 @@ vst_effects:
 	move.w	d0,(a2)
 	done_return
 
+  ifne 0
 * lib_vst_effects - Standard Library function
 * Todo: -
 * In:	a1	Parameters   effects_set = lib_vst_effects(effects)
@@ -208,6 +210,7 @@ lib_vst_effects:
 	and.w	wk_writing_effects(a2),d0
 	move.w	d0,vwk_text_effects(a0)
 	rts
+  endc
 
 
 	dc.b	0,0,"vst_alignment",0
@@ -233,6 +236,7 @@ vst_alignment:
 	move.l	d0,(a2)
 	done_return
 
+  ifne 0
 * lib_vst_alignment - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vst_alignment(halign, valign, &hresult, &vresult)
@@ -257,6 +261,7 @@ lib_vst_alignment:
 	swap	d0
 	move.w	d0,(a2)
 	rts
+  endc
 
 
 	dc.b	0,"vst_rotation",0
@@ -319,6 +324,21 @@ lib_vst_rotation:
 *       a0      VDI struct
 vst_font:
 	uses_d1
+	movem.l	d2/a1,-(a7)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vst_font
+	addq.l	#8,a7
+	movem.l	(a7)+,d2/a1
+	move.l	intout(a1),a1
+	move.w	d0,(a1)
+	used_d1
+	done_return
+  ifne 0
+	uses_d1
 	move.l	a1,-(a7)
 	move.l	intin(a1),a1
 	bsr	lib_vst_font
@@ -327,7 +347,9 @@ vst_font:
 	move.w	d0,(a1)
 	used_d1
 	done_return
+  endc
 
+  ifne 0
 * lib_vst_font - Standard Library function
 * Todo: Also look for correct size?
 * In:	a1	Parameters   font_set = lib_vst_font(fontID)
@@ -379,6 +401,7 @@ lib_vst_font:
 
 .same:
 	rts
+  endc
 
 
 	dc.b	0,"vqt_name",0
@@ -395,6 +418,20 @@ vqt_name:
 	bge	vqt_ext_name
 	
 .normal_vqt_name:
+	movem.l	d2/a1,-(a7)
+	move.l	intout(a1),a2
+	pea	2(a2)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vqt_name
+	add.w	#12,a7
+	movem.l	(a7)+,d2/a1
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+  ifne 0
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 	move.l	intout(a1),a1
@@ -405,6 +442,7 @@ vqt_name:
 	addq.l	#2,a7
 	move.l	(a7)+,a1
 	move.w	d0,-2(a1)
+  endc
 	used_d1
 	done_return
 
@@ -425,7 +463,7 @@ vqt_ext_name:
 	used_d1
 	done_return
 
-
+  ifne 0
 * lib_vqt_name - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   id = lib_vqt_name(number, name)
@@ -467,6 +505,7 @@ lib_vqt_name:
 
 	move.l	a0,d0
 	rts
+  endc
 
 
 * lib_vqt_ext_name - Standard Library function
@@ -539,6 +578,7 @@ vqt_font_info:
 	move.w	font_distance_top(a0),(a2)+
 	done_return
 
+  ifne 0
 * lib_vqt_font_info - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vqt_font_info(&minchar, &maxchar, distance, &maxwidth, effects)
@@ -562,6 +602,7 @@ lib_vqt_font_info:
 	move.w	#0,(a2)+		; Temporary current spec. eff. change to left!
 	move.w	#0,(a2)			; Temporary current spec. eff. change to right!
 	rts
+  endc
 
 
 	dc.b	0,"vqt_xfntinfo",0
@@ -808,7 +849,7 @@ vqt_extent:
 	done_return
 
 
-	
+  ifne 0
 * lib_vqt_extent - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vqt_extent(length, &string, points)
@@ -910,6 +951,7 @@ lib_vqt_extent:
  label .no_external_vqt_extent,9
 	movem.l	(a7)+,d2-d4/a3-a4
 	rts
+  endc
 
 
 	dc.b	0,0,"vqt_width",0
@@ -1226,6 +1268,42 @@ vst_arbpt:
 * In:   a1      Parameter block
 *       a0      VDI struct
 vst_point:
+  ifne 1
+	uses_d1
+	movem.l	d2/a1,-(a7)
+	move.l	ptsout(a1),a2
+	pea	6(a2)
+	pea	4(a2)
+	pea	2(a2)
+	pea	0(a2)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vst_point
+  ifne 1
+	move.l	(a7),a0
+  endc
+	add.w	#6*4,a7
+	movem.l	(a7)+,d2/a1
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+	used_d1
+  ifne 1
+	move.l	vwk_text_current_font(a0),a0
+	tst.w	font_flags(a0)
+	lbpl	.no_display,4
+	movem.l	d1-d2,-(a7)
+	move.l	a1,-(a7)
+	jsr	_display_output
+	addq.l	#4,a7
+	movem.l	(a7)+,d1-d2
+ label .no_display,4
+  endc
+	done_return
+  endc
+  ifne 0
 	uses_d1
 	move.l	a3,-(a7)
 	move.l	intin(a1),a2
@@ -1247,6 +1325,9 @@ vst_point:
 	lbne	.search,1
  label .found,2
 	move.l	a3,vwk_text_current_font(a0)
+  ifne 1
+	move.l	a1,d0
+  endc
 	movem.l	intout(a1),a1-a2		; Get ptsout too
 	move.w	font_widest_character(a3),d1
 	move.w	d1,(a2)+
@@ -1267,6 +1348,17 @@ vst_point:
 	move.w	font_size(a3),(a1)
 	move.l	(a7)+,a3
 	used_d1
+  ifne 1
+	move.l	vwk_text_current_font(a0),a0
+	tst.w	font_flags(a0)
+	lbpl	.no_display,4
+	movem.l	d1-d2,-(a7)
+	move.l	d0,-(a7)
+	jsr	_display_output
+	addq.l	#4,a7
+	movem.l	(a7)+,d1-d2
+ label .no_display,4
+  endc
 	done_return
 
  label .external_vst_point,3
@@ -1296,8 +1388,9 @@ vst_point:
 	move.l	(a7)+,a3
 	used_d1
 	done_return
+  endc
 
-
+  ifne 0
 * lib_vst_point - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   point_set = lib_vst_point(height, &charw, &charh, &cellw, &cellh)
@@ -1341,6 +1434,7 @@ lib_vst_point:
 	move.w	font_size(a3),d0
 	move.l	(a7)+,a3
 	rts
+  endc
 
 
 	dc.b	0,"vqt_attributes",0
@@ -1361,6 +1455,7 @@ vqt_attributes:
 	move.l	(a0)+,(a2)+		; Cell height and width
 	done_return
 
+  ifne 0
 * lib_vqt_attributes - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vqt_attributes(settings)
@@ -1377,6 +1472,7 @@ lib_vqt_attributes:
 	move.l	(a0)+,(a1)+		; Character height and width
 	move.l	(a0)+,(a1)+		; Cell height and width
 	rts
+  endc
 
 
 	dc.b	0,"vst_load_fonts",0
@@ -1394,6 +1490,7 @@ vst_load_fonts:
 	move.w	d0,(a1)
 	done_return
 
+  ifne 0
 * lib_vst_load_fonts - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   fonts_loaded = lib_vst_load_fonts(select)
@@ -1403,6 +1500,7 @@ lib_vst_load_fonts:
 	move.w	wk_writing_fonts(a2),d0
 	subq.w	#1,d0
 	rts
+  endc
 
 
 	dc.b	0,"vst_unload_fonts",0
@@ -1413,11 +1511,13 @@ lib_vst_load_fonts:
 vst_unload_fonts:
 	done_return
 
+  ifne 0
 * lib_vst_unload_fonts - Standard Library function
 * Todo: ?
 * In:	a1	Parameters   lib_vst_unload_fonts(select)
 *	a0	VDI struct
 lib_vst_unload_fonts:
 	rts
+  endc
 
 	end

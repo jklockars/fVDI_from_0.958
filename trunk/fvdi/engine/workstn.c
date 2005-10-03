@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.9 2005-08-10 10:09:41 johan Exp $
+ * $Id: workstn.c,v 1.10 2005-10-03 22:51:42 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -307,10 +307,17 @@ void v_opnvwk(Virtual *vwk, VDIpars *pars)
 	lib_vdi_s(&lib_vsl_color, vwk, pars->intin[2]);
 	lib_vdi_s(&lib_vsm_type, vwk, pars->intin[3]);
 	lib_vdi_s(&lib_vsm_color, vwk, pars->intin[4]);
+#if 0
 	lib_vdi_s(&lib_vst_font, vwk, pars->intin[5]);
 	/* Default to 10 point font (or less) (should really depend on resolution) */
 	lib_vdi_spppp(&lib_vst_point, vwk, 10, &dummy, &dummy, &dummy, &dummy);
 	lib_vdi_s(&lib_vst_color, vwk, pars->intin[6]);
+#else
+	lib_vst_font(vwk, pars->intin[5]);
+	/* Default to 10 point font (or less) (should really depend on resolution) */
+	lib_vst_point(vwk, 10, &dummy, &dummy, &dummy, &dummy);
+	lib_vst_color(vwk, pars->intin[6]);
+#endif
 	lib_vdi_s(&lib_vsf_interior, vwk, pars->intin[7]);
 	lib_vdi_s(&lib_vsf_style, vwk, pars->intin[8]);
 	lib_vdi_s(&lib_vsf_color, vwk, pars->intin[9]);

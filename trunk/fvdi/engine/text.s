@@ -1,7 +1,7 @@
 *****
 * fVDI text drawing functions
 *
-* $Id: text.s,v 1.8 2005-05-07 18:38:55 standa Exp $
+* $Id: text.s,v 1.9 2005-10-03 22:51:42 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -16,7 +16,7 @@ transparent	equ	1		; Fall through?
 	xref	clip_point,clip_line
 	xref	setup_plot,tos_colour
 	xref	line_types
-	xref	lib_vqt_extent,lib_vrt_cpyfm
+	xref	_lib_vqt_extent,lib_vrt_cpyfm
 	xref	allocate_block,free_block
 	xref	text_area
 	xref	_vdi_stack_top,_vdi_stack_size,_external_renderer
@@ -64,6 +64,20 @@ lib_v_gtext:
 	tst.w	vwk_text_alignment_horizontal(a0)
 	beq	.left_justified
 
+	movem.l	d2/a0-a2,-(a7)
+	sub.w	#8*2,a7
+	pea	(a7)
+	move.l	4(a1),-(a7)
+	move.w	8(a1),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vqt_extent
+	move.w	16+4(a7),d1
+;	add.w	#1,d1		; Was right coordinate, need width
+	add.w	#16+16,a7
+	movem.l	(a7)+,d2/a0-a2
+  ifne 0
 	movem.l	a0-a1,-(a7)
 	sub.w	#8*2,a7
 	pea	(a7)
@@ -75,6 +89,7 @@ lib_v_gtext:
 ;	add.w	#1,d1		; Was right coordinate, need width
 	add.w	#10+16,a7
 	movem.l	(a7)+,a0-a1
+  endc
 	cmp.w	#2,vwk_text_alignment_horizontal(a0)
 	beq	.right_justified
 	lsr.w	#1,d1 

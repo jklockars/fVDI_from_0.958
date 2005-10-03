@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.8 2005-07-18 06:38:23 johan Exp $
+ * $Id: function.h,v 1.9 2005-10-03 22:53:20 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -60,6 +60,8 @@ extern void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *)
 extern void lib_vdi_pp(void *, void *, void *, void *);
 #else
  #ifdef __GNUC__
+void *set_stack_call_p(void *stk, long size, void *func, long, long, long, long);
+long set_stack_call(void *stk, long size, void *func, long, long, long, long);
 void lib_vdi_s(void *, void *, long);
 void lib_vdi_sp(void *, void *, long, void *);
 void lib_vdi_spppp(void *, void *, long, void *, void *, void *, void *);
@@ -82,9 +84,10 @@ extern void unlink_mouse_routines(void);
 extern void setup_vbl_handler(void);
 extern void shutdown_vbl_handler(void);
 
-extern void *lib_vst_color;
-extern void *lib_vst_font;
-extern void *lib_vst_point;
+extern int lib_vst_font(Virtual *vwk, long fontID);
+extern int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
+			 short *cellw, short *cellh);
+extern long lib_vst_color(Virtual *vwk, unsigned long colour);
 extern void *lib_vsl_color;
 extern void *lib_vsl_type;
 extern void *lib_vsm_color;
@@ -113,6 +116,15 @@ extern void lib_vr_trn_fm(Virtual *, MFDB *, MFDB *);
 extern void opnvwk_values(Virtual *, VDIpars *);
 
 extern short isqrt(unsigned long x);
+
+extern int         (*external_init)(void);
+extern Fontheader* (*external_load_font)(const char *font);
+extern long        (*external_vqt_extent)(Fontheader *font, short *text, long length);
+extern long        (*external_vqt_width)(Fontheader *font, long ch);
+extern Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes);
+extern long        (*external_renderer)(Virtual *vwk, unsigned long coords,
+					short *text, long length);
+extern void*       (*external_char_bitmap)(Fontheader *font, long ch);
 
 #endif
 
