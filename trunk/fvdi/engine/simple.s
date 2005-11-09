@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.10 2005-08-10 10:12:27 johan Exp $
+* $Id: simple.s,v 1.11 2005-11-09 23:06:41 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -14,7 +14,6 @@ transparent	equ	1		; Fall through?
 	include	"macros.inc"
 
 	xref	_v_opnwk,_v_opnvwk,_v_clsvwk,_v_clswk
-	xref	_old_gdos
 	xref	_event
 
 	xref	_vq_chcells,_v_exit_cur,_v_enter_cur,_v_curup,_v_curdown
