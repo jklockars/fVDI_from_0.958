@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.29 2005-09-26 14:17:48 johan Exp $
+ * $Id: startup.c,v 1.30 2005-11-09 23:07:35 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0965
-#define BETA	11
+#define BETA	15
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -308,8 +308,9 @@ long startup(void)
 			readable->cookie.flags |= BOOTED;
 		}
 	}
-	if (!stand_alone)
-		old_gdos = vq_gdos();
+
+	old_gdos = vq_gdos();
+
 	if (!disabled) {
 		*(short *)((long)&vdi_dispatch + 2) = 0x0073;	/* Finally make fVDI take normal VDI calls */
 		readable->cookie.flags |= ACTIVE;
