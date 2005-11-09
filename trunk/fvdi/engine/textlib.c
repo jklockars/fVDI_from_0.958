@@ -1,7 +1,9 @@
+/* No debugging right now! */
+#undef DEB
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.1 2005-10-03 22:51:42 johan Exp $
+ * $Id: textlib.c,v 1.2 2005-11-09 23:05:52 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -863,10 +865,12 @@ int lib_vst_font(Virtual *vwk, long fontID)
     if (!fontID)
 	fontID = 1;
 
+#if DEB
     puts("lib_vst_font ");
     ltoa(buf, fontID, 10);
     puts(buf);
     puts("\x0a\x0d");
+#endif
 
     font = vwk->real_address->writing.first_font;
     if (vwk->text.current_font) {
@@ -878,17 +882,21 @@ int lib_vst_font(Virtual *vwk, long fontID)
 
 
     do {
+#if DEB
 	puts("  loop\x0a\x0d");
 	ltoa(buf, font->id, 10);
 	puts(buf);
 	puts("\x0a\x0d");
+#endif
 	if (fontID <= font->id)
 	    break;
 	font = font->next;
     } while (font);
 
     if (!font || (font->id != fontID)) {
+#if DEB
 	puts("  set first\x0a\x0d");
+#endif
 	fontID = 1;
 	font = vwk->real_address->writing.first_font;
     }
@@ -1226,31 +1234,43 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
     Fontheader *font;
 
     /* Some other method should be used for this! */
+#if DEB
     puts("lib_vst_point\x0a\x0d");
+#endif
     if (vwk->text.current_font->flags < 0) {
+#if DEB
 	puts("  vector\x0a\x0d");
+#endif
 	/* Handle differently? This is not really allowed at all! */
 	if (!external_vst_point)
 	    return 0;
+#if DEB
 	puts("  vector ok\x0a\x0d");
+#endif
 	font = set_stack_call_p(vdi_stack_top, vdi_stack_size,
 				external_vst_point,
 				vwk, height, sizes, 0);
+#if DEB
 	puts("  vector found\x0a\x0d");
+#endif
     } else {
+#if DEB
 	char buf[10];
 	ltoa(buf, height, 10);
 	puts(buf);
 	puts(" ");
+#endif
 
 	font = vwk->text.current_font->extra.first_size;
 
 	while (font->extra.next_size && (font->extra.next_size->size <= height)) {
 	    font = font->extra.next_size;
 	}
+#if DEB
 	ltoa(buf, font->height, 10);
 	puts(buf);
 	puts("\x0a\x0d");
+#endif
     }
 
     vwk->text.current_font = font;

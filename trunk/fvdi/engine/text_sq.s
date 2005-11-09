@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.12 2005-10-03 22:51:42 johan Exp $
+* $Id: text_sq.s,v 1.13 2005-11-09 23:06:13 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -1290,7 +1290,7 @@ vst_point:
 	move.l	intout(a1),a2
 	move.w	d0,(a2)
 	used_d1
-  ifne 1
+  ifne 0
 	move.l	vwk_text_current_font(a0),a0
 	tst.w	font_flags(a0)
 	lbpl	.no_display,4
@@ -1348,7 +1348,7 @@ vst_point:
 	move.w	font_size(a3),(a1)
 	move.l	(a7)+,a3
 	used_d1
-  ifne 1
+  ifne 0
 	move.l	vwk_text_current_font(a0),a0
 	tst.w	font_flags(a0)
 	lbpl	.no_display,4
