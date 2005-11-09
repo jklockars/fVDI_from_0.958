@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.7 2005-10-03 22:54:54 johan Exp $
+ * $Id: ft2.c,v 1.8 2005-11-09 23:12:07 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -26,6 +26,8 @@
 #include "list.h"
 
 #undef CACHE_YSIZE
+
+extern short Atari2Unicode[];
 
 /* Cached glyph information */
 typedef struct cached_glyph {
@@ -460,6 +462,10 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	FT_Glyph_Metrics *metrics;
 	FT_Outline *outline;
 
+#if 1
+	puts("Loading glyph\x0a\x0d");
+#endif
+
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
 		font = ft2_open_face(font);
@@ -469,7 +475,11 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 
 	/* Load the glyph */
 	if (!cached->index) {
+#if 0
 		cached->index = FT_Get_Char_Index(face, ch);
+#else
+		cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch]);
+#endif
 	}
 	error = FT_Load_Glyph(face, cached->index, FT_LOAD_DEFAULT);
 	if (error) {
@@ -653,6 +663,9 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 {
 	int retval = 0;
 
+#if 0
+	ch = Atari2Unicode[ch];
+#endif
 	if (ch < 256) {
 		font->extra.current = &((c_glyph *)font->extra.cache)[ch];
 	} else {
@@ -797,12 +810,18 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	height = font->height;
 
 	/* Fill in the target surface */
-	textbuf->width = width;
-	textbuf->height = height;
-	textbuf->standard = 1;
+	textbuf->width     = width;
+	textbuf->height    = height;
+	textbuf->standard  = 1;
 	textbuf->bitplanes = 1;
-	textbuf->wdwidth = (width + 15) >> 4; /* Number of words per line */
+#if 0
+	textbuf->wdwidth   = (width + 15) >> 4; /* Number of words per line */
 	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
+#else
+	/* +1 for end write */
+	textbuf->wdwidth   = ((width + 15) >> 4) + 1; /* Words per line */
+	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
+#endif
 	if (textbuf->address == NULL) {
 		return NULL;
 	}
@@ -823,8 +842,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
 #if 0
-	int swapped;
-	swapped = TTF_byteswapped;
+		int swapped;
+		swapped = TTF_byteswapped;
 		if (c == UNICODE_BOM_NATIVE) {
 			swapped = 0;
 			if (text == ch) {
@@ -844,12 +863,35 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 #endif
 
+#if 1
 		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_BITMAP);
 		if (error) {
 			free(textbuf->address);
 			return NULL;
 		}
 		glyph = font->extra.current;
+#else
+		/* This should be done via a macro! */
+#if 0
+		c = Atari2Unicode[c];
+#endif
+		if (c < 256) {
+			glyph = &((c_glyph *)font->extra.cache)[c];
+		} else {
+			if (((c_glyph *)font->extra.scratch)->cached != c) {
+				ft2_flush_glyph(font->extra.scratch);
+			}
+			glyph = font->extra.scratch;
+		}
+		if ((glyph->stored & (CACHED_METRICS | CACHED_BITMAP)) !=
+		    (CACHED_METRICS | CACHED_BITMAP)) {
+			if (ft2_load_glyph(font, c, glyph,
+			                   (CACHED_METRICS | CACHED_BITMAP))) {
+				free(textbuf->address);
+				return NULL;
+			}
+		}
+#endif
 		current = &glyph->bitmap;
 		/* Ensure the width of the pixmap is correct. In some cases,
 		 * freetype may report a larger pixmap than possible.
@@ -861,7 +903,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		/* Do kerning, if possible AC-Patch */
 		if (use_kerning && prev_index && glyph->index) {
 			FT_Vector delta; 
-			FT_Get_Kerning(face, prev_index, glyph->index, ft_kerning_default, &delta); 
+			FT_Get_Kerning(face, prev_index, glyph->index,
+			               ft_kerning_default, &delta); 
 			xstart += delta.x >> 6;
 		}
 		/* Compensate for wrap around bug with negative minx's */
@@ -870,6 +913,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 		
 		{
+#if 0
 			int offset = xstart + glyph->minx;
 			short shift = offset % 8;
 			unsigned char rmask = (1 << shift) - 1;
@@ -902,6 +946,46 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 					*dst |= (x & rmask) << (8 - shift);
 				}
 			}
+#else
+			int offset = xstart + glyph->minx;
+			short shift = offset % 8;
+			int last_row;
+			unsigned char *dst_base, *src_base, byte;
+			
+			row = 0;
+			src_base = current->buffer;
+			dst_base = (unsigned char *)textbuf->address +
+			           (offset >> 3);
+			if (glyph->yoffset < 0) {   /* Under limit? */
+			    row      -= glyph->yoffset;
+			    src_base += row * current->pitch;
+			} else if (glyph->yoffset) {
+			    dst_base += glyph->yoffset * textbuf->wdwidth * 2;
+			}
+
+			/* Over limit? */
+			last_row = current->rows - 1;
+			if (last_row + glyph->yoffset >= textbuf->height)
+			    last_row = textbuf->height - glyph->yoffset - 1;
+
+			width = (width + 7) >> 3;
+
+			for(; row <= last_row; ++row) {
+
+				dst = dst_base;
+				dst_base += textbuf->wdwidth * 2;
+				src = src_base;
+				src_base += current->pitch;
+
+				byte = *dst;
+				for(col = width; col > 0; --col) {
+					unsigned char x = *src++;
+					*dst++ = byte | (x >> shift);
+					byte = x << (8 - shift);
+				}
+				*dst = byte;
+			}
+#endif
 		}
 
 		xstart += glyph->advance;
@@ -1062,7 +1146,7 @@ Fontheader *ft2_vst_point(Virtual *vwk, long ptsize, unsigned short *sizes)
 		ptsize = 32000;
 
 	if (sizes) {
-#if 0
+#if 1
 		while(*(sizes + 1) <= ptsize)
 			sizes++;
 		ptsize = *sizes;
