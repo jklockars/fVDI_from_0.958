@@ -1,3 +1,9 @@
+2005-11-09 - johan
+The Atari character set is now mapped to Unicode for TrueType fonts.
+Significant optimizations for TrueType rendering from cached bitmaps.
+Check for other GDOS is now always done at startup.
+Disabled vector font size debug code.
+
 2005-09-24 - johan
 The 16 bit driver can now be built using gcc.
 
