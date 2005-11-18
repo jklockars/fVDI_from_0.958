@@ -1,3 +1,14 @@
+2005-11-17 - johan
+Made it possible to force call to the fVDI mouse movement vector.
+Fix for vbl handler install/remove.
+
+2005-11-15 - johan
+Fixed bug that made it impossible to do operations on non-fVDI handles
+if running in standalone mode.
+Partially implemented vq_devinfo.
+Debug messages added for non-fVDI workstation open.
+Made it possible to force VDI fallback (old VDI workstation open).
+
 2005-11-09 - johan
 The Atari character set is now mapped to Unicode for TrueType fonts.
 Significant optimizations for TrueType rendering from cached bitmaps.
