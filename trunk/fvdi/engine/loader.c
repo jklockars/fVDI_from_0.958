@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.20 2005-08-04 10:13:07 johan Exp $
+ * $Id: loader.c,v 1.21 2005-11-18 23:52:54 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -95,6 +95,8 @@ unsigned short sizes[16] = {8, 9, 10, 11, 12, 14, 18, 24, 36, 48, 0xffff};
 short size_count = 11;
 short size_user = 0;
 short old_malloc = 0;
+short fall_back = 0;
+short move_mouse = 0;
 
 static char path[PATH_SIZE];
 
@@ -165,7 +167,9 @@ static Option options[] = {
    {"module",     use_module,     -1},  /* module str, specify a module to load */
    {"silent",     set_silent,     -1},  /* silent n, no debug for VDI call n */
    {"size",       set_size,       -1},  /* size n, specify a default available font size */
-   {"oldmalloc",   &old_malloc,    1}   /* oldmalloc, use only the standar Malloc/Free */
+   {"oldmalloc",  &old_malloc,     1},  /* oldmalloc, use only the standar Malloc/Free */
+   {"fallback",   &fall_back,      1},  /* fallback, forces fVDI to open workstation on an underlying VDI */
+   {"movemouse",  &move_mouse,     1}   /* movemouse, forces fVDI to call its movement vector explicitly */
 };
 
 
