@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.22 2005-09-26 14:15:28 johan Exp $
+ * $Id: utility.c,v 1.23 2005-11-18 23:52:23 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1466,6 +1466,9 @@ long event(long id_type, long data)
       if (!screen_wk->mouse.forced) {
          xy = *(long *)&screen_wk->mouse.position.x;
          if (data != xy) {
+            extern void *mouse_move;
+            if (move_mouse)
+               vector_call(&mouse_move, data);
             data = vector_call(screen_wk->vector.motion, data);
             data = vector_call(screen_wk->vector.draw, data);
          }
