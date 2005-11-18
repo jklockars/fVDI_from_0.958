@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.10 2005-08-10 10:07:18 johan Exp $
+ * $Id: setup.c,v 1.11 2005-11-18 23:40:30 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -176,8 +176,13 @@ Virtual *initialize_vdi(void)
    wk->mouse.hide = 0;
    wk->mouse.buttons = 0;
    wk->mouse.forced = 0;
+#if 0
    wk->mouse.position.x = 0;
    wk->mouse.position.y = 0;
+#else
+   wk->mouse.position.x = 64;
+   wk->mouse.position.y = 64;
+#endif
    wk->vector.motion = mouse_move;
    wk->vector.draw   = do_nothing;
    wk->vector.button = do_nothing;
@@ -438,8 +443,10 @@ void setup_vbl_handler(void)
    addr = get_l(0x456);           /* vblqueue */
    for(; n > 0; n--) {
        if (get_l(addr) == 0) {
+#if 0
            if (n != 1)            /* What about the last slot? Must be 0? */
               set_l(addr + 4, 0);
+#endif
            old_timv = do_nothing;
            set_l(addr, (long)vbl_handler);
            vbl_handler_installed = 1;
@@ -463,10 +470,12 @@ void shutdown_vbl_handler(void)
        addr += 4;
    }
    if (n) {
+#if 0
       for(; n > 1; n--) {
          set_l(addr, get_l(addr + 4));
          addr += 4;
       }
+#endif
       set_l(addr, 0L);
       vbl_handler_installed = 0;
    }
