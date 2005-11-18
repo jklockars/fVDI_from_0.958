@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.10 2005-10-03 22:51:42 johan Exp $
+ * $Id: workstn.c,v 1.11 2005-11-18 23:42:48 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -345,6 +345,7 @@ void v_opnwk(VDIpars *pars)
 	 * workstation handle >10 is non-fVDI
 	 */
 	if (pars->intin[0] > 10) {
+#if 0
 		pars->control->handle = 0;	/* Assume failure */
 		vwk = 0;
 		if ((old_gdos != -2) &&		/* No pass-through without old GDOS */
@@ -358,6 +359,39 @@ void v_opnwk(VDIpars *pars)
 			pars->control->handle = hnd;
 		} else if (vwk)
 			free(vwk);		/* Couldn't open */
+#else
+		int failed = 1;
+		pars->control->handle = 0;	/* Assume failure */
+		vwk = 0;
+		if (old_gdos != -2) {		/* No pass-through without old GDOS */
+		    if (hnd = find_free_handle(&handle_entry)) {
+			if (vwk = malloc(6)) {
+			    if (oldhnd = call_other(pars, 0)) {	/* Dummy handle for call */
+				failed = 0;
+				vwk->real_address = non_fvdi_wk;
+				/* Mark as pass-through handle */
+				vwk->standard_handle = oldhnd | 0x8000;
+				*handle_entry = vwk;
+				pars->control->handle = hnd;
+			    } else {
+			      char buf[10];
+				puts("call_other failed (");
+				ltoa(buf, pars->intin[0], 10);
+				puts(buf);
+				puts(")\x0a\x0d");
+			    }
+			} else
+			    puts("malloc failed\x0a\x0d");
+		    } else
+			puts("find_free_handle failed\x0a\x0d");
+		} else
+		    puts("no old GDOS\x0a\x0d");
+
+		if (failed) {
+		    if (vwk)
+			free(vwk);		/* Couldn't open */
+		}
+#endif
 		return;
 	}
 
@@ -512,6 +546,68 @@ void v_clswk(Virtual *vwk, VDIpars *pars)
 #endif
 
 	return;
+}
+
+
+void vq_devinfo(VDIpars *pars)
+{
+	Driver *driver;
+	Workstation *wk;
+	unsigned short hnd, oldhnd;
+
+	/* For now, just assume that any
+	 * workstation handle >10 is non-fVDI
+	 */
+	if (pars->intin[0] > 10) {
+#if 0
+		if ((old_gdos != -2) &&		/* No pass-through without old GDOS */
+		    (oldhnd = call_other(pars, 0))) {	/* Dummy handle for call */
+		} else if (vwk)
+			free(vwk);		/* Couldn't open */
+#else
+		int failed = 1;
+		if (old_gdos != -2) {		/* No pass-through without old GDOS */
+			char buf[10];
+			call_other(pars, 0);	/* Dummy handle for call */
+			puts("vq_devinfo: ");
+			ltoa(buf, pars->intout[0], 10);
+			puts(buf);
+			puts(",");
+			ltoa(buf, pars->intout[1], 10);
+			puts(buf);
+			puts("\x0a\x0d");
+		} else
+		    puts("no old GDOS (vq_devinfo)\x0a\x0d");
+#endif
+		display_output(pars);
+		puts(*(char **)&pars->intin[1]);
+		puts("\x0a\x0d");
+		puts(*(char **)&pars->intin[3]);
+		puts("\x0a\x0d");
+		puts(*(char **)&pars->intin[5]);
+		puts("\x0a\x0d");
+		return;
+	}
+
+	pars->intout[0] = 1;
+	pars->intout[1] = 1;
+	puts("fVDI handles currently don't support vq_devinfo\x0a\x0d");
+
+#if 0
+ #if 0
+	if (driver_list->type != ...)		/* Sanity check */
+ #endif
+	driver = (Driver *)driver_list->value;
+ #if 0
+	if (driver->flags & 1)
+ #endif
+
+	if (vwk = ((Virtual *(*)(Virtual *))(driver->opnwk))(default_virtual))
+		;				/* Should probably do something */
+	else
+		vwk = driver->default_vwk;
+
+#endif
 }
 
 
