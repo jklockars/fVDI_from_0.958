@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.30 2005-11-09 23:07:35 johan Exp $
+ * $Id: startup.c,v 1.31 2005-11-18 23:43:53 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,7 +23,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0965
-#define BETA	15
+#define BETA	19
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -299,7 +299,7 @@ long startup(void)
 			puts_nl("Copying available virtual workstations");
 		copy_workstations(first_vwk, !fakeboot);	/* f.vwk - default vwk to set up for, fall-through if fakeboot */
 	} else if (!disabled) {
-		if (!fakeboot && !stand_alone) {
+		if (!fakeboot && (!stand_alone || fall_back)) {
 			if (debug) {
 				puts_nl("About to set up VDI fallback. Press any key.");
 				key_wait(10);			/* It's too late to wait for a key afterwards */
