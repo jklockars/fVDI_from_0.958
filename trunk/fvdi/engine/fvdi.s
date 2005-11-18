@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.8 2005-08-02 22:16:44 johan Exp $
+* $Id: fvdi.s,v 1.9 2005-11-18 23:43:16 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -417,6 +417,8 @@ bad_handle:				; The handle definitely was bad
 	cmp.w	#1,d0			; Check for the functions which are OK
 	beq	.opnwk_ok		;  without a handle
 	cmp.w	#100,d0
+	beq	.opnvwk_ok
+	cmp.w	#248,d0			; This is a vq_devinfo call
 	beq	.opnvwk_ok
 .bad_call:
 	return				; Should probably return an error instead
