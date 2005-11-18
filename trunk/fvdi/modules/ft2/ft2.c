@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.8 2005-11-09 23:12:07 johan Exp $
+ * $Id: ft2.c,v 1.9 2005-11-18 23:57:28 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -462,10 +462,6 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	FT_Glyph_Metrics *metrics;
 	FT_Outline *outline;
 
-#if 1
-	puts("Loading glyph\x0a\x0d");
-#endif
-
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
 		font = ft2_open_face(font);
@@ -475,11 +471,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 
 	/* Load the glyph */
 	if (!cached->index) {
-#if 0
-		cached->index = FT_Get_Char_Index(face, ch);
-#else
 		cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch]);
-#endif
 	}
 	error = FT_Load_Glyph(face, cached->index, FT_LOAD_DEFAULT);
 	if (error) {
@@ -663,9 +655,6 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 {
 	int retval = 0;
 
-#if 0
-	ch = Atari2Unicode[ch];
-#endif
 	if (ch < 256) {
 		font->extra.current = &((c_glyph *)font->extra.cache)[ch];
 	} else {
@@ -814,14 +803,9 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	textbuf->height    = height;
 	textbuf->standard  = 1;
 	textbuf->bitplanes = 1;
-#if 0
-	textbuf->wdwidth   = (width + 15) >> 4; /* Number of words per line */
-	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
-#else
 	/* +1 for end write */
 	textbuf->wdwidth   = ((width + 15) >> 4) + 1; /* Words per line */
 	textbuf->address = malloc(textbuf->wdwidth * 2 * textbuf->height);
-#endif
 	if (textbuf->address == NULL) {
 		return NULL;
 	}
@@ -894,7 +878,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 #endif
 		current = &glyph->bitmap;
 		/* Ensure the width of the pixmap is correct. In some cases,
-		 * freetype may report a larger pixmap than possible.
+		 * FreeType may report a larger pixmap than possible.
 		 */
 		width = current->width;
 		if (width > glyph->maxx - glyph->minx) {
