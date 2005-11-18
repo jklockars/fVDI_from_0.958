@@ -1,7 +1,7 @@
 *****
 * fVDI miscellaneous functions
 *
-* $Id: simple.s,v 1.11 2005-11-09 23:06:41 johan Exp $
+* $Id: simple.s,v 1.12 2005-11-18 10:38:27 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -14,6 +14,7 @@ transparent	equ	1		; Fall through?
 	include	"macros.inc"
 
 	xref	_v_opnwk,_v_opnvwk,_v_clsvwk,_v_clswk
+	xref	_vq_devinfo
 	xref	_event
 
 	xref	_vq_chcells,_v_exit_cur,_v_enter_cur,_v_curup,_v_curdown
@@ -23,6 +24,7 @@ transparent	equ	1		; Fall through?
 	xref	_lib_vq_extnd
 
 	xdef	v_opnwk,v_opnvwk,v_clsvwk,v_clswk
+	xdef	vq_devinfo
 	xdef	vs_clip,vswr_mode,vq_extnd
 
 	xdef	lib_vs_clip,lib_vswr_mode
@@ -107,6 +109,25 @@ v_clswk:
 	move.l	a0,-(a7)
 	jsr	_v_clswk
 	addq.l	#8,a7
+	
+	move.l	(a7)+,d2
+	used_d1
+	
+	done_return
+
+
+	dc.b	0,"vq_devinfo",0
+* vq_devinfo - Standard Trap function
+* Todo: ?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vq_devinfo:
+	uses_d1
+	move.l	d2,-(a7)
+
+	move.l	a1,-(a7)
+	jsr	_vq_devinfo
+	addq.l	#4,a7
 	
 	move.l	(a7)+,d2
 	used_d1
