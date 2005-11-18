@@ -1,7 +1,7 @@
 *****
 * fVDI support routines
 *
-* $Id: support.s,v 1.7 2004-10-17 21:44:11 johan Exp $
+* $Id: support.s,v 1.8 2005-11-18 10:37:10 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -68,7 +68,7 @@ _flip_longs:
 * In:	a1	Parameter block   **** Should perhaps put this in d1? ****
 redirect:
 	move.w	_old_wk_handle,d0
-redirect_d0:
+;redirect_d0:
 	move.l	control(a1),a0
 	cmp.w	handle(a0),d0		; Already correct?
 	bne	.call
@@ -79,6 +79,10 @@ redirect_d0:
 	bne	.no_redirect
 	bsr	call_other
 .no_redirect:
+	real_return
+
+redirect_d0:
+	bsr	call_other
 	real_return
 
 
