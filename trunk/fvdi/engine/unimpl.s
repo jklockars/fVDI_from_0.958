@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.14 2005-11-18 23:45:12 johan Exp $
+* $Id: unimpl.s,v 1.15 2005-11-21 13:05:48 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -26,7 +26,8 @@ transparent	equ	1		; Fall through?
 
 	xdef	nothing
 	xdef	v_clrwk,v_updwk
-	xdef	vrq_locator,vrq_valuator,vrq_choice,vrq_string,vsin_mode
+;	xdef	vrq_locator,vrq_valuator,vrq_choice,vrq_string,vsin_mode
+	xdef	vrq_locator,vrq_valuator,vrq_choice,vsin_mode
 	xdef	v_contourfill
 	xdef	vqin_mode
 	xdef	v_cellarray,vq_cellarray
@@ -71,7 +72,7 @@ v_updwk:
 vrq_locator:
 vrq_valuator:
 vrq_choice:
-vrq_string:
+;vrq_string:
 vqin_mode:
   ifne 1
 	move.l	intout(a1),a2

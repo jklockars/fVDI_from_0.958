@@ -24,7 +24,7 @@ sven_mouse	equ	1		; Use Sven's timer draw code?
 	xref	_screen_wk,_old_curv,_old_timv
 
 	xdef	vsc_form,v_show_c,v_hide_c
-	xdef	vq_mouse,vq_key_s
+	xdef	vq_mouse,vq_key_s,vrq_string
 	xdef	vex_butv,vex_motv,vex_curv,vex_wheelv,vex_timv
 	xdef	_mouse_move,_mouse_timer
 	xdef	_do_nothing,_vector_call
@@ -288,6 +288,56 @@ vq_mouse:
 	tst.w	_stand_alone
 ;	beq	redirect			; Temporary (needs a1)
 	redir	vq_mouse			; Temporary (needs a1)
+	done_return
+
+
+	dc.b	0,"vrq_string",0
+* vrq_string - Standard Trap function
+* Todo: This could use the p_kbshift system variable instead
+* In:   a1      Parameter block
+*       a0      VDI struct
+vrq_string:
+	uses_d1
+	movem.l	d2/a0-a1,-(a7)
+
+	move.w	#2,-(a7)
+	move.w	#$01,-(a7)
+	trap	#13
+	addq.l	#4,a7
+	tst.w	d0
+	beq	.no_key
+	
+	move.w	#2,-(a7)
+	move.w	#$02,-(a7)
+	trap	#13
+	addq.l	#4,a7
+	and.w	#$00ff,d0
+	move.l	d0,d1
+	swap	d1
+	lsl.w	#8,d1
+	or.w	d1,d0
+.no_key:
+	
+	movem.l	(a7)+,d2/a0-a1
+	used_d1
+
+	tst.w	d0
+	beq	.no_result
+	move.l	intin(a1),a2
+	tst.w	(a2)
+	bmi	.keep_scancode
+	and.w	#$00ff,d0
+.keep_scancode:
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+	move.l	control(a1),a2
+	move.w	#1,L_intout(a2)
+.no_result:
+
+	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
+	tst.w	_stand_alone
+;	beq	redirect			; Temporary (needs a1)
+	redir	vrq_string			; Temporary (needs a1)
 	done_return
 
 

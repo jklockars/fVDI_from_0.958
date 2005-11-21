@@ -1,5 +1,6 @@
 2005-11-21 - johan
 Modified version of Standa's Calamus support added.
+Implemented vsm_string.
 
 2005-11-17 - johan
 Made it possible to force call to the fVDI mouse movement vector.
