@@ -2,7 +2,7 @@
 * fVDI v0.96, 020710
 *   Mainly function dispatcher related things
 *
-* $Id: fvdi.s,v 1.9 2005-11-18 23:43:16 johan Exp $
+* $Id: fvdi.s,v 1.10 2005-11-21 23:38:05 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -431,6 +431,7 @@ bad_handle:				; The handle definitely was bad
 .really_ok:
 .opnvwk_ok:
 	moveq	#1,d0			; Set handle to first workstation
+	lea	_handle,a0
 	bra	handle_ok
 
 .first_opnwk:				; Special treatment for the first opened
