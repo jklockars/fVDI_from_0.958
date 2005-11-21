@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.11 2005-11-18 23:40:30 johan Exp $
+ * $Id: setup.c,v 1.12 2005-11-21 08:32:41 johan Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -35,7 +35,8 @@ short old_wk_handle = 0;   /* Was 1, [010109] */
 
 short vbl_handler_installed = 0;
 
-Workstation *screen_wk = 0;
+Workstation *screen_wk  = 0;
+Virtual     *screen_vwk = 0;
 void *old_curv = 0;
 void *old_timv = 0;
 
@@ -551,6 +552,7 @@ void copy_workstations(Virtual *def, long really_copy)
    
    if (!disabled && !oldmouse && really_copy) {
       screen_wk = handle[1]->real_address;
+      screen_vwk = handle[1];
       link_mouse_routines();
    }
 }

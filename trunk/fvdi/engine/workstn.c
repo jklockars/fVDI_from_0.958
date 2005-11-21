@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.11 2005-11-18 23:42:48 johan Exp $
+ * $Id: workstn.c,v 1.12 2005-11-21 08:32:41 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -459,6 +459,8 @@ void v_opnwk(VDIpars *pars)
 #endif
 
 	v_opnvwk(vwk, pars);
+
+	screen_vwk = *find_handle_entry(pars->control->handle);
 }
 
 

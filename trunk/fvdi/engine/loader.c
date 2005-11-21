@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.21 2005-11-18 23:52:54 johan Exp $
+ * $Id: loader.c,v 1.22 2005-11-21 08:32:41 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -87,6 +87,7 @@ short interactive = 0;
 short stand_alone = 0;
 short nvdi_cookie = 0;
 short speedo_cookie = 0;
+short calamus_cookie = 0;
 char silent[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 char silentx[1] = {0};
@@ -162,7 +163,7 @@ static Option options[] = {
    {"debugout",   &debug_out,      4},  /* debugout n, send all debug (and similar) output to device number n */
    {"interactive",&interactive,    1},  /* interactive, turns on key controlled debugging */
    {"standalone", &stand_alone,    1},  /* standalone, forces fVDI to refrain from relying on an underlying VDI */
-   {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi = value, allows for setting cookie values */
+   {"cookie",     specify_cookie, -1},  /* cookie speedo/nvdi/calamus = value, allows for setting cookie values */
    {"vqgdos",     specify_vqgdos, -1},  /* vqgdos str, specify a vq_gdos reply */
    {"module",     use_module,     -1},  /* module str, specify a module to load */
    {"silent",     set_silent,     -1},  /* silent n, no debug for VDI call n */
@@ -244,10 +245,11 @@ long use_module(Virtual *vwk, const char **ptr)
 long specify_cookie(Virtual *vwk, const char **ptr)
 {
    char token[TOKEN_SIZE];
-   short nvdi_val, speedo_val;
+   short nvdi_val, speedo_val, calamus_val;
 
    nvdi_val = 0;
    speedo_val = 0;
+   calamus_val = 0;
 
    if (!(*ptr = skip_space(*ptr))) {
       error("Bad cookie setting!", 0);
@@ -262,6 +264,8 @@ long specify_cookie(Virtual *vwk, const char **ptr)
 #endif
    } else if (equal(token, "speedo")) {
       speedo_val = 0x0500;
+   } else if (equal(token, "calamus")) {
+      calamus_val = 0x0100;
    }
 
    *ptr = skip_space(*ptr);
@@ -278,6 +282,8 @@ long specify_cookie(Virtual *vwk, const char **ptr)
             nvdi_val   = (short)atol(token);
          else if (speedo_val)
             speedo_val = (short)atol(token);
+	 else if (calamus_val)
+            calamus_val = (short)atol(token);
       }
    }
 
@@ -285,6 +291,8 @@ long specify_cookie(Virtual *vwk, const char **ptr)
       nvdi_cookie = (short)nvdi_val;
    else if (speedo_val)
       speedo_cookie = (short)speedo_val;
+   else if (calamus_val)
+      calamus_cookie = (short)calamus_val;
 
    return 1;
 }

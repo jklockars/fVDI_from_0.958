@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.8 2005-11-18 23:53:37 johan Exp $
+ * $Id: globals.h,v 1.9 2005-11-21 08:31:48 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -71,9 +71,8 @@ extern Access *access;
 
 extern long *pid;
 
-#if 1
-extern Workstation *screen_wk;    /* Used in tokenize() */
-#endif
+extern Workstation *screen_wk;
+extern Virtual     *screen_vwk;
 
 extern char *vdi_stack_top;
 extern long vdi_stack_size;
@@ -102,6 +101,7 @@ extern short interactive;
 extern short stand_alone;
 extern short nvdi_cookie;
 extern short speedo_cookie;
+extern short calamus_cookie;
 extern char silent[];
 extern char silentx[];
 extern unsigned short sizes[];

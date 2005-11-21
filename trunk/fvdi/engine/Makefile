@@ -77,6 +77,7 @@ SSRC = \
 	traptabl.s \
 	unimpl.s \
 	vdi_misc.s \
+	dcsdstub.s \
 	setjmp.s
 
 
@@ -96,6 +97,7 @@ CSRC = \
 	workstn.c \
 	colour.c \
 	textlib.c \
+	calamus.c \
 	default.c
 
 ifneq ($(ft2_srcdir),)

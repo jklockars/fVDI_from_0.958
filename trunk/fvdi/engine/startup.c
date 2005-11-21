@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.32 2005-11-18 23:59:09 johan Exp $
+ * $Id: startup.c,v 1.33 2005-11-21 08:32:41 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -13,6 +13,7 @@
 #include "utility.h"
 #include "globals.h"
 #include "function.h"
+#include "calamus.h"
 
 #define DEBUG
 
@@ -80,6 +81,7 @@ struct Readable_data {
 	struct fVDI_cookie cookie;
 	struct FSMC_cookie fsmc_cookie;
 	struct NVDI_cookie nvdi_cookie;
+	struct DCSD_cookie dcsd_cookie;
 } *readable = 0;
 
 struct Super_data *super = 0;
@@ -156,6 +158,9 @@ long startup(void)
 		readable->nvdi_cookie.version = nvdi_cookie;
 		readable->nvdi_cookie.date    = 0x13052005;
 		readable->nvdi_cookie.flags   = 0x0001;  /* GDOS support */
+	}
+	if (calamus_cookie) {
+	    calamus_initialize_cookie(&readable->dcsd_cookie, calamus_cookie);
 	}
 
 	if (debug) {				/* Set up log table if asked for */
@@ -332,9 +337,13 @@ long startup(void)
 		set_cookie("NVDI", (long)&readable->nvdi_cookie);
 	}
 
+	if (calamus_cookie && (get_cookie("DCSD", 0) == -1)) {
+		set_cookie("DCSD", (long)&readable->dcsd_cookie);
+		puts_nl("Calamus cookie installed");
+	}
+
 	if (set_cookie("fVDI", (long)&readable->cookie) && debug)
 		puts_nl("Replacing previous cookie");
-
 
 	/*
 	 * Some trickery to make it possible for a TSR
