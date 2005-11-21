@@ -1,7 +1,7 @@
 /*
  * fVDI Calamus declarations
  *
- * $Id: calamus.h,v 1.1 2005-11-21 08:31:48 johan Exp $
+ * $Id: calamus.h,v 1.2 2005-11-21 08:42:29 johan Exp $
  *
  * Copyright 2004, Standa Opichals
  * This software is licensed under the GNU General Public License.
@@ -27,4 +27,3 @@ struct DCSD_cookie {
 
 
 void calamus_initialize_cookie(struct DCSD_cookie *cookie, short version);
-short calamus_setup(Virtual *vwk);
