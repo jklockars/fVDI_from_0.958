@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.34 2005-11-21 08:59:37 johan Exp $
+ * $Id: startup.c,v 1.35 2005-11-21 23:38:58 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -23,8 +23,8 @@
 
 #define SYSNAME "fvdi.sys"
 
-#define VERSION	0x0965
-#define BETA	21
+#define VERSION	0x0966
+#define BETA	1
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
