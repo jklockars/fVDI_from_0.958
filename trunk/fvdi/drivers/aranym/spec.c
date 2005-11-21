@@ -400,7 +400,11 @@ static void setup_wk(Virtual *vwk)
 	 * default workstation settings.
 	 */
 	wk->screen.mfdb.address = (void *)c_get_videoramaddress();
+#if 0
 	wk->screen.mfdb.wdwidth = ((long)wk->screen.mfdb.width * wk->screen.mfdb.bitplanes) / 16;
+#else
+	wk->screen.mfdb.wdwidth = (wk->screen.mfdb.width + 15) / 16;
+#endif
 	wk->screen.wrap = wk->screen.mfdb.width * (wk->screen.mfdb.bitplanes / 8);
 
 	wk->screen.coordinates.max_x = wk->screen.mfdb.width - 1;
