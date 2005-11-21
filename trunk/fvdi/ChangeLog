@@ -1,3 +1,7 @@
+2005-11-22 - johan
+Fixed previously unknown bug in the dispatcher that crashed Calamus.
+fVDI engine version bumped to 0.965beta.
+
 2005-11-21 - johan
 Modified version of Standa's Calamus support added.
 Implemented vsm_string.
