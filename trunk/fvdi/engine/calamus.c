@@ -1,7 +1,7 @@
 /*
  * fVDI Calamus functions
  *
- * $Id: calamus.c,v 1.2 2005-11-21 09:32:02 johan Exp $
+ * $Id: calamus.c,v 1.3 2005-11-21 11:33:24 johan Exp $
  *
  * Copyright 2004, Standa Opichals
  * This software is licensed under the GNU General Public License.
@@ -61,7 +61,7 @@ static void CDECL dcsd_init(void)
 	 * directly used by Calamus
 	 */
 
-#if 0
+#if 1
 	size = dcsd_offscreen_mfdb.wdwidth * 2L *
 	       dcsd_offscreen_mfdb.height * dcsd_offscreen_mfdb.bitplanes;
 #else
