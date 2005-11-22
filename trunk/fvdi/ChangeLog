@@ -1,5 +1,6 @@
 2005-11-22 - standa
 Calamus does all the clipping for the external driver on its own.
+Remofing wrong wdwidth formulas from the aranym and calamus drivers.
 
 2005-11-22 - johan
 Fixed previously unknown bug in the dispatcher that crashed Calamus.
