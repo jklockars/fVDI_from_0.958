@@ -1,7 +1,7 @@
 /*
  * fVDI Calamus functions
  *
- * $Id: calamus.c,v 1.3 2005-11-21 11:33:24 johan Exp $
+ * $Id: calamus.c,v 1.4 2005-11-22 02:13:05 standa Exp $
  *
  * Copyright 2004, Standa Opichals
  * This software is licensed under the GNU General Public License.
@@ -159,9 +159,6 @@ void CDECL dcsd_gettlt(unsigned char tlt[256])
 void CDECL dcsd_blit_from_screen(struct DCSD_BLITARGS *args)
 {
 	short coords[8];
-	struct clip_ clipping;
-
-	clipping = dcsd_vwk->clip;
 
 	coords[0] = args->x;
 	coords[1] = args->y;
@@ -191,22 +188,17 @@ void CDECL dcsd_blit_from_screen(struct DCSD_BLITARGS *args)
 		puts_nl("");
 	}
 
-	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, 0, (void *)0);
-
 	/* FIXME: BPP transformations are necessary (now BPP 32bit only) */
 
 	/* Note: From screen direction should always use the 'replace' mode */
 	lib_vdi_spppp(&lib_vro_cpyfm, dcsd_vwk, 3, coords, 0L,
 	              &dcsd_offscreen_mfdb, 0L);
-
-	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, clipping.on, &clipping.rectangle.x1);
 }
 
 
 void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 {
 	short coords[8];
-	struct clip_ clipping;
 
 	coords[0] = args->x;
 	coords[1] = args->y;
@@ -239,8 +231,6 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 		puts_nl("");
 	}
 
-	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, 0, (void *)0);
-
 	/* FIXME: BPP transformations are necessary (now BPP 32bit only)
 	 *
 	 * Calamus uses 1, 8 or 32bit offscreen buffer according to
@@ -264,8 +254,6 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 	 */ 
 	lib_vdi_spppp(&lib_vro_cpyfm, dcsd_vwk, args->mode, coords,
 	              &dcsd_offscreen_mfdb, 0L, 0L);
-
-	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, clipping.on, &clipping.rectangle.x1);
 }
 
 

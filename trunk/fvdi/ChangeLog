@@ -1,3 +1,6 @@
+2005-11-22 - standa
+Calamus does all the clipping for the external driver on its own.
+
 2005-11-22 - johan
 Fixed previously unknown bug in the dispatcher that crashed Calamus.
 fVDI engine version bumped to 0.965beta.
