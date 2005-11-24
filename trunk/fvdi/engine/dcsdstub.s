@@ -1,7 +1,7 @@
 *****
 * fVDI Calamus stub functions
 *
-* Copyright 2004, Standa Opichals
+* Copyright 2004, STanda Opichal
 * This software is licensed under the GNU General Public License.
 * Please, see LICENSE.TXT for further information.
 *****
