@@ -1,3 +1,13 @@
+2005-11-23 - standa
+Basic ft2 bitmap font support (tested with MS Win .fon fonts).
+Performed tests of type-1 as well as TrueType fonts.
+
+Few implementaiton notes:
+* font->underline == 0 is used to determine whether metrics for the
+  particular font->size were loeaded
+* font->flags & 0x8000 is FreeType2 handled font flag
+* font->flags & 0x4000 is scalable font flag
+
 2005-11-22 - standa
 Calamus does all the clipping for the external driver on its own.
 Remofing wrong wdwidth formulas from the aranym and calamus drivers.
