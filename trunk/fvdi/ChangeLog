@@ -1,3 +1,8 @@
+2005-11-28 - johan
+Added a bitplane driver written in C, based on a significantly modified
+version of the EmuTOS VDI blit routines. Definitely needs more work,
+but it can at least display a desktop (sort of ;-)
+
 2005-11-23 - standa
 Basic ft2 bitmap font support (tested with MS Win .fon fonts).
 Performed tests of type-1 as well as TrueType fonts.
