@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.1 2005-11-28 17:14:17 johan Exp $
+ * $Id: blit.c,v 1.2 2005-11-30 13:26:24 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -12,10 +12,13 @@
  */
 
 #include "fvdi.h"
+#include "relocate.h"
 
 #define DBG_BLIT 0      /* See, what happens (a bit) */
 
 #define BOOL int
+#define TRUE 1
+#define FALSE 0
 #define BYTE char
 #define UBYTE unsigned char
 #define WORD short
@@ -27,6 +30,9 @@
 /* flag:1 SOURCE and PATTERN   flag:0 SOURCE only */
 #define PAT_FLAG        16
 
+
+extern Access *access;
+static long dbg = 0;
 
 extern void CDECL
 c_get_colour(Virtual *vwk, long colour, short *foreground, short* background);
@@ -95,8 +101,160 @@ struct blit {
 
 
 
+#if 0
+static inline void
+do_blit(blit * blt)
+{
+    ULONG   blt_src_in;
+    UWORD   blt_src_out, blt_dst_in, blt_dst_out, mask_out;
+    int  xc, yc, last, first;
 
-#if 1
+#if DBG_BLIT
+    kprintf ("bitblt: Start\n");
+    kprintf ("HALFT[] 0x%04x-%04x-%04x-%04x\n", (UWORD) blt->halftone[0], blt->h
+alftone[1], blt->halftone[2], blt->halftone[3]);
+    kprintf ("X COUNT 0x%04x\n", (UWORD) blt->x_cnt);
+    kprintf ("Y COUNT 0x%04x\n", (UWORD) blt->y_cnt);
+    kprintf ("X S INC 0x%04x\n", (UWORD) blt->src_x_inc);
+    kprintf ("Y S INC 0x%04x\n", (UWORD) blt->src_y_inc);
+    kprintf ("X D INC 0x%04x\n", (UWORD) blt->dst_x_inc);
+    kprintf ("Y D INC 0x%04x\n", (UWORD) blt->dst_y_inc);
+    kprintf ("ENDMASK 0x%04x-%04x-%04x\n", (UWORD) blt->end_1, (UWORD) blt->end_
+2, (UWORD) blt->end_3);
+    kprintf ("S_ADDR  0x%08lx\n", blt->src_addr);
+    kprintf ("D_ADDR  0x%08lx\n", blt->dst_addr);
+    kprintf ("HOP=%01d, OP=%02d\n", blt->hop & 0x3, blt->op & 0xf);
+    kprintf ("HOPline=%02d\n", blt->status & 0xf);
+    kprintf ("NFSR=%d, FXSR=%d, SKEW=%02d\n", (blt->skew & NFSR) != 0,
+                                              (blt->skew & FXSR) != 0,
+                                              (blt->skew & SKEW));
+#endif
+    if (blt->x_cnt == 0) blt->x_cnt = 65535;
+    if (blt->y_cnt == 0) blt->y_cnt = 65535;
+
+    xc = 0;
+    yc = blt->y_cnt;
+    while (yc-- > 0) {
+        xc = blt->x_cnt;
+        first = 1;
+        blt_src_in = 0;
+        /* next line to get rid of obnoxious compiler warnings */
+        blt_src_out = blt_dst_out = 0;
+        while (xc-- > 0) {
+            last = (xc == 0);
+            /* read source into blt_src_in */
+            if (blt->src_x_inc >= 0) {
+                if (first && (blt->hop & FXSR)) {
+                    blt_src_in = GetMemW (blt->src_addr);
+                    blt->src_addr += blt->src_x_inc;
+                }
+                blt_src_in <<= 16;
+
+                if (last && (blt->hop & NFSR)) {
+                    blt->src_addr -= blt->src_x_inc;
+                } else {
+                    blt_src_in |= GetMemW (blt->src_addr);
+                    if (!last) {
+                        blt->src_addr += blt->src_x_inc;
+                    }
+                }
+            } else {
+                if (first &&  (blt->hop & FXSR)) {
+                    blt_src_in = GetMemW (blt->src_addr);
+                    blt->src_addr +=blt->src_x_inc;
+                } else {
+                    blt_src_in >>= 16;
+                }
+                if (last && (blt->hop & NFSR)) {
+                    blt->src_addr -= blt->src_x_inc;
+                } else {
+                    blt_src_in |= (GetMemW (blt->src_addr) << 16);
+                    if (!last) {
+                        blt->src_addr += blt->src_x_inc;
+                    }
+                }
+            }
+            /* shift blt->skew times into blt_src_out */
+            blt_src_out = blt_src_in >> (blt->skew & SKEW);
+
+            /* read destination into blt_dst_in */
+            blt_dst_in = GetMemW (blt->dst_addr);
+            /* op into blt_dst_out */
+            switch (blt->op & 0xf) {
+            case 0:
+                blt_dst_out = 0;
+                break;
+            case 1:
+                blt_dst_out = blt_src_out & blt_dst_in;
+                break;
+            case 2:
+                blt_dst_out = blt_src_out & ~blt_dst_in;
+                break;
+            case 3:
+                blt_dst_out = blt_src_out;
+                break;
+            case 4:
+                blt_dst_out = ~blt_src_out & blt_dst_in;
+                break;
+            case 5:
+                blt_dst_out = blt_dst_in;
+                break;
+            case 6:
+                blt_dst_out = blt_src_out ^ blt_dst_in;
+                break;
+            case 7:
+                blt_dst_out = blt_src_out | blt_dst_in;
+                break;
+            case 8:
+                blt_dst_out = ~blt_src_out & ~blt_dst_in;
+                break;
+            case 9:
+                blt_dst_out = ~blt_src_out ^ blt_dst_in;
+                break;
+            case 0xa:
+                blt_dst_out = ~blt_dst_in;
+                break;
+            case 0xb:
+                blt_dst_out = blt_src_out | ~blt_dst_in;
+                break;
+            case 0xc:
+                blt_dst_out = ~blt_src_out;
+                break;
+            case 0xd:
+                blt_dst_out = ~blt_src_out | blt_dst_in;
+                break;
+            case 0xe:
+                blt_dst_out = ~blt_src_out | ~blt_dst_in;
+                break;
+            case 0xf:
+                blt_dst_out = 0xffff;
+                break;
+            }
+
+            /* and endmask */
+            if (first) {
+                mask_out = (blt_dst_out & blt->end_1) | (blt_dst_in & ~blt->end_1);
+            } else if (last) {
+                mask_out = (blt_dst_out & blt->end_3) | (blt_dst_in & ~blt->end_3);
+            } else {
+                mask_out = (blt_dst_out & blt->end_2) | (blt_dst_in & ~blt->end_2);
+            }
+            SetMemW (blt->dst_addr, mask_out);
+            if (!last) {
+                blt->dst_addr += blt->dst_x_inc;
+            }
+            first = 0;
+        }
+        blt->status = (blt->status + ((blt->dst_y_inc >= 0) ? 1 : 15)) & 0xef;
+        blt->src_addr += blt->src_y_inc;
+        blt->dst_addr += blt->dst_y_inc;
+    }
+    /* blt->status &= ~BUSY; */
+    blt->y_cnt = 0;
+}
+
+#else
+#if 0
 static void
 do_blit_0(blit *blt)
 {
@@ -108,7 +266,7 @@ do_blit_0(blit *blt)
     WORD end_2;
     WORD end_3 = blt->end_3;
 
-#if 0
+#if 1
     if (blt->x_cnt == 0)
        blt->x_cnt = 65535;
     if (blt->y_cnt == 0)
@@ -188,7 +346,7 @@ do_blit_15(blit * blt)
     WORD end_2;
     WORD end_3 = blt->end_3;
 
-#if 0
+#if 1
     if (blt->x_cnt == 0)
        blt->x_cnt = 65535;
     if (blt->y_cnt == 0)
@@ -249,7 +407,7 @@ do_blit_short_32(blit *blt)
     end_1     = blt->end_1;
 
     yc = blt->y_cnt;
-#if 0
+#if 1
     if (yc == 0)
 	yc = 65535;
 #endif
@@ -258,7 +416,7 @@ do_blit_short_32(blit *blt)
 	end_1 = ~end_1;
     my_op = ops[blt->op];
 
-#if 0
+#if 1
     do {
 	blt_src_in = GetMemW(src_addr);
 	blt_src_in <<= 16;
@@ -362,7 +520,7 @@ do_blit_short(blit *blt)
     int yc;
     ULONG skew;
     ULONG dst_addr, src_addr;
-#if 0
+#if 1
     LONG src_x_inc;
 #endif
     LONG src_y_inc, dst_y_inc;
@@ -383,13 +541,13 @@ do_blit_short(blit *blt)
     src_addr  = blt->src_addr;
     src_y_inc = blt->src_y_inc;
     dst_y_inc = blt->dst_y_inc;
-#if 0
+#if 1
     src_x_inc = blt->src_x_inc;
 #endif
     end_1     = blt->end_1;
 
     yc = blt->y_cnt;
-#if 0
+#if 1
     if (yc == 0)
 	yc = 65535;
 #endif
@@ -532,6 +690,13 @@ do_blit(blit *blt)
 	return;
     }
 
+#if 0
+    if (blt->op == 7 && dbg) {
+      dbg = 2;
+      //        blt->op = 3;
+    }
+#endif
+
     skew      = blt->skew;
     dst_addr  = blt->dst_addr;
     src_addr  = blt->src_addr;
@@ -541,18 +706,29 @@ do_blit(blit *blt)
     dst_x_inc = blt->dst_x_inc;
     end_1     = ((ULONG)blt->end_3 << 16) | (UWORD)blt->end_1;
 
+    if (blt->op < 2)
+	end_1 = ~end_1;
     my_op1 = ops1[blt->op];
     my_op2 = ops2[blt->op];
     my_op3 = ops3[blt->op];
 
     yc = blt->y_cnt;
-#if 0
+#if 1
     if (blt->x_cnt == 0)
        blt->x_cnt = 65535;
     if (yc == 0)
        yc = 65535;
 #endif
 
+    if (dbg) {
+      char buf[10];
+      access->funcs.ltoa(buf, end_1, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts(" (");
+      access->funcs.ltoa(buf, (long)blt->op, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts(")\x0a\x0d");
+    }
 
     do {
         xc = blt->x_cnt;
@@ -817,6 +993,7 @@ op3_end:
         dst_addr += dst_y_inc;
     } while (--yc > 0);
 }
+#endif
 
 
 /*
@@ -938,11 +1115,28 @@ bit_blt(struct blit_frame *info)
     if (!d_span) {
         /* Merge both end masks into Endmask1. */
         lendmask &= rendmask;           /* Single word end mask */
+#if 0
+	rendmask = lendmask;
+#endif
         skew_idx |= 0x0004;             /* Single word dst */
         /* The other end masks will be ignored by the BLiTTER */
     }
 
+    /* Calculate starting addresses */
+    s_addr = (ULONG)info->s_form +
+             (ULONG)info->s_ymin * (ULONG)info->s_nxln +
+             (ULONG)s_xmin_off   * (ULONG)info->s_nxwd;
+    d_addr = (ULONG)info->d_form +
+             (ULONG)info->d_ymin * (ULONG)info->d_nxln +
+             (ULONG)d_xmin_off   * (ULONG)info->d_nxwd;
+
+#if 1
     if (s_addr < d_addr) {
+#else
+      //    if ((info->s_form == info->d_form) && (s_addr < d_addr)) {
+      //    if ((info->s_form != info->d_form) || (s_addr < d_addr)) {
+    if (1) {
+#endif
         /* Start from lower right corner, so add width+length */
         s_addr = (ULONG)info->s_form + 
                  (ULONG)info->s_ymax * (ULONG)info->s_nxln +
@@ -967,16 +1161,7 @@ bit_blt(struct blit_frame *info)
         skew = (d_xmax & 0x0f) - (s_xmax & 0x0f);
         if (skew >= 0 )
             skew_idx |= 0x0001;         /* d6[bit0]<- Alignment flag */
-    }
-    else {
-        /* Calculate starting addresses */
-        s_addr = (ULONG)info->s_form +
-                 (ULONG)info->s_ymin * (ULONG)info->s_nxln +
-                 (ULONG)s_xmin_off   * (ULONG)info->s_nxwd;
-        d_addr = (ULONG)info->d_form +
-                 (ULONG)info->d_ymin * (ULONG)info->d_nxln +
-                 (ULONG)d_xmin_off   * (ULONG)info->d_nxwd;
-
+    } else {
         /* Offset between consecutive words in planes */
         blt->src_x_inc = info->s_nxwd;
         blt->dst_x_inc = info->d_nxwd;
@@ -993,26 +1178,46 @@ bit_blt(struct blit_frame *info)
         skew = (d_xmin & 0x0f) - (s_xmin & 0x0f);
         if (skew < 0)
             skew_idx |= 0x0001;         /* Alignment flag */
+
+#if 0
+    {
+      char buf[10];
+      access->funcs.ltoa(buf, (long)s_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts("->");
+      access->funcs.ltoa(buf, (long)d_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts(" : ");
+      access->funcs.ltoa(buf, (long)lendmask, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts(" , ");
+      access->funcs.ltoa(buf, (long)rendmask, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts("\x0a\x0d");
     }
+#endif
+
+    }
+
+#if 0
+    {
+      char buf[10];
+      access->funcs.ltoa(buf, (long)s_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts("->");
+      access->funcs.ltoa(buf, (long)d_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts("\x0a\x0d");
+    }
+#endif
 
     /*
      * The low nibble of the difference in Source and Destination alignment
      * is the skew value.  Use the skew flag index to reference FXSR and
      * NFSR states in skew flag table.
      */
-#if 0
-    blt->skew = (skew & 0x0f) | skew_flags[skew_idx];
-#else
     blt->skew = skew & 0x0f;
-#endif
-
-    /* BLiTTER REGISTER MASKS */
-#define mHOP_Source  0x02
-#if 0
-    blt->hop = mHOP_Source;   /* word */    /* Set HOP to source only */
-#else
     blt->hop = skew_flags[skew_idx];
-#endif
 
     for(plane = info->plane_ct - 1; plane >= 0; plane--) {
         int op_tabidx;
@@ -1056,11 +1261,9 @@ setup_pattern(Virtual *vwk, struct blit_frame *info)
  * Fill the info structure with MFDB values
  */
 static BOOL
-setup_info(Virtual *vwk, struct blit_frame *info, MFDB *src, MFDB *dst,
+setup_info(Workstation *wk, struct blit_frame *info, MFDB *src, MFDB *dst,
            int src_x, int src_y, int dst_x, int dst_y, int w, int h)
 {
-    Workstation *wk = vwk->real_address;
-
     /* Setup plane info for source MFDB */
     if (src && src->address && (src->address != wk->screen.mfdb.address)) {
         /* For a positive source address */
@@ -1114,6 +1317,7 @@ setup_info(Virtual *vwk, struct blit_frame *info, MFDB *src, MFDB *dst,
     return info->plane_ct & ~0x000f;
 }
 
+
 /*
  * copy raster opaque
  *
@@ -1128,7 +1332,7 @@ c_blit_area(Virtual *vwk, MFDB *src, long src_x, long src_y, MFDB *dst,
 
     /* If mode is made up of more than the first 5 bits */
     if (operation & ~0x001f)
-        return;                         /* Mode is invalid */
+        return 1;                       /* Mode is invalid */
 
     /* Check the pattern flag (bit 5) and revert to log op # */
     info.p_addr = 0;                    /* Clear pattern pointer */
@@ -1138,12 +1342,12 @@ c_blit_area(Virtual *vwk, MFDB *src, long src_x, long src_y, MFDB *dst,
     }
 
     /* If true, the plane count is invalid or clipping took all! */
-    if (setup_info(vwk, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
-        return;
+    if (setup_info(vwk->real_address, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
+        return 1;
 
     /* Planes of source and destination must be equal in number */
     if (info.s_nxwd != info.d_nxwd)
-        return;
+        return 1;
 
     info.op_tab[0] = operation;     /* fg:0 bg:0 */
     info.bg_col = 0;                /* bg:0 & fg:0 => only first OP_TAB */
@@ -1152,6 +1356,34 @@ c_blit_area(Virtual *vwk, MFDB *src, long src_x, long src_y, MFDB *dst,
     bit_blt(&info);
 }
 
+
+long CDECL
+x_blit_area(Workstation *wk, MFDB *src, long src_x, long src_y, MFDB *dst,
+            long dst_x, long dst_y, long w, long h, long operation)
+{
+    struct blit_frame info;     /* Holds some internal info for bit_blt */
+
+    /* If mode is made up of more than the first 5 bits */
+    if (operation & ~0x001f)
+        return 1;                       /* Mode is invalid */
+
+    /* Check the pattern flag (bit 5) and revert to log op # */
+    info.p_addr = 0;                    /* Clear pattern pointer */
+
+    /* If true, the plane count is invalid or clipping took all! */
+    if (setup_info(wk, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
+        return 1;
+
+    /* Planes of source and destination must be equal in number */
+    if (info.s_nxwd != info.d_nxwd)
+        return 1;
+
+    info.op_tab[0] = operation;     /* fg:0 bg:0 */
+    info.bg_col = 0;                /* bg:0 & fg:0 => only first OP_TAB */
+    info.fg_col = 0;                /* entry will be referenced */
+
+    bit_blt(&info);
+}
 
 
 /*
@@ -1172,6 +1404,10 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
     short background;
 
     c_get_colour((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+#if 1
+    foreground = 1;
+    background = 0;
+#endif
 
     /* If mode is made up of more than the first 5 bits */
 #if 0
@@ -1188,9 +1424,43 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
         setup_pattern(vwk, &info);   /* Fill in pattern related stuff */
     }
 
+#if 0
+    /* Try to get everything to display! */
+    if (dst_x && !(dst_x % 16))
+ #if 0
+        dst_x -= 1;
+ #else
+        dbg = 1;
+ #endif
+#endif
+#if 0
+    if ((w != 1) || (h != 1))
+    {
+      char buf[10];
+      access->funcs.ltoa(buf, src_x, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(",");
+      access->funcs.ltoa(buf, src_y, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" ");
+      access->funcs.ltoa(buf, dst_x, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(",");
+      access->funcs.ltoa(buf, dst_y, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" ");
+      access->funcs.ltoa(buf, w, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(",");
+      access->funcs.ltoa(buf, h, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts("\x0a\x0d");
+    }
+#endif
+
     /* If true, the plane count is invalid or clipping took all! */
-    if (setup_info(vwk, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
-        return;
+    if (setup_info(vwk->real_address, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
+        return 1;
 
     /*
      * COPY RASTER TRANSPARENT - copies a monochrome raster area
@@ -1200,7 +1470,7 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
 
     /* Is source area one plane? */
     if (info.s_nxwd != 2)
-        return;    /* Source must be mono plane */
+        return 1;    /* Source must be mono plane */
 
     info.s_nxpl = 0;            /* Use only one plane of source */
 
@@ -1236,39 +1506,100 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
         break;
 
     default:
-        return;                     /* Unsupported mode */
+        return 1;                   /* Unsupported mode */
     }
 
     bit_blt(&info);
+
+#if 0
+    if (dbg == 2) {
+    for(dbg = 100000000; dbg >= 0; dbg--)
+      ;
+    }
+    dbg = 0;
+#endif
 }
 
 
 long CDECL
-c_fill_area(Virtual *vwk, long x, long y, long w, long h, short *pattern,
-            long colour, long mode, long interior_style)
+x_expand_area(Workstation *wk, MFDB *src, long src_x, long src_y,
+              MFDB *dst, long dst_x, long dst_y, long w, long h,
+              long operation, long colour)
 {
-  MFDB src;
+    struct blit_frame info;     /* Holds some internal info for bit_blt */
+    short foreground;
+    short background;
 
-  /* Don't understand any table operations yet */
-  if ((long)vwk & 1)
-    return -1;
+#if 0
+    c_get_colour((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+#else
+    foreground = colour & 0xffff;
+    background = (colour >> 16) & 0xffff;
+#endif
 
-  src.address   = pattern;
-  src.width     = 16;
-  src.height    = 16;
-  src.wdwidth   = 1;
-  src.standard  = 0;
-  src.bitplanes = 1;
+    /* If mode is made up of more than the first 5 bits */
+#if 0
+    if (operation & ~0x001f)
+        return;                 /* Mode is invalid */
+#else
+    operation &= 0x000f;
+#endif
 
-  /* Always fill with black, white or XOR, for the time being */
-  if (mode == 3)
-    c_blit_area(vwk, 0L, 0L, 0L, 0L, x, y, w, h, 12L);  /* XOR */
-  else if (colour == 1)
-    c_blit_area(vwk, 0L, 0L, 0L, 0L, x, y, w, h, 15L);  /* Black */
-  else
-    c_blit_area(vwk, 0L, 0L, 0L, 0L, x, y, w, h, 0L);   /* White */
+    /* Check the pattern flag (bit 5) and revert to log op # */
+    info.p_addr = 0;            /* Get pattern pointer*/
 
-  return 1;
+    /* If true, the plane count is invalid or clipping took all! */
+    if (setup_info(wk, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
+        return 1;
+
+    /*
+     * COPY RASTER TRANSPARENT - copies a monochrome raster area
+     * from source form to a color area. A writing mode and color
+     * indices for both 0's and 1's are specified in the INTIN array.
+     */
+
+    /* Is source area one plane? */
+    if (info.s_nxwd != 2)
+        return 1;    /* Source must be mono plane */
+
+    info.s_nxpl = 0;            /* Use only one plane of source */
+
+    switch(operation) {
+    case 2:
+        info.op_tab[0] = 04;    /* fg:0 bg:0  D' <- [not S] and D */
+        info.op_tab[2] = 07;    /* fg:1 bg:0  D' <- S or D */
+        info.fg_col = foreground;       /* We're only interested in one color */
+        info.bg_col = 0;                /* Save the color of interest */
+        break;
+
+    case 1:
+        /* CHECK: bug, that colors are reversed? */
+        info.op_tab[0] = 00;    /* fg:0 bg:0  D' <- 0 */
+        info.op_tab[1] = 12;    /* fg:0 bg:1  D' <- not S */
+        info.op_tab[2] = 03;    /* fg:1 bg:0  D' <- S */
+        info.op_tab[3] = 15;    /* fg:1 bg:1  D' <- 1 */
+        info.bg_col = background;      /* Save fore and background colors */
+        info.fg_col = foreground;
+        break;
+
+    case 3:
+        info.op_tab[0] = 06;    /* fg:0 bg:0  D' <- S xor D */
+        info.bg_col = 0;
+        info.fg_col = 0;
+        break;
+
+    case 4:
+        info.op_tab[0] = 01;    /* fg:0 bg:0  D' <- S and D */
+        info.op_tab[1] = 13;    /* fg:0 bg:1  D' <- [not S] or D */
+        info.fg_col = 0;                /* We're only interested in one color */
+        info.bg_col = background;       /* Save the color of interest */
+        break;
+
+    default:
+        return 1;                     /* Unsupported mode */
+    }
+
+    bit_blt(&info);
 }
 
 
@@ -1287,7 +1618,7 @@ c_read_pixel(Virtual *vwk, MFDB *mfdb, long x, long y)
   dst.bitplanes = mfdb->bitplanes;
 
   /* Fetch one pixel in D=S mode */
-  c_blit_area(vwk, mfdb, x, y, &dst, 15L, 0L, 1L, 1L, 3L);
+  c_blit_area(vwk, mfdb, x, y, &dst, 15, 0, 1, 1, 3);
 
   colour = 0;
   ptr = pixel;
@@ -1326,40 +1657,66 @@ c_write_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour)
 
 
 long CDECL
-c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2,
-            long pattern, long colour, long mode)
+c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
 {
-  static short no_pattern[] = {0xffff, 0xffff, 0xffff, 0xffff,
-                               0xffff, 0xffff, 0xffff, 0xffff, 
-                               0xffff, 0xffff, 0xffff, 0xffff, 
-                               0xffff, 0xffff, 0xffff, 0xffff};
-  long tmp, w, h;
+    static short mask[16], data[16];
+    static short saved[16];
+    static short old_x = 0;
+    static short old_y = 0;
+    int i;
+    MFDB src, dst;
 
-  /* Don't understand any table operations yet. */
-  if ((long)vwk & 1)
-    return -1;
+    src.width = dst.width = 16;
+    src.height = dst.height = 16;
+    src.wdwidth = dst.wdwidth = 1;
+    src.standard = dst.standard = 0;
+    src.bitplanes = dst.bitplanes = 1;
 
-  /* Only draws straight line, for now. */
-  if ((x1 != x2) && (y1 != y2))
-    return 0;
+    switch((long)mouse) {
+    case 0:
+	src.address = saved;
+	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
+	dst.address = saved;
+	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
+	old_x = x;
+	old_y = y;
+#if 0
+	src.address = saved;
+	x_blit_area(wk, &src, 0, 0, 0, 10, 10, 16, 16, 3);
+#endif
+	src.address = mask;
+	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	src.address = data;
+	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
+	break;
+    case 1:
+	break;
+    case 2:   /* Hide */
+	src.address = saved;
+	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
+	break;
+    case 3:   /* Show */
+	dst.address = saved;
+	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
+	old_x = x;
+	old_y = y;
+	src.address = mask;
+	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	src.address = data;
+	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
+	break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        break;
+    default:
+	for(i = 0; i < 16; i++) {
+	    mask[i] = mouse->mask[i];
+	    data[i] = mouse->data[i];
+	}
+	break;
+    }
 
-  /* Only draws non-patterned lines, for now. */
-  if ((pattern & 0xffff) != 0xffff)
-    return 0;
-
-  if (!clip_line(vwk, &x1, &y1, &x2, &y2))
-    return 1;
-
-  w = x2 - x1 + 1;
-  if (x1 > x2) {
-    w = x1 - x2 + 1;
-    x1 = x2;
-  }
-  h = y2 - y1 + 1;
-  if (y1 > y2) {
-    h = y1 - y2 + 1;
-    y1 = y2;
-  }
-
-  c_fill_area(vwk, x1, y1, w, h, no_pattern, colour, mode, 1L);
+    return 0; 
 }
