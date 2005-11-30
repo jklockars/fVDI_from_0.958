@@ -1,7 +1,7 @@
 /*
  * fVDI Calamus functions
  *
- * $Id: calamus.c,v 1.5 2005-11-22 02:18:38 standa Exp $
+ * $Id: calamus.c,v 1.6 2005-11-30 12:10:40 johan Exp $
  *
  * Copyright 2004, Standa Opichals
  * This software is licensed under the GNU General Public License.
@@ -66,6 +66,7 @@ static void CDECL dcsd_init(void)
 
 	dcsd_offscreen_mfdb.address = (void *)malloc(size);
 
+#if 0
 	{
 		char buf[10];
 		puts("dcsd_init: ");
@@ -88,12 +89,15 @@ static void CDECL dcsd_init(void)
 		puts(buf);
 	       	puts_nl("]");
 	}
+#endif
 }
 
 
 static void CDECL dcsd_exit(void)
 {
+#if 0
 	puts_nl("dcsd_exit");
+#endif
 
 	/* Do nothing if inactive:
 	 * - faulty state (Calamus crashed badly or something) */
@@ -103,7 +107,9 @@ static void CDECL dcsd_exit(void)
 	/* Mark inactive */
 	is_active = 0;
 
+#if 0
 	puts_nl("dcsd_exit: destroy");
+#endif
 
 	/* Delete the allocated offscreen buffer */
 	free(dcsd_offscreen_mfdb.address);
@@ -116,8 +122,10 @@ static void CDECL dcsd_exit(void)
  */
 static long CDECL dcsd_active(void)
 {
+#if 0
 	puts("dcsd_active: ");
 	puts_nl(is_active ? "yes" : "no");
+#endif
 
 	return is_active;
 }
@@ -128,10 +136,12 @@ static long CDECL dcsd_active(void)
  */
 void * CDECL dcsd_getbase(void)
 {
+#if 0
 	char buf[10];
 	ltoa(buf, (long)dcsd_offscreen_mfdb.address, 16);
 	puts("dcsd_getbase: ");
 	puts_nl(buf);
+#endif
 
 	return dcsd_offscreen_mfdb.address;
 }
@@ -144,7 +154,9 @@ void CDECL dcsd_gettlt(unsigned char tlt[256])
 {
 	int i;
 
+#if 0
 	puts_nl("dcsd_gettlt");
+#endif
 
 	/* FIXME: TODO give the driver translation table if necessary */
 	for(i = 0; i < 256; i++)
@@ -155,17 +167,21 @@ void CDECL dcsd_gettlt(unsigned char tlt[256])
 void CDECL dcsd_blit_from_screen(struct DCSD_BLITARGS *args)
 {
 	short coords[8];
+	struct clip_ clipping;
+
+	clipping = dcsd_vwk->clip;
 
 	coords[0] = args->x;
 	coords[1] = args->y;
 	coords[2] = coords[0] + args->w - 1;
 	coords[3] = coords[1] + args->h - 1;
-	/* dest and source coords are the same */
+	/* Dest and source coords are the same */
 	coords[4] = coords[0];
 	coords[5] = coords[1];
 	coords[6] = coords[2];
 	coords[7] = coords[3];
 	
+#if 0
 	{
 		char buf[10];
 
@@ -183,18 +199,26 @@ void CDECL dcsd_blit_from_screen(struct DCSD_BLITARGS *args)
 		puts(buf);
 		puts_nl("");
 	}
+#endif
 
 	/* FIXME: BPP transformations are necessary (now BPP 32bit only) */
+
+	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, 0, 0);
 
 	/* Note: From screen direction should always use the 'replace' mode */
 	lib_vdi_spppp(&lib_vro_cpyfm, dcsd_vwk, 3, coords, 0L,
 	              &dcsd_offscreen_mfdb, 0L);
+
+	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, clipping.on, &clipping.rectangle.x1);
 }
 
 
 void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 {
 	short coords[8];
+	struct clip_ clipping;
+
+	clipping = dcsd_vwk->clip;
 
 	coords[0] = args->x;
 	coords[1] = args->y;
@@ -206,6 +230,7 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 	coords[6] = coords[2];
 	coords[7] = coords[3];
 
+#if 0
 	{
 		char buf[10];
 
@@ -226,6 +251,7 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 		puts(buf);
 		puts_nl("");
 	}
+#endif
 
 	/* FIXME: BPP transformations are necessary (now BPP 32bit only)
 	 *
@@ -241,6 +267,8 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 	 * 24		32
 	 * 32		32
 	 */
+
+	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, 0, 0);
 	
 	/* FIXME??? BUG?? This doesn't seem to call the fVDI native driver
 	 * according to the logs
@@ -250,6 +278,8 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 	 */ 
 	lib_vdi_spppp(&lib_vro_cpyfm, dcsd_vwk, args->mode, coords,
 	              &dcsd_offscreen_mfdb, 0L, 0L);
+
+	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, clipping.on, &clipping.rectangle.x1);
 }
 
 
