@@ -1,7 +1,7 @@
 /*
  * fVDI device driver specific setup
  *
- * $Id: spec.c,v 1.1 2005-11-28 17:14:17 johan Exp $
+ * $Id: spec.c,v 1.2 2005-11-30 13:25:17 johan Exp $
  *
  * Copyright 1998-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -11,6 +11,7 @@
 #include "fvdi.h"
 #include "relocate.h"
 
+#include "os.h"
 #include "driver.h"
 
 #if 0
@@ -47,8 +48,8 @@ extern void *c_fill_area;
 extern void *c_blit_area;
 #if 0
 extern void *text_area;
-extern void *mouse_draw;
 #endif
+extern void *c_mouse_draw;
 extern void *c_set_colours;
 extern void *c_get_colour;
 
@@ -60,7 +61,7 @@ void *fill_area_r   = &c_fill_area;
 void *fill_poly_r   = 0;
 void *blit_area_r   = &c_blit_area;
 void *text_area_r   = 0;
-void *mouse_draw_r  = 0;
+void *mouse_draw_r  = &c_mouse_draw;
 void *set_colours_r = &c_set_colours;
 void *get_colours_r = 0;
 void *get_colour_r  = &c_get_colour;
@@ -69,7 +70,7 @@ long wk_extend = 0;
 
 short accel_s = 0;
 short accel_c = A_SET_PAL | A_GET_COL | A_SET_PIX | A_GET_PIX |
-                A_BLIT | A_FILL | A_EXPAND | A_LINE;
+                A_BLIT | A_FILL | A_EXPAND | A_LINE | A_MOUSE;
 
 #if 0
 short graphics_mode = CHECK_PREVIOUS;
@@ -199,6 +200,25 @@ long initialize(Virtual *vwk)
 	}
 #endif
 
+#if 1
+	{
+	char buf[10];
+
+	access->funcs.ltoa(buf, (long)wk->screen.mfdb.width, 10);
+	access->funcs.puts(buf);
+	access->funcs.puts("x");
+	access->funcs.ltoa(buf, (long)wk->screen.mfdb.height, 10);
+	access->funcs.puts(buf);
+	access->funcs.puts("x");
+	access->funcs.ltoa(buf, (long)wk->screen.mfdb.bitplanes, 10);
+	access->funcs.puts(buf);
+	access->funcs.puts(" screen at ");
+	access->funcs.ltoa(buf, (long)wk->screen.mfdb.address, 16);
+	access->funcs.puts(buf);
+	access->funcs.puts("\x0a\x0d");
+	}
+#endif
+
 	return 1;
 }
 
@@ -248,6 +268,8 @@ long setup(long type, long value)
  */
 Virtual *opnwk(Virtual *vwk)
 {
+	me->default_vwk->real_address->screen.mfdb.address = (void *)Physbase();
+
 	return 0;
 }
 
