@@ -1,3 +1,7 @@
+2005-11-29 - johan
+Restored the Calamus clip rectangle handling. It is necessary since the
+code is actually "borrowing" the original workstation opened by the AES.
+
 2005-11-28 - johan
 Added a bitplane driver written in C, based on a significantly modified
 version of the EmuTOS VDI blit routines. Definitely needs more work,
