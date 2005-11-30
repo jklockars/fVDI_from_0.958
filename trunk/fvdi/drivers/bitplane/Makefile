@@ -46,6 +46,7 @@ CSRC = \
 	../common/colours.c \
 	spec.c \
 	palette.c \
+	fill.c \
 	blit.c
 
 # handle DevPac -> gas conversions
