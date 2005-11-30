@@ -1,3 +1,8 @@
+2005-11-30 - johan
+Various improvements for the bitplane driver.
+Added fill routine from the EmuTOS VDI to the bitplane driver.
+Added mouse drawing support to the bitplane driver.
+
 2005-11-29 - johan
 Restored the Calamus clip rectangle handling. It is necessary since the
 code is actually "borrowing" the original workstation opened by the AES.
