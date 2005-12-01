@@ -11,8 +11,15 @@
 #include "fvdi.h"
 
 
+long CDECL
+c_get_colour(Virtual *vwk, long colour)
+{
+  return colour;
+}
+
+
 void CDECL
-c_get_colour(Virtual *vwk, long colour, short *foreground, short* background)
+c_get_colours(Virtual *vwk, long colour, short *foreground, short* background)
 {
   *foreground = colour & 0xffff;
   *background = (colour >> 16) & 0xffff;
