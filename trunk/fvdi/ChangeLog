@@ -1,3 +1,6 @@
+2005-12-01 - johan
+Fixed a serious bug concerning colour handling in the bitplane driver.
+
 2005-11-30 - johan
 Various improvements for the bitplane driver.
 Added fill routine from the EmuTOS VDI to the bitplane driver.
@@ -16,15 +19,15 @@ but it can at least display a desktop (sort of ;-)
 Basic ft2 bitmap font support (tested with MS Win .fon fonts).
 Performed tests of type-1 as well as TrueType fonts.
 
-Few implementaiton notes:
+A few implementaiton notes:
 * font->underline == 0 is used to determine whether metrics for the
-  particular font->size were loeaded
+  particular font->size were loaded
 * font->flags & 0x8000 is FreeType2 handled font flag
 * font->flags & 0x4000 is scalable font flag
 
 2005-11-22 - standa
 Calamus does all the clipping for the external driver on its own.
-Remofing wrong wdwidth formulas from the aranym and calamus drivers.
+Removing wrong wdwidth formulas from the aranym and Calamus drivers.
 
 2005-11-22 - johan
 Fixed previously unknown bug in the dispatcher that crashed Calamus.
