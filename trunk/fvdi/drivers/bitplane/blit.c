@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.2 2005-11-30 13:26:24 johan Exp $
+ * $Id: blit.c,v 1.3 2005-12-01 23:26:33 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -35,7 +35,7 @@ extern Access *access;
 static long dbg = 0;
 
 extern void CDECL
-c_get_colour(Virtual *vwk, long colour, short *foreground, short* background);
+c_get_colours(Virtual *vwk, long colour, short *foreground, short* background);
 extern long CDECL clip_line(Virtual *vwk, long *x1, long *y1, long *x2, long *y2);
 
 
@@ -1130,6 +1130,34 @@ bit_blt(struct blit_frame *info)
              (ULONG)info->d_ymin * (ULONG)info->d_nxln +
              (ULONG)d_xmin_off   * (ULONG)info->d_nxwd;
 
+#if 0
+      if (info->b_ht != 1)
+    {
+      char buf[10];
+      access->funcs.ltoa(buf, (long)s_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts("->");
+      access->funcs.ltoa(buf, (long)d_addr, 16);
+      access->funcs.puts(buf);
+      access->funcs.puts(" : ");
+      access->funcs.ltoa(buf, (long)info->s_nxwd, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" , ");
+      access->funcs.ltoa(buf, (long)info->d_nxwd, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" ; ");
+      access->funcs.ltoa(buf, (long)(info->s_nxln - info->s_nxwd * s_span), 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" , ");
+      access->funcs.ltoa(buf, (long)(info->d_nxln - info->d_nxwd * d_span), 10);
+      access->funcs.puts(buf);
+      access->funcs.puts(" * ");
+      access->funcs.ltoa(buf, (long)info->b_ht, 10);
+      access->funcs.puts(buf);
+      access->funcs.puts("\x0a\x0d");
+    }
+#endif
+
 #if 1
     if (s_addr < d_addr) {
 #else
@@ -1162,6 +1190,12 @@ bit_blt(struct blit_frame *info)
         if (skew >= 0 )
             skew_idx |= 0x0001;         /* d6[bit0]<- Alignment flag */
     } else {
+#if 0
+      if (info->b_ht != 1)
+    {
+      access->funcs.puts("******* Top to bottom **********\x0a\x0d");
+    }
+#endif
         /* Offset between consecutive words in planes */
         blt->src_x_inc = info->s_nxwd;
         blt->dst_x_inc = info->d_nxwd;
@@ -1200,6 +1234,7 @@ bit_blt(struct blit_frame *info)
     }
 
 #if 0
+      if (info->b_ht != 1)
     {
       char buf[10];
       access->funcs.ltoa(buf, (long)s_addr, 16);
@@ -1207,6 +1242,7 @@ bit_blt(struct blit_frame *info)
       access->funcs.puts("->");
       access->funcs.ltoa(buf, (long)d_addr, 16);
       access->funcs.puts(buf);
+      access->funcs.puts("\x0a\x0d");
       access->funcs.puts("\x0a\x0d");
     }
 #endif
@@ -1217,14 +1253,14 @@ bit_blt(struct blit_frame *info)
      * NFSR states in skew flag table.
      */
     blt->skew = skew & 0x0f;
-    blt->hop = skew_flags[skew_idx];
+    blt->hop  = skew_flags[skew_idx];
 
     for(plane = info->plane_ct - 1; plane >= 0; plane--) {
         int op_tabidx;
 
-        blt->src_addr = s_addr;          /* Load Source pointer to this plane */
-        blt->dst_addr = d_addr;          /* Load Dest ptr to this plane */
-        blt->y_cnt    = info->b_ht;      /* Load the line count */
+        blt->src_addr = s_addr;         /* Load Source pointer to this plane */
+        blt->dst_addr = d_addr;         /* Load Dest ptr to this plane */
+        blt->y_cnt    = info->b_ht;     /* Load the line count */
 
         /* Calculate operation for actual plane */
         op_tabidx  = ((info->fg_col >> plane) & 0x0001) << 1;
@@ -1233,12 +1269,16 @@ bit_blt(struct blit_frame *info)
 
         do_blit(blt);
 
-        s_addr += info->s_nxpl;          /* a0-> start of next src plane */
-        d_addr += info->d_nxpl;          /* a1-> start of next dst plane */
+        s_addr += info->s_nxpl;         /* a0-> start of next src plane */
+        d_addr += info->d_nxpl;         /* a1-> start of next dst plane */
     }
+#if 0
+    while(info->b_ht == 114);
+#endif
 }
 
 
+#if 0
 /*
  * If bit 5 of mode is set, use pattern with blit
  */
@@ -1255,6 +1295,7 @@ setup_pattern(Virtual *vwk, struct blit_frame *info)
     info->p_nxln = 2;           /* Offset to next line in pattern */
     info->p_mask = 0xf;         /* Pattern index mask */
 }
+#endif
 
 
 /*
@@ -1330,16 +1371,22 @@ c_blit_area(Virtual *vwk, MFDB *src, long src_x, long src_y, MFDB *dst,
 {
     struct blit_frame info;     /* Holds some internal info for bit_blt */
 
+#if 0
     /* If mode is made up of more than the first 5 bits */
     if (operation & ~0x001f)
         return 1;                       /* Mode is invalid */
+#else
+    operation &= 0x0f;
+#endif
 
     /* Check the pattern flag (bit 5) and revert to log op # */
     info.p_addr = 0;                    /* Clear pattern pointer */
+#if 0
     if (operation & PAT_FLAG) {
         operation &= ~PAT_FLAG;         /* Set bit to 0! */
         setup_pattern(vwk, &info);      /* Fill in pattern related stuff */
     }
+#endif
 
     /* If true, the plane count is invalid or clipping took all! */
     if (setup_info(vwk->real_address, &info, src, dst, src_x, src_y, dst_x, dst_y, w, h))
@@ -1364,8 +1411,12 @@ x_blit_area(Workstation *wk, MFDB *src, long src_x, long src_y, MFDB *dst,
     struct blit_frame info;     /* Holds some internal info for bit_blt */
 
     /* If mode is made up of more than the first 5 bits */
+#if 0
     if (operation & ~0x001f)
         return 1;                       /* Mode is invalid */
+#else
+    operation &= 0x0f;
+#endif
 
     /* Check the pattern flag (bit 5) and revert to log op # */
     info.p_addr = 0;                    /* Clear pattern pointer */
@@ -1403,26 +1454,30 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
     short foreground;
     short background;
 
-    c_get_colour((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
-#if 1
+    c_get_colours((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+
+#if 0
+    /* With this active, no texts disappear on icons */
     foreground = 1;
     background = 0;
 #endif
 
-    /* If mode is made up of more than the first 5 bits */
 #if 0
+    /* If mode is made up of more than the first 5 bits */
     if (operation & ~0x001f)
         return;                 /* Mode is invalid */
 #else
-    operation &= 0x000f;
+    operation = ((operation - 1) & 0x03) + 1;
 #endif
 
     /* Check the pattern flag (bit 5) and revert to log op # */
     info.p_addr = 0;            /* Get pattern pointer*/
+#if 0
     if (operation & PAT_FLAG) {
         operation &= ~PAT_FLAG;      /* Set bit to 0! */
         setup_pattern(vwk, &info);   /* Fill in pattern related stuff */
     }
+#endif
 
 #if 0
     /* Try to get everything to display! */
@@ -1510,14 +1565,6 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
     }
 
     bit_blt(&info);
-
-#if 0
-    if (dbg == 2) {
-    for(dbg = 100000000; dbg >= 0; dbg--)
-      ;
-    }
-    dbg = 0;
-#endif
 }
 
 
@@ -1531,18 +1578,18 @@ x_expand_area(Workstation *wk, MFDB *src, long src_x, long src_y,
     short background;
 
 #if 0
-    c_get_colour((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+    c_get_colours((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
 #else
     foreground = colour & 0xffff;
     background = (colour >> 16) & 0xffff;
 #endif
 
-    /* If mode is made up of more than the first 5 bits */
 #if 0
+    /* If mode is made up of more than the first 5 bits */
     if (operation & ~0x001f)
         return;                 /* Mode is invalid */
 #else
-    operation &= 0x000f;
+    operation = ((operation - 1) & 0x03) + 1;
 #endif
 
     /* Check the pattern flag (bit 5) and revert to log op # */
@@ -1666,42 +1713,46 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
     int i;
     MFDB src, dst;
 
-    src.width = dst.width = 16;
-    src.height = dst.height = 16;
-    src.wdwidth = dst.wdwidth = 1;
-    src.standard = dst.standard = 0;
+    src.width     = dst.width     = 16;
+    src.height    = dst.height    = 16;
+    src.wdwidth   = dst.wdwidth   = 1;
+    src.standard  = dst.standard  = 0;
     src.bitplanes = dst.bitplanes = 1;
 
     switch((long)mouse) {
-    case 0:
+    case 0:   /* Move */
+        /* Restore old background */
 	src.address = saved;
 	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
+	/* Save new background */
 	dst.address = saved;
 	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
 	old_x = x;
 	old_y = y;
-#if 0
-	src.address = saved;
-	x_blit_area(wk, &src, 0, 0, 0, 10, 10, 16, 16, 3);
-#endif
+	/* Draw mask */
 	src.address = mask;
 	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	/* Draw shape */
 	src.address = data;
 	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
 	break;
     case 1:
 	break;
     case 2:   /* Hide */
+        /* Restore old background */
 	src.address = saved;
 	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
 	break;
     case 3:   /* Show */
+	/* Save new background */
 	dst.address = saved;
 	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
 	old_x = x;
 	old_y = y;
+	/* Draw mask */
 	src.address = mask;
 	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	/* Draw shape */
 	src.address = data;
 	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
 	break;
@@ -1710,7 +1761,7 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
     case 6:
     case 7:
         break;
-    default:
+    default:  /* New mouse shape */
 	for(i = 0; i < 16; i++) {
 	    mask[i] = mouse->mask[i];
 	    data[i] = mouse->data[i];

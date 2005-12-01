@@ -1,7 +1,7 @@
 /*
  * Bitplane fill routines
  *
- * $Id: fill.c,v 1.1 2005-11-30 13:24:26 johan Exp $
+ * $Id: fill.c,v 1.2 2005-12-01 23:26:33 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -67,6 +67,7 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
     int leftpart;
     int rightpart;
     int planes;
+    UWORD pattern, bits, help;
 
     mode -= 1;
 
@@ -128,10 +129,10 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                 /* Init adress counter */
                 for(plane = planes - 1; plane >= 0; plane--) {
                     /* Load values fresh for this bitplane */
-                    UWORD pattern = patternptr[patind];
+                    pattern = patternptr[patind];
                         /* Isolate the necessary pixels */
-                        UWORD bits = *addr;
-                        UWORD help = bits;
+                        bits = *addr;
+                        help = bits;
 
                     if (color & 0x0001) {
                         bits |= ~pattern;       /* Complement of mask with source */
@@ -157,8 +158,7 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                 for(plane = planes - 1; plane >= 0; plane--) {
                     /* Load values fresh for this bitplane */
-                    UWORD help, bits;
-                    UWORD pattern = patternptr[patind];
+                    pattern = patternptr[patind];
 
                     /* Isolate the necessary pixels */
                     bits = *addr;
@@ -183,10 +183,10 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                 for(plane = planes - 1; plane >= 0; plane--) {
                     /* Load values fresh for this bitplane */
-                    UWORD pattern = patternptr[patind];
+                    pattern = patternptr[patind];
                         /* Isolate the necessary pixels */
-                        UWORD bits = *addr;
-                        UWORD help = bits;
+                        bits = *addr;
+                        help = bits;
 
                     if (color & 0x0001) {
                         bits |= pattern;        /* Complement of mask with source */
@@ -215,8 +215,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                 for(plane = planes - 1; plane >= 0; plane--) {
                     /* Load values fresh for this bitplane */
-                    UWORD bits;
-                    UWORD pattern = 0;
+                    bits;
+                    pattern = 0;
 
                     /* Isolate the necessary pixels */
                     bits = *addr;
@@ -255,7 +255,7 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     /* Load values fresh for this bitplane */
                     UWORD *adr = addr;
                     int pixels = dx;
-                    UWORD pattern = patternptr[patind];
+                    pattern = patternptr[patind];
 
                     if (color & 0x0001) {
                         int bw;
@@ -264,8 +264,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                         /* Draw the left fringe */
                         if (leftmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits |= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= leftmask;   /* Isolate changed bits outside of fringe */
@@ -282,8 +282,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         }
                         /* Draw the right fringe */
                         if (~rightmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits |= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= rightmask;  /* Isolate changed bits outside of fringe */
@@ -296,8 +296,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                         /* Draw the left fringe */
                         if (leftmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits &= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= leftmask;   /* Isolate changed bits outside of fringe */
@@ -314,8 +314,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         }
                         /* Draw the right fringe */
                         if (~rightmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits &= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= rightmask;  /* Isolate changed bits outside of fringe */
@@ -340,10 +340,9 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     /* Load values fresh for this bitplane */
                     UWORD *adr = addr;
                     int pixels = dx;
-                    UWORD pattern = patternptr[patind];
-
                     int bw;
-                    UWORD help,bits;
+                    pattern = patternptr[patind];
+
                     /* Draw the left fringe */
                     if (leftmask) {
                         bits = *adr;
@@ -389,15 +388,15 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     /* Load values fresh for this bitplane */
                     UWORD *adr = addr;
                     int pixels = dx;
-                    UWORD pattern = patternptr[patind];
+                    pattern = patternptr[patind];
 
                     if (color & 0x0001) {
                         int bw;
 
                         /* Draw the left fringe */
                         if (leftmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits |= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= ~leftmask;  /* Isolate changed bits outside of fringe */
@@ -414,8 +413,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         }
                         /* Draw the right fringe */
                         if (~rightmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits |= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= ~rightmask; /* Isolate changed bits outside of fringe */
@@ -429,8 +428,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
 
                         /* Draw the left fringe */
                         if (leftmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits &= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= leftmask;   /* Isolate changed bits outside of fringe */
@@ -447,8 +446,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         }
                         /* Draw the right fringe */
                         if (~rightmask) {
-                            UWORD bits = *adr;
-                            UWORD help = bits;
+                            bits = *adr;
+                            help = bits;
                             bits &= pattern;    /* Complement of mask with source */
                             help ^= bits;       /* Isolate changed bits */
                             help &= rightmask;  /* Isolate changed bits outside of fringe */
@@ -476,14 +475,14 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     int bw;
                     UWORD *adr = addr;
                     int pixels = dx;
-                    UWORD pattern = 0;
+                    pattern = 0;
 
                     if (color & 0x0001)
                         pattern = patternptr[patind];
 
                     /* Draw the left fringe */
                     if (leftmask) {
-                        UWORD bits = *adr;
+                        bits = *adr;
                         bits ^= pattern;        /* xor the pattern with the source */
                         bits &= leftmask;       /* Isolate the bits outside the fringe */
                         bits ^= pattern;        /* Restore the bits outside the fringe */
@@ -499,7 +498,7 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     }
                     /* Draw the right fringe */
                     if (~rightmask) {
-                        UWORD bits = *adr;
+                        bits = *adr;
                         bits ^= pattern;        /* xor the pattern with the source */
                         bits &= rightmask;      /* isolate the bits outside the fringe */
                         bits ^= pattern;        /* Restore the bits outside the fringe */
