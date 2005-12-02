@@ -1,3 +1,6 @@
+2005-12-02 - johan
+A few more bug fixes for the bitplane driver.
+
 2005-12-01 - johan
 Fixed a serious bug concerning colour handling in the bitplane driver.
 
