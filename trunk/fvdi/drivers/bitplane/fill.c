@@ -1,7 +1,7 @@
 /*
  * Bitplane fill routines
  *
- * $Id: fill.c,v 1.2 2005-12-01 23:26:33 johan Exp $
+ * $Id: fill.c,v 1.3 2005-12-04 21:16:00 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -29,7 +29,6 @@ static long dbg = 0;
 
 extern void CDECL
 c_get_colour(Virtual *vwk, long colour, short *foreground, short* background);
-extern long CDECL clip_line(Virtual *vwk, long *x1, long *y1, long *x2, long *y2);
 
 
 #define GetMemW(addr) ((ULONG)*(UWORD *)(addr))
@@ -76,7 +75,7 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
     dx = x2 - x1 - 16;      /* Width of line - one WORD */
     addr = vwk->real_address->screen.mfdb.address;
     addr += (x1 / 16) * vwk->real_address->screen.mfdb.bitplanes;
-    addr += (LONG)y1 * vwk->real_address->screen.wrap / 2;;
+    addr += (LONG)y1 * vwk->real_address->screen.wrap / 2;
 #if 0
     patmsk = vwk->patmsk;                   /* Which pattern to start with */
     patadd = vwk->multifill ? 16 : 0;       /* Multi plane pattern offset */
@@ -573,43 +572,3 @@ c_write_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour)
   return 1;
 }
 #endif
-
-
-long CDECL
-c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2,
-            long pattern, long colour, long mode)
-{
-  static short no_pattern[] = {0xffff, 0xffff, 0xffff, 0xffff,
-                               0xffff, 0xffff, 0xffff, 0xffff, 
-                               0xffff, 0xffff, 0xffff, 0xffff, 
-                               0xffff, 0xffff, 0xffff, 0xffff};
-  long tmp, w, h;
-
-  /* Don't understand any table operations yet. */
-  if ((long)vwk & 1)
-    return -1;
-
-  /* Only draws straight line, for now. */
-  if ((x1 != x2) && (y1 != y2))
-    return 0;
-
-  /* Only draws non-patterned lines, for now. */
-  if ((pattern & 0xffff) != 0xffff)
-    return 0;
-
-  if (!clip_line(vwk, &x1, &y1, &x2, &y2))
-    return 1;
-
-  w = x2 - x1 + 1;
-  if (x1 > x2) {
-    w = x1 - x2 + 1;
-    x1 = x2;
-  }
-  h = y2 - y1 + 1;
-  if (y1 > y2) {
-    h = y1 - y2 + 1;
-    y1 = y2;
-  }
-
-  c_fill_area(vwk, x1, y1, w, h, no_pattern, colour, mode, 1L);
-}
