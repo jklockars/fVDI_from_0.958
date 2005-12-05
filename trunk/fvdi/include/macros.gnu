@@ -102,10 +102,10 @@ return\@:
 
 	.macro	ijsr indirect
   .if mc68000 == 1
-	pea	\@
+	pea	ret\@
 	move.l	\indirect,-(a7)
 	rts
-\@:
+ret\@:
   .else
 	jsr	([\indirect])
   .endif
