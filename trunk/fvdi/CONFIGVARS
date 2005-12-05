@@ -24,7 +24,7 @@ endif
 DEBUG  = no
 
 # CPU to compile for
-CPU    = 040 
+CPU    = 040
 
 # General compilation and optimization options (CFLAGS)
 OPTS   = \
