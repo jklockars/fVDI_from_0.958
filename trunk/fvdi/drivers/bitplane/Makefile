@@ -16,8 +16,6 @@ top_srcdir = ../..
 
 include $(top_srcdir)/CONFIGVARS
 
-CPU     = 040
-
 CFLAGS  = -m68$(CPU) -mshort -O2 -fomit-frame-pointer -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include $(M68K_ATARI_MINT_CFLAGS)
 ASFLAGS = -m68$(CPU) -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include
 
