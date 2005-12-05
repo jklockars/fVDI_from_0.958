@@ -2,6 +2,13 @@
 
 CONV2GAS = $(top_srcdir)/utility/conv2gas/conv2gas
 
+SYMBOLS = --defsym gas=1 --defsym lattice=0
+ifeq ($(CPU),000)
+ SYMBOLS += --defsym mc68000=1
+else
+ SYMBOLS += --defsym mc68000=0
+endif
+
 # Use native compiler when cross compiling
 $(CONV2GAS): $(top_srcdir)/utility/conv2gas/conv2gas.c
 	$(NATIVE_CC) -o $@ $<
@@ -16,7 +23,7 @@ SSRC_GNU    = $(SSRC:=.gnu)
 
 # Assember for .gnu
 %.gnu.o: %.gnu
-	$(AS) $(ASFLAGS) --defsym gas=1 --defsym lattice=0 --defsym mc68000=0 -o $@ < $<
+	$(AS) $(ASFLAGS) $(SYMBOLS) -o $@ < $<
 
 clean_gnu:
 	rm -rf $(SINCSRC_GNU) $(SSRC_GNU)
