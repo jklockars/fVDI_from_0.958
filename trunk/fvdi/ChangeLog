@@ -1,3 +1,6 @@
+2005-12-05 - johan
+Made some changes to enable gcc build for 68000.
+
 2005-12-04 - johan
 Added line drawing support to the bitplane driver.
 
