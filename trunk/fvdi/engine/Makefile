@@ -31,13 +31,13 @@ ASFLAGS = -m68$(CPU) -I$(top_srcdir)/include -I$(top_srcdir)/drivers/include \
 ifneq ($(ft2_srcdir),)
  ifneq ($(libkern_srcdir),)
   LIBKERN = $(libkern_srcdir)/libkern$(CPU).a
-  #LIBS   = -lft2 -lkern$(CPU)
-  LIBS    = -lft2 -lkern020-60
+  #LIBS  := -lft2 -lkern$(CPU) $(LIBS)
+  LIBS   := -lft2 -lkern020-60 $(LIBS)
   LDFLAGS = -L$(top_srcdir)/modules/ft2 -L$(libkern_srcdir)
   CFLAGS += -DUSE_LIBKERN
  else
   LIBKERN = 
-  LIBS    = -lft2
+  LIBS   := -lft2 $(LIBS)
   LDFLAGS = -L$(top_srcdir)/modules/ft2
  endif
 
