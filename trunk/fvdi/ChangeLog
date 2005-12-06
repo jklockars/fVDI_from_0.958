@@ -1,3 +1,6 @@
+2005-12-06 - johan
+Corrected the pixel size setting for the monochrome and bitplane drivers.
+
 2005-12-05 - johan
 Made some changes to enable gcc build for 68000.
 

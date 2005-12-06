@@ -83,6 +83,15 @@ long initialize(Virtual *vwk)
 	vwk = me->default_vwk;	/* This is what we're interested in */
 	wk = vwk->real_address;
 
+        if (wk->screen.pixel.width > 0)        /* Starts out as screen width */
+                wk->screen.pixel.width = (wk->screen.pixel.width * 1000L) / wk->screen.mfdb.width;
+        else                                   /*   or fixed DPI (negative) */
+                wk->screen.pixel.width = 25400 / -wk->screen.pixel.width;
+        if (wk->screen.pixel.height > 0)        /* Starts out as screen height */
+                wk->screen.pixel.height = (wk->screen.pixel.height * 1000L) / wk->screen.mfdb.height;
+        else                                    /*   or fixed DPI (negative) */
+                wk->screen.pixel.height = 25400 / -wk->screen.pixel.height;
+
 	device.byte_width = wk->screen.wrap;
 	device.address = wk->screen.mfdb.address;
 

@@ -1,7 +1,7 @@
 /*
  * fVDI device driver specific setup
  *
- * $Id: spec.c,v 1.2 2005-11-30 13:25:17 johan Exp $
+ * $Id: spec.c,v 1.3 2005-12-06 08:06:43 johan Exp $
  *
  * Copyright 1998-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -140,6 +140,15 @@ long initialize(Virtual *vwk)
 #endif
 	if (!wk->screen.shadow.address)
 		driver_name[10] = 0;
+
+        if (wk->screen.pixel.width > 0)        /* Starts out as screen width */
+                wk->screen.pixel.width = (wk->screen.pixel.width * 1000L) / wk->screen.mfdb.width;
+        else                                   /*   or fixed DPI (negative) */
+                wk->screen.pixel.width = 25400 / -wk->screen.pixel.width;
+        if (wk->screen.pixel.height > 0)        /* Starts out as screen height */
+                wk->screen.pixel.height = (wk->screen.pixel.height * 1000L) / wk->screen.mfdb.height;
+        else                                    /*   or fixed DPI (negative) */
+                wk->screen.pixel.height = 25400 / -wk->screen.pixel.height;
 
 #if 0
 	device.format = mode[depth].format;
