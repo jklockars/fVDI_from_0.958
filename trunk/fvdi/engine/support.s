@@ -1,7 +1,7 @@
 *****
 * fVDI support routines
 *
-* $Id: support.s,v 1.8 2005-11-18 10:37:10 johan Exp $
+* $Id: support.s,v 1.9 2005-12-06 00:14:04 johan Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -185,20 +185,35 @@ _cache_flush:
 	beq	.is_030
 
   ifne lattice
-	cpusha	bc		; This is an '040 or '060 ($f4f8
+   ifeq mc68000
+	cpusha	bc		; This is an '040 or '060
+   else
+	dc.w	$f4f8		; cpusha bc
+   endc
   else
-	dc.w	$f4f8
+	dc.w	$f4f8		; cpusha bc
   endc
 .cache_end:
 	movem.l	(a7)+,d0-d1
 	rts
 
 .is_030:
+  ifeq mc68000
 	movec	cacr,d0
 	move.l	d0,d1
 	or.w	#$808,d1
 	movec	d1,cacr
 	movec	d0,cacr
+  else
+	dc.w	$4e7a		; movec cacr,d0
+	dc.w	$0002
+	move.l	d0,d1
+	or.w	#$808,d1
+	dc.w	$4e7b		; movec d1,cacr
+	dc.w	$1002
+	dc.w	$4e7b		; movec d0,cacr
+	dc.w	$0002
+  endc
 	bra	.cache_end
 
 	end
