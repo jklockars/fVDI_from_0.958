@@ -27,11 +27,14 @@ DEBUG  = no
 CPU    = 040
 
 # General compilation and optimization options (CFLAGS)
-OPTS   = \
-	-O2 -fomit-frame-pointer
+OPTS   = -O2 -fomit-frame-pointer
+# OPTS   = -O2 -fomit-frame-pointer -mshort
 
-#	-mshort \
-
+# If building for 68000 (no long multiply instruction),
+# this must be set to point to the gcc library.
+ifeq ($(CPU),000)
+ LIBS = -L/usr/lib/gcc-lib/m68k-atari-mint/2.95.3/ -lgcc
+endif
 
 
 # Set these to point to the correct directories for FreeType support!
