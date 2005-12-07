@@ -334,10 +334,12 @@ vrq_string:
 	move.w	#1,L_intout(a2)
 .no_result:
 
+  ifne 0
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
 	tst.w	_stand_alone
 ;	beq	redirect			; Temporary (needs a1)
 	redir	vrq_string			; Temporary (needs a1)
+  endc
 	done_return
 
 
@@ -355,29 +357,18 @@ vq_key_s:
 	trap	#13
 	addq.l	#4,a7
   endc
-  ifne 0
-  move.l	d0,-(a7)
-  subq.l	#2,a7
-  and.w		#$000f,d0
-  add.b		#'A',d0
-  lsl.w		#8,d0
-  move.w	d0,(a7)
-  move.l	a7,-(a7)
-  jsr		_puts
-  addq.l	#4,a7
-  addq.l	#2,a7
-  move.l	(a7)+,d0
-  endc
 	movem.l	(a7)+,d2/a0-a2
 	used_d1
 	and.w	#$000f,d0
 	move.l	intout(a1),a2
 	move.w	d0,(a2)
 
+  ifne 0
 	move.l	vwk_real_address(a0),a2		; If no mouse type, the original VDI is called too
 	tst.w	_stand_alone
 ;	beq	redirect			; Temporary (needs a1)
 	redir	vq_key_s			; Temporary (needs a1)
+  endc
 	done_return
 
 	
