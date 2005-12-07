@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.5 2005-12-07 06:52:40 johan Exp $
+ * $Id: blit.c,v 1.6 2005-12-07 08:53:55 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -36,6 +36,7 @@ static long dbg = 0;
 
 extern void CDECL
 c_get_colours(Virtual *vwk, long colour, short *foreground, short* background);
+extern void CDECL
 x_get_colours(Workstation *wk, long colour, short *foreground, short* background);
 extern long CDECL clip_line(Virtual *vwk, long *x1, long *y1, long *x2, long *y2);
 
