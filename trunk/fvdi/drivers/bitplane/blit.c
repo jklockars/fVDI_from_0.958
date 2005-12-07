@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.6 2005-12-07 08:53:55 johan Exp $
+ * $Id: blit.c,v 1.7 2005-12-07 22:25:40 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -1720,8 +1720,39 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
     static short saved[16 * 8];
     static short old_x = 0;
     static short old_y = 0;
+    static short old_w = 0;
+    static short old_h = 0;
     int i;
+    int xs, ys, w, h;
     MFDB src, dst;
+    short foreground, background;
+
+    foreground = x_get_colour(wk, wk->mouse.colour.foreground);
+    background = x_get_colour(wk, wk->mouse.colour.background);
+
+    xs = ys = 0;
+    x -= wk->mouse.hotspot.x;
+    y -= wk->mouse.hotspot.y;
+    w = h = 16;
+
+    if (x < wk->screen.coordinates.min_x) {
+	xs = wk->screen.coordinates.min_x - x;
+	w -= xs;
+	x = wk->screen.coordinates.min_x;
+    }
+    if (x + w - 1 > wk->screen.coordinates.max_x)
+	w = wk->screen.coordinates.max_x - x + 1;
+
+    if (y < wk->screen.coordinates.min_y) {
+	ys = wk->screen.coordinates.min_y - y;
+	h -= ys;
+	y = wk->screen.coordinates.min_y;
+    }
+    if (y + h - 1> wk->screen.coordinates.max_y)
+	h = wk->screen.coordinates.max_y - y + 1;
+
+    if ((w < 0) || (h < 0))
+	w = h = 0;
 
     src.width     = dst.width     = 16;
     src.height    = dst.height    = 16;
@@ -1734,21 +1765,23 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
         /* Restore old background */
 	src.address = saved;
 	src.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
+	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, old_w, old_h, 3);
 	/* Save new background */
 	dst.address = saved;
 	dst.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
+	x_blit_area(wk, 0, x, y, &dst, 0, 0, w, h, 3);
 	old_x = x;
 	old_y = y;
+	old_w = w;
+	old_h = h;
 	/* Draw mask */
 	src.address = mask;
 	src.bitplanes = 1;
-	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, background);
 	/* Draw shape */
 	src.address = data;
 	src.bitplanes = 1;
-	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
+	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, foreground);
 	break;
     case 1:
 	break;
@@ -1756,23 +1789,25 @@ c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
         /* Restore old background */
 	src.address = saved;
 	src.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, 16, 16, 3);
+	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, old_w, old_h, 3);
 	break;
     case 3:   /* Show */
 	/* Save new background */
 	dst.address = saved;
 	dst.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, 0, x, y, &dst, 0, 0, 16, 16, 3);
+	x_blit_area(wk, 0, x, y, &dst, 0, 0, w, h, 3);
 	old_x = x;
 	old_y = y;
+	old_w = w;
+	old_h = h;
 	/* Draw mask */
 	src.address = mask;
 	src.bitplanes = 1;
-	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 1);
+	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, background);
 	/* Draw shape */
 	src.address = data;
 	src.bitplanes = 1;
-	x_expand_area(wk, &src, 0, 0, 0, x, y, 16, 16, 2, 0);
+	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, foreground);
 	break;
     case 4:
     case 5:
