@@ -1,6 +1,8 @@
 2005-12-07 - johan
 Fixed the colour selection in the bitplane driver.
 Corrected OR mode fill for the bitplane driver.
+The mouse cursor for the bitplane driver is now clipped against the
+screen and has correct colours and hotspot.
 Removed redirection for keyboard handling.
 
 2005-12-06 - johan
