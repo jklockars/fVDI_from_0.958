@@ -1,7 +1,7 @@
 /*
  * Bitplane fill routines
  *
- * $Id: fill.c,v 1.4 2005-12-07 06:52:40 johan Exp $
+ * $Id: fill.c,v 1.5 2005-12-07 08:54:22 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -89,33 +89,6 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
     rightmask =  0x7fff >> rightpart;   /* Origin for right fringe lookup */
     yinc = vwk->real_address->screen.wrap / 2 - planes;
 
-#if 0
-    {
-      char buf[10];
-      access->funcs.ltoa(buf, x1, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts(",");
-      access->funcs.ltoa(buf, y1, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts(" ");
-      access->funcs.ltoa(buf, x2, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts(",");
-      access->funcs.ltoa(buf, y2, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts(" ");
-      access->funcs.ltoa(buf, (long)addr, 16);
-      access->funcs.puts(buf);
-      access->funcs.puts(" ");
-      access->funcs.ltoa(buf, mode, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts(" ");
-      access->funcs.ltoa(buf, fillcolor, 10);
-      access->funcs.puts(buf);
-      access->funcs.puts("\x0a\x0d");
-    }
-#endif
-
     /* Check if we have to process just one single WORD on screen */
     if (dx + leftpart < 0) {
         switch (mode) {
@@ -188,16 +161,15 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         help = bits;
 
                     if (color & 0x0001) {
-                        bits |= pattern;        /* Complement of mask with source */
-                        help ^= bits;           /* Isolate changed bits */
-                        help &= ~(leftmask | rightmask);        /* Isolate bits */
+			pattern &= ~(leftmask | rightmask);
+			bits |= pattern;
                     } else {
                         bits &= ~pattern;        /* Complement of mask with source */
                         help ^= bits;           /* Isolate changed bits */
                         help &= leftmask | rightmask;   /* Isolate bits */
-                    }
                         bits ^= help;           /* Restore them to original states */
-                        *addr = bits;
+                    }
+                    *addr = bits;
                     addr++;               /* Next plane */
                     patind += patadd;
                     color >>= 1;
@@ -221,13 +193,17 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                     bits = *addr;
                     if (color & 0x0001) {
                         pattern = patternptr[patind];
-
+#if 1
+		    }
+#endif
                     bits ^= pattern;
                     bits &= leftmask | rightmask; /* Isolate the bits outside the fringe */
                     bits ^= pattern;    /* Restore the bits outside the fringe */
+#if 0
 		    } else {
                     bits &= leftmask | rightmask; /* Isolate the bits outside the fringe */
 		    }
+#endif
                     *addr = bits;
                     addr++;             /* Next plane */
                     patind += patadd;
@@ -395,11 +371,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         /* Draw the left fringe */
                         if (leftmask) {
                             bits = *adr;
-                            help = bits;
-                            bits |= pattern;    /* Complement of mask with source */
-                            help ^= bits;       /* Isolate changed bits */
-                            help &= ~leftmask;  /* Isolate changed bits outside of fringe */
-                            bits ^= help;       /* Restore them to original states */
+			    help = pattern & ~leftmask;
+                            bits |= help;
                             *adr = bits;
 
                             adr += planes;
@@ -413,11 +386,8 @@ void draw_rect(Virtual *vwk, long x1, long y1, long w, long h, short *patternptr
                         /* Draw the right fringe */
                         if (~rightmask) {
                             bits = *adr;
-                            help = bits;
-                            bits |= pattern;    /* Complement of mask with source */
-                            help ^= bits;       /* Isolate changed bits */
-                            help &= ~rightmask; /* Isolate changed bits outside of fringe */
-                            bits ^= help;       /* restore them to original states */
+			    help = pattern & ~rightmask;
+                            bits |= help;
                             *adr = bits;
                         }
                     } else {
