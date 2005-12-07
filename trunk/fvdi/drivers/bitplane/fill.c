@@ -1,7 +1,7 @@
 /*
  * Bitplane fill routines
  *
- * $Id: fill.c,v 1.3 2005-12-04 21:16:00 johan Exp $
+ * $Id: fill.c,v 1.4 2005-12-07 06:52:40 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -28,7 +28,7 @@ extern Access *access;
 static long dbg = 0;
 
 extern void CDECL
-c_get_colour(Virtual *vwk, long colour, short *foreground, short* background);
+c_get_colours(Virtual *vwk, long colour, short *foreground, short* background);
 
 
 #define GetMemW(addr) ((ULONG)*(UWORD *)(addr))
@@ -519,10 +519,14 @@ c_fill_area(Virtual *vwk, long x, long y, long w, long h, short *pattern,
             long colour, long mode, long interior_style)
 {
   MFDB src;
+  short foreground;
+  short background;
 
   /* Don't understand any table operations yet */
   if ((long)vwk & 1)
     return -1;
+
+    c_get_colours((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
 
 #if 0
   src.address   = pattern;
@@ -540,7 +544,7 @@ c_fill_area(Virtual *vwk, long x, long y, long w, long h, short *pattern,
   else
     c_blit_area(vwk, 0L, 0L, 0L, 0L, x, y, w, h, 0L);   /* White */
 #else
-  draw_rect(vwk, x, y, w, h, pattern, colour & 0xffff, mode, interior_style);
+  draw_rect(vwk, x, y, w, h, pattern, foreground, mode, interior_style);
 #endif
 
   return 1;

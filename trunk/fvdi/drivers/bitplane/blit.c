@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.4 2005-12-02 09:10:47 johan Exp $
+ * $Id: blit.c,v 1.5 2005-12-07 06:52:40 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -36,6 +36,7 @@ static long dbg = 0;
 
 extern void CDECL
 c_get_colours(Virtual *vwk, long colour, short *foreground, short* background);
+x_get_colours(Workstation *wk, long colour, short *foreground, short* background);
 extern long CDECL clip_line(Virtual *vwk, long *x1, long *y1, long *x2, long *y2);
 
 
@@ -1583,8 +1584,8 @@ x_expand_area(Workstation *wk, MFDB *src, long src_x, long src_y,
     short foreground;
     short background;
 
-#if 0
-    c_get_colours((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+#if 1
+    x_get_colours(wk, colour, &foreground, &background);
 #else
     foreground = colour & 0xffff;
     background = (colour >> 16) & 0xffff;

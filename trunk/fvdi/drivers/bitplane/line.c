@@ -34,7 +34,7 @@
 #define UWORD unsigned short
 #define LONG long
 
-extern void CDECL c_get_colour(Virtual *vwk, long colour, short *foreground, short* background);
+extern void CDECL c_get_colours(Virtual *vwk, long colour, short *foreground, short* background);
 extern long CDECL clip_line(Virtual *vwk, long *x1, long *y1, long *x2, long *y2);
 
 
@@ -67,8 +67,8 @@ c_line_draw(Virtual *vwk, long x1, long y1, long x2, long y2,
     if (!clip_line(vwk, &x1, &y1, &x2, &y2))
       return 1;
 
-    c_get_colour(vwk, colour, &color, (short *)&plane); /* Dummy background */
-#if 1
+    c_get_colours(vwk, colour, &color, (short *)&plane); /* Dummy background */
+#if 0
     color = colour & 0xffff;
 #endif
     linemask = pattern;                 /* To avoid compiler warning */
