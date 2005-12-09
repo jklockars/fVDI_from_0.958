@@ -1,3 +1,7 @@
+2005-12-09 - johan
+Corrected a bug that recently crept in regarding names for fonts
+handled by the FreeType2 engine.
+
 2005-12-07 - johan
 Fixed the colour selection in the bitplane driver.
 Corrected OR mode fill for the bitplane driver.
