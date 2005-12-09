@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.10 2005-11-24 00:07:00 standa Exp $
+ * $Id: ft2.c,v 1.11 2005-12-09 08:07:25 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -145,7 +145,7 @@ static char* ft2_error(const char *msg, FT_Error error)
 	static char buffer[1024] = "uninitialized\r\n";
 #ifdef USE_FREETYPE_ERRORS
 #undef FTERRORS_H
-#define FT_ERRORDEF( e, v, s )  { e, s },
+#define FT_ERRORDEF(e, v, s)  {e, s},
 	static const struct
 	{
 	  int          err_code;
@@ -205,7 +205,8 @@ static void ft2_close_face(Fontheader *font)
 		access->funcs.puts("\r\n");
 		access->funcs.puts(((FT_Face)font->extra.unpacked.data)->family_name);
 	       	access->funcs.puts(", size: ");
-	       	access->funcs.puts(buf); access->funcs.puts("\r\n");
+	       	access->funcs.puts(buf);
+		access->funcs.puts("\r\n");
 	}
 #endif
 
@@ -217,7 +218,7 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 {
 	FT_Error error;
 
-	if ( FT_IS_SCALABLE(face) ) {
+	if (FT_IS_SCALABLE(face)) {
 		FT_Fixed scale;
 
 		/* Set the character size and use default DPI (72) */
@@ -239,27 +240,34 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 		font->widest.character = FT_CEIL(FT_MulFix(face->max_advance_width, scale));
 
 		font->underline = FT_FLOOR(FT_MulFix(face->underline_thickness, scale));
-	} else if ( face->num_fixed_sizes ) {
+	} else if (face->num_fixed_sizes) {
 		int s;
-		/* find the required font size in the bitmap face (if present) */
-		if (debug > 1) access->funcs.puts("FT2 face_sizes:");
-		for (s = 0; s < face->num_fixed_sizes; s++ ) {
-			if ( debug > 1 ) { 
+		/* Find the required font size in the bitmap face (if present) */
+		if (debug > 1)
+			access->funcs.puts("FT2 face_sizes:");
+		for(s = 0; s < face->num_fixed_sizes; s++) {
+			if (debug > 1) { 
 				char buf[10];
 				access->funcs.puts(", ");
-				ltoa(buf, (long)face->available_sizes[s].size/64, 10); access->funcs.puts(buf);
+				ltoa(buf, (long)face->available_sizes[s].size / 64, 10);
+				access->funcs.puts(buf);
 				access->funcs.puts(" [");
-				ltoa(buf, (long)face->available_sizes[s].width, 10); access->funcs.puts(buf);
+				ltoa(buf, (long)face->available_sizes[s].width, 10);
+				access->funcs.puts(buf);
 				access->funcs.puts(",");
-				ltoa(buf, (long)face->available_sizes[s].height, 10); access->funcs.puts(buf);
+				ltoa(buf, (long)face->available_sizes[s].height, 10);
+				access->funcs.puts(buf);
 				access->funcs.puts(" ]");
 			}
-			if ( ptsize >= face->available_sizes[s].size/64  ) break;
+			if (ptsize >= face->available_sizes[s].size / 64)
+				break;
 		}
-		if (debug > 1) access->funcs.puts("\r\n");
+		if (debug > 1)
+			access->funcs.puts("\r\n");
 
-		/* no size match -> pick the last one */
-		if (s == face->num_fixed_sizes) s--;
+		/* No size match -> pick the last one */
+		if (s == face->num_fixed_sizes)
+			s--;
 
 		/* Set the character size and use default DPI (72) */
 		error = FT_Set_Pixel_Sizes(face, face->available_sizes[s].width, face->available_sizes[s].height);
@@ -275,7 +283,7 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 		font->distance.bottom  = 0;
 
 		/* This gives us weird values - perhaps caused by taking care of unusual characters out of Latin-1 charset */
-		font->widest.cell = face->available_sizes[s].width;
+		font->widest.cell      = face->available_sizes[s].width;
 		font->widest.character = face->available_sizes[s].width;
 
 		font->underline = 1;
@@ -298,12 +306,12 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 #endif
 	font->size = ptsize;
 
-	/* finish the font metrics fill-in */
-	font->distance.half    = (font->distance.top + font->distance.bottom) >> 1;
-	font->height  = font->distance.ascent + font->distance.descent + LINE_GAP;
+	/* Finish the font metrics fill-in */
+	font->distance.half = (font->distance.top + font->distance.bottom) >> 1;
+	font->height        = font->distance.ascent + font->distance.descent + LINE_GAP;
 
 	/* Fake for vqt_fontinfo() as some apps might rely on this */
-	font->code.low = 0;
+	font->code.low  = 0;
 	font->code.high = 255;
 
 	//FIXME: font->lineskip = FT_CEIL(FT_MulFix(face->height, scale));
@@ -374,7 +382,11 @@ Fontheader *ft2_load_font(const char *filename)
 	   /* Clear the structure */
 	   memset(font, 0, sizeof(Fontheader));
 
+#if 0
 	   if (debug > 0) {
+#else
+	   {
+#endif
 		   char buf[255];
 		   strcpy(buf, face->family_name);
 		   strcat(buf, " " );
@@ -383,17 +395,17 @@ Fontheader *ft2_load_font(const char *filename)
 	   }
 
 	   font->id = id++;
-	   font->flags = 0x8000 /* ft2 handled font */ |
+	   font->flags = 0x8000 |				/* FT2 handled font */
 			 (FT_IS_SCALABLE(face)    ? 0x4000 : 0) |
 		  	 (FT_IS_FIXED_WIDTH(face) ? 0x0008 : 0);	/* .FNT compatible flag */
-	   font->extra.filename = strdup(filename);		/* font filename to load_glyphs on-demand */
-	   font->extra.index = 0;				/* index to load, FIXME: how to we load multiple of them */
+	   font->extra.filename = strdup(filename);		/* Font filename to load_glyphs on-demand */
+	   font->extra.index = 0;				/* Index to load, FIXME: how to we load multiple of them */
 
 
-	   if ( !face->num_fixed_sizes ) {
-		   font->size = 0;				/* vector fonts have size = 0 */
+	   if (!face->num_fixed_sizes) {
+		   font->size = 0;				/* Vector fonts have size = 0 */
 	   } else {
-		   font->size = face->available_sizes[0].size / 64;	/* bitmap font size */
+		   font->size = face->available_sizes[0].size / 64;	/* Bitmap font size */
 	   }
 
 	   FT_Done_Face(face);
@@ -409,10 +421,10 @@ Fontheader *ft2_load_font(const char *filename)
 		   access->funcs.puts("\r\n");
 	   }
 
-	   /* by default faces should not be kept in memory... (void*)face */;
+	   /* By default faces should not be kept in memory... (void*)face */;
 	   font->extra.unpacked.data = NULL;
-	   font->extra.cache = NULL;
-	   font->extra.scratch = NULL;
+	   font->extra.cache         = NULL;
+	   font->extra.scratch       = NULL;
    }
 
    return font;
@@ -469,26 +481,27 @@ static Fontheader* ft2_open_face(Fontheader *font, short ptsize)
 		}
 	}
 
-	if ( !font->extra.cache ) {
-	   font->extra.cache = malloc(sizeof(c_glyph) * 256);	/* cache */
-	   memset(font->extra.cache, 0, sizeof(c_glyph) * 256);	/* cache */
-	   font->extra.scratch = malloc(sizeof(c_glyph));	/* scratch */
+	if (!font->extra.cache) {
+	   font->extra.cache = malloc(sizeof(c_glyph) * 256);	/* Cache */
+	   memset(font->extra.cache, 0, sizeof(c_glyph) * 256);	/* Cache */
+	   font->extra.scratch = malloc(sizeof(c_glyph));	/* Scratch */
 	   memset(font->extra.scratch, 0, sizeof(c_glyph));
 	}
 
 	font = ft2_load_metrics(font, face, ptsize);
-	if ( !font ) {
+	if (!font) {
 		access->funcs.puts("FT2  Cannot load metrics\r\n");
 		return NULL;
 	}
 
-	/* face loaded successfully */
-	font->extra.unpacked.data = (void*)face;
+	/* Face loaded successfully */
+	font->extra.unpacked.data = (void *)face;
 
 	return font;
 }
 
-static inline FT_Face ft2_get_face(Fontheader *font) {
+static inline FT_Face ft2_get_face(Fontheader *font)
+{
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
 		font = ft2_open_face(font, font->size);
