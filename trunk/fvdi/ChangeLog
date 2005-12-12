@@ -1,3 +1,6 @@
+2005-12-12 - johan
+Corrected a bug concerning allocation of the negative palette indices.
+
 2005-12-09 - johan
 Corrected a bug that recently crept in regarding names for fonts
 handled by the FreeType2 engine.
