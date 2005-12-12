@@ -1,7 +1,7 @@
 /*
  * fVDI colour handling
  *
- * $Id: colour.c,v 1.1 2005-08-09 08:38:39 johan Exp $
+ * $Id: colour.c,v 1.2 2005-12-12 01:20:30 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -187,6 +187,7 @@ int lib_vs_fg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
 {
   short *fg, *bg, index;
   Colour *palette;
+  void *addr;
   DrvPalette palette_pars;
 
   if ((unsigned int)colour_space > 1)    /* Only 0 or 1 allowed for now (current or RGB) */
@@ -198,12 +199,12 @@ int lib_vs_fg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
 
   palette = vwk->palette;
   if (!palette) {
-    palette = malloc(neg_pal_n * sizeof(Colour));
-    if (!palette) {
+    addr = malloc(neg_pal_n * sizeof(Colour));
+    if (!addr) {
       puts("Could not allocate space for negative palette!\x0a\x0d");
       return -1;
     }
-    palette = vwk->palette = (Colour *)((long)palette | 1);
+    palette = vwk->palette = (Colour *)(((long)addr + neg_pal_n * sizeof(Colour)) | 1);   /* Point to index 0 */
   }
   palette = (Colour *)((long)palette & ~1);
   
@@ -226,6 +227,7 @@ int lib_vs_bg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
 {
   short *fg, *bg, index;
   Colour *palette;
+  void *addr;
   DrvPalette palette_pars;
 
   if ((unsigned int)colour_space > 1)    /* Only 0 or 1 allowed for now (current or RGB) */
@@ -237,12 +239,12 @@ int lib_vs_bg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
 
   palette = vwk->palette;
   if (!palette) {
-    palette = malloc(neg_pal_n * sizeof(Colour));
-    if (!palette) {
+    addr = malloc(neg_pal_n * sizeof(Colour));
+    if (!addr) {
       puts("Could not allocate space for negative palette!\x0a\x0d");
       return -1;
     }
-    palette = vwk->palette = (Colour *)((long)palette | 1);
+    palette = vwk->palette = (Colour *)(((long)addr + neg_pal_n * sizeof(Colour)) | 1);   /* Point to index 0 */
   }
   palette = (Colour *)((long)palette & ~1);
 
