@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.25 2005-12-12 01:23:51 johan Exp $
+ * $Id: utility.c,v 1.26 2005-12-12 02:00:44 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1193,7 +1193,7 @@ long free(void *addr)
      size = current->size & 0xffff;
      if (((debug > 2) && !(silentx[0] & 0x02)) ||
 	 (unsigned int)size >= sizeof(block_space) / sizeof(block_space[0]) ||
-	 !(size >> 16)) {
+	 !(current->size >> 16)) {
        char buf[10];
        puts("Freeing at ");
        ltoa(buf, (long)current, 16);
