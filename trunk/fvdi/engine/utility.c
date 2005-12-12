@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.23 2005-11-18 23:52:23 johan Exp $
+ * $Id: utility.c,v 1.24 2005-12-12 01:20:08 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1190,14 +1190,27 @@ long free(void *addr)
    current = &((Circle *)addr)[-1];
 
    if (!current->prev) {
-     if ((debug > 2) && !(silentx[0] & 0x02)) {
+     size = current->size & 0xffff;
+     if (((debug > 2) && !(silentx[0] & 0x02)) ||
+	 (unsigned int)size >= sizeof(block_space) / sizeof(block_space[0])) {
        char buf[10];
        puts("Freeing at ");
        ltoa(buf, (long)current, 16);
        puts(buf);
+#if 1
+       puts(" (");
+       ltoa(buf, (long)current->size, 16);
+       puts(buf);
+       puts(" ,");
+       ltoa(buf, (long)current->prev, 16);
+       puts(buf);
+       puts(" ,");
+       ltoa(buf, (long)current->next, 16);
+       puts(buf);
+       puts(")");
+#endif
        puts("\x0a\x0d");
      }
-     size = current->size & 0xffff;
      current->next = (Circle *)block_free[size];
      block_free[size] = (char *)current;
      free_blocks[size]++;
