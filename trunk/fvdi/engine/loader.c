@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.22 2005-11-21 08:32:41 johan Exp $
+ * $Id: loader.c,v 1.23 2005-12-13 23:51:34 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -98,6 +98,13 @@ short size_user = 0;
 short old_malloc = 0;
 short fall_back = 0;
 short move_mouse = 0;
+short ext_malloc = 0;
+#if 1
+short check_mem = 0;
+#else
+short check_mem = 1;
+#endif
+
 
 static char path[PATH_SIZE];
 
@@ -124,6 +131,7 @@ static long specify_vqgdos(Virtual *vwk, const char **ptr);
 static long use_module(Virtual *vwk, const char **ptr);
 static long set_silent(Virtual *vwk, const char **ptr);
 static long set_size(Virtual *vwk, const char **ptr);
+static long pre_allocate(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
@@ -170,7 +178,10 @@ static Option options[] = {
    {"size",       set_size,       -1},  /* size n, specify a default available font size */
    {"oldmalloc",  &old_malloc,     1},  /* oldmalloc, use only the standar Malloc/Free */
    {"fallback",   &fall_back,      1},  /* fallback, forces fVDI to open workstation on an underlying VDI */
-   {"movemouse",  &move_mouse,     1}   /* movemouse, forces fVDI to call its movement vector explicitly */
+   {"movemouse",  &move_mouse,     1},  /* movemouse, forces fVDI to call its movement vector explicitly */
+   {"extmalloc",  &ext_malloc,     4},  /* extalloc n, extend all malloc's by n bytes */
+   {"checkmem",   &check_mem,      4},  /* checkmem n, check memory allocation consistency at every nth VDI call */
+   {"preallocate",pre_allocate,    -1}  /* preallocate n, allocate n kbyte at startup */
 };
 
 
@@ -598,6 +609,21 @@ long set_arc_max(Virtual *vwk, const char **ptr)
    arc_max = atol(token);
    if (arc_max > 1000)
       arc_max = 1000;
+
+   return 1;
+}
+
+long pre_allocate(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   int amount;
+
+   if (!(*ptr = skip_space(*ptr)))
+      ;  /* *********** Error, somehow */
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   amount = atol(token);
+   if (amount > 0)
+     allocate(amount);
 
    return 1;
 }
