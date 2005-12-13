@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.39 2005-12-12 01:20:53 johan Exp $
+ * $Id: startup.c,v 1.40 2005-12-13 23:53:09 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -24,7 +24,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0966
-#define BETA	6
+#define BETA	8
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -529,6 +529,7 @@ void vdi_debug(VDIpars *pars, char *vector)
    static long count = 1;
    static int entered = 0;
    static int current = 0;
+   static int check_count = 0;
    static short set[] = {9100, 109, 110, 121};
    char buf[10];
    int i;
@@ -541,7 +542,12 @@ void vdi_debug(VDIpars *pars, char *vector)
    if (entered)
       return;
    entered = 1;
-   
+
+   if (check_mem && (--check_count <= 0)) {
+     check_memory();
+     check_count = check_mem;
+   }
+
    func = pars->control->function;
    if (silent[func >> 3] & (1 << (func & 7))) {
       entered = 0;
@@ -619,23 +625,27 @@ void vdi_debug(VDIpars *pars, char *vector)
                access->funcs.puts("  MFDB src = $");
             else
                access->funcs.puts("  MFDB dst = $");
-            access->funcs.ltoa(buf, (long)mfdb->address, 16);
-            access->funcs.puts(buf);
-            access->funcs.puts(" ");
-            access->funcs.ltoa(buf, mfdb->width, 10);
-            access->funcs.puts(buf);
-            access->funcs.puts("(");
-            access->funcs.ltoa(buf, mfdb->wdwidth, 10);
-            access->funcs.puts(buf);
-            access->funcs.puts(") ");
-            access->funcs.ltoa(buf, mfdb->height, 10);
-            access->funcs.puts(buf);
-            if (mfdb->standard)
-               access->funcs.puts(" standard ");
-            else
-               access->funcs.puts(" specific ");
-            access->funcs.ltoa(buf, mfdb->bitplanes, 10);
-            access->funcs.puts(buf);
+	    if (!mfdb->address)
+	      access->funcs.puts("screen");
+	    else {
+	      access->funcs.ltoa(buf, (long)mfdb->address, 16);
+	      access->funcs.puts(buf);
+	      access->funcs.puts(" ");
+	      access->funcs.ltoa(buf, mfdb->width, 10);
+	      access->funcs.puts(buf);
+	      access->funcs.puts("(");
+	      access->funcs.ltoa(buf, mfdb->wdwidth, 10);
+	      access->funcs.puts(buf);
+	      access->funcs.puts(") ");
+	      access->funcs.ltoa(buf, mfdb->height, 10);
+	      access->funcs.puts(buf);
+	      if (mfdb->standard)
+		access->funcs.puts(" standard ");
+	      else
+		access->funcs.puts(" specific ");
+	      access->funcs.ltoa(buf, mfdb->bitplanes, 10);
+	      access->funcs.puts(buf);
+	    }
             access->funcs.puts("\x0a\x0d");
             mfdb = (MFDB *)pars->control->addr2;
          }
