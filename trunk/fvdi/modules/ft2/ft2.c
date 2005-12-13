@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.11 2005-12-09 08:07:25 johan Exp $
+ * $Id: ft2.c,v 1.12 2005-12-13 14:56:57 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -382,11 +382,8 @@ Fontheader *ft2_load_font(const char *filename)
 	   /* Clear the structure */
 	   memset(font, 0, sizeof(Fontheader));
 
-#if 0
-	   if (debug > 0) {
-#else
+	   /* Construct the font->name = family_name + style_name */
 	   {
-#endif
 		   char buf[255];
 		   strcpy(buf, face->family_name);
 		   strcat(buf, " " );
