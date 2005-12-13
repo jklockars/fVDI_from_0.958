@@ -1,3 +1,6 @@
+2005-12-13 - standa
+Fixed a forgotten 0x4000 flag use for vector fonts also textlib.c.
+
 2005-12-12 - johan
 Corrected a bug concerning allocation of the negative palette indices.
 
