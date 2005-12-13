@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.2 2005-11-09 23:05:52 johan Exp $
+ * $Id: textlib.c,v 1.3 2005-12-13 14:59:43 standa Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -932,7 +932,7 @@ long lib_vqt_name(Virtual *vwk, long number, short *name)
     for(i = 31; i >= 0; i--)
 	*name++ = *font_name++;
 
-    if (font->flags < 0)
+    if (font->flags & 0x4000)
 	*name = 1;   /* Vector font! */
     else
 	*name = 0;
