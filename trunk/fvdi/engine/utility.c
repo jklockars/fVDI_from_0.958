@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.26 2005-12-12 02:00:44 johan Exp $
+ * $Id: utility.c,v 1.27 2005-12-14 00:06:21 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -976,11 +976,20 @@ void *fmalloc(long size, long type)
          if (mblocks) {
             new->prev = mblocks->prev;
             new->next = mblocks;
+#if 0
             mblocks->prev->next = new;
             mblocks->prev = new;
+#else
+            ((Circle *)((long)mblocks->prev & ~1))->next = new;
+	    mblocks->prev = (Circle *)((long)new | 1);
+#endif
          } else {
             mblocks = new;
+#if 0
             new->prev = new;
+#else
+            new->prev = (Circle *)((long)new | 1);
+#endif
             new->next = new;
          }
       }
@@ -998,10 +1007,290 @@ void *fmalloc(long size, long type)
   static short block_space[] = {16, 48, 112, 240, 496, 1008, 2028, 4068, 8148, 16308};
 #endif
   static char *block_free[]  = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+#if 0
   static char *block_used[]  = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+#else
+#if 0
+static Circle block_used[]  = { {0,0,0},  {0,0,0},   {0,0,0},   {0,0,0},   {0,0,0},    {0,0,0},    {0,0,0},    {0,0,0},    {0,0,0},     {0,0,0}};
+#else
+  static Circle *block_used[]  = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
+#endif
+#endif
   static short free_blocks[] = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
   static short used_blocks[] = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
   static short allocated = 0;
+
+
+void allocate(long amount)
+{
+  const int sizes = sizeof(block_space) / sizeof(block_space[0]);
+  char *buf;
+  Circle *link, *last;
+  int i;
+
+  amount &= ~0x0fL;
+  if (!amount)
+    return;
+
+  buf = fmalloc(amount * 1024, 3);
+  if (!buf)
+    return;
+
+  if ((debug > 2) && !(silentx[0] & 0x02)) {
+    puts("       Malloc at ");
+    ltoa(buf, (long)buf, 16);
+    puts(buf);
+    puts("\x0a\x0d");
+  }
+
+  last = (Circle *)block_free[sizes - 1];
+  for(i = 0; i < amount; i += 16) {
+    link = (Circle *)&buf[i * 1024L];
+    link->next = last;
+    link->prev = 0;
+    link->size = sizes - 1;
+    last = link;
+  }
+
+  block_free[sizes - 1] = (char *)last;
+  free_blocks[sizes - 1] += amount >> 4;
+  allocated += amount >> 4;
+}
+
+
+void search_links(Circle *srch)
+{
+
+  int m, n;
+  const int sizes = sizeof(block_space) / sizeof(block_space[0]);
+  char *block, buf[10];
+  Circle *link, *next, *first, *found;
+  long dist, dist_min;
+  int dist_n;
+
+  dist_min = 999999999;
+  for(n = 0; n < sizes; n++) {
+    link = (Circle *)block_free[n];
+    while (link) {
+      if (((long)link & 0xfe000003) ||
+          ((unsigned int)(link->size & 0xffff) >=
+	   sizeof(block_space) / sizeof(block_space[0])) ||
+	  !(link->size >> 16))
+	break;
+
+      dist = (long)srch - (long)link;
+      if ((dist > 0) && (dist < dist_min)) {
+	dist_min = dist;
+	dist_n = n | 0x8000;
+	found = link;
+      }
+
+      link = link->next;
+    }
+
+    link = first = block_used[n];
+    while (link) {
+      if (((long)link & 0xfe000003) ||
+          ((unsigned int)(link->size & 0xffff) >=
+	   sizeof(block_space) / sizeof(block_space[0])) ||
+	  !(link->size >> 16))
+	break;
+
+      dist = (long)srch - (long)link;
+      if ((dist > 0) && (dist < dist_min)) {
+	dist_min = dist;
+	dist_n = n;
+	found = link;
+      }
+
+      next = link->next;
+      if ((next == first) || (next->prev != link))
+        break;
+      link = next;
+    }
+  }
+
+  puts("At distance ");
+  ltoa(buf, dist_min, 10);
+  puts(buf);
+  puts(": ");
+  ltoa(buf, (long)found, 16);
+  puts(buf);
+  puts("(");
+  ltoa(buf, dist_n & 0x7fff, 10);
+  puts(buf);
+  if (dist_n & 0x8000)
+    puts(" free)");
+  else
+    puts(" used)");
+  
+  puts("\x0a\x0d");
+}
+
+
+void display_links(Circle *first)
+{
+  Circle *link, *last;
+  char buf[10];
+  int m = 0;
+  int n;
+
+  puts("Links: ");
+  ltoa(buf, (long)first, 16);
+  puts(buf);
+
+  last = first;
+  if (first) {
+    link = first->next;
+    while (link != first) {
+      if (m++ > 1000)
+	break;
+      puts("->");
+      ltoa(buf, (long)link, 16);
+      puts(buf);
+      if (link->prev != last) {
+	puts("(");
+	ltoa(buf, (long)link->prev, 16);
+	puts(buf);
+	puts(")");
+      }
+      last = link;
+      link = link->next;
+      if ((long)link & 0xfe000003)
+	break;
+    }
+  }
+  puts("\x0a\x0d");
+}
+
+
+void check_memory(void)
+{
+  int m, n;
+  const int sizes = sizeof(block_space) / sizeof(block_space[0]);
+  char *block, buf[10];
+  Circle *link, *next, *first;
+  int error;
+
+  for(n = 0; n < sizes; n++) {
+    link = (Circle *)block_free[n];
+    m = 0;
+    error = 0;
+    while (link) {
+      m++;
+      if ((long)link & 0xfe000003) {
+	puts("Bad free list linkage at ");
+	error = 1;
+      }
+#if 0
+      else if ((unsigned int)(link->size & 0xffff) >=
+		 sizeof(block_space) / sizeof(block_space[0]) ||
+	         !(link->size >> 16)) {
+	puts("Bad free list size at ");
+	error = 1;
+      }
+#endif
+      if (error) {
+	ltoa(buf, (long)link, 16);
+	puts(buf);
+	puts("(");
+	ltoa(buf, m, 10);
+	puts(buf);
+	puts(",");
+	ltoa(buf, n, 10);
+	puts(buf);
+	puts(")\x0\x0d");
+#if 0
+	display_links(block_free[n]);
+#endif
+	break;
+      }
+
+      link = link->next;
+    }
+
+    if (!error && (m != free_blocks[n])) {
+      puts("Wrong number of free blocks (");
+      ltoa(buf, m, 10);
+      puts(buf);
+      puts("/");
+      ltoa(buf, free_blocks[n], 10);
+      puts(buf);
+      puts(")\x0a\x0d");
+#if 0
+      display_links(block_free[n]);
+#endif
+    }
+
+
+    link = first = block_used[n];
+    m = 0;
+    error = 0;
+    while (link) {
+      m++;
+      if ((long)link & 0xfe000003) {
+	puts("Bad used list link at ");
+	error = 1;
+      } else if ((unsigned int)(link->size & 0xffff) >=
+                  sizeof(block_space) / sizeof(block_space[0]) ||
+	         !(link->size >> 16)) {
+	puts("\x0a\x0d");
+	search_links(link);
+	puts("Bad used list size at ");
+	error = 1;
+      } else if ((long)link->next & 0xfe000003) {
+	puts("\x0a\x0d");
+	search_links(link);
+	puts("Bad used list linkage at ");
+	error = 1;
+      }
+      next = link->next;
+      if (next->prev != link) {
+	puts("\x0a\x0d");
+	search_links(next);
+	puts("Bad used list prev linkage ");
+	ltoa(buf, (long)next, 16);
+	puts(buf);
+	puts(" ");
+	ltoa(buf, (long)next->prev, 16);
+	puts(buf);
+	puts(" ");
+	error = 1;
+      }
+
+      if (error) {
+	ltoa(buf, (long)link, 16);
+	puts(buf);
+	puts(" (");
+	ltoa(buf, m, 10);
+	puts(buf);
+	puts(",");
+	ltoa(buf, n, 10);
+	puts(buf);
+	puts(")\x0a\x0d");
+	display_links(block_used[n]);
+	break;
+      }
+      if (next == first)
+        break;
+      link = next;
+    }
+
+    if (error && (m != used_blocks[n])) {
+      puts("Wrong number of used blocks (");
+      ltoa(buf, n, 10);
+      puts(buf);
+      puts(":");
+      ltoa(buf, m, 10);
+      puts(buf);
+      puts("/");
+      ltoa(buf, used_blocks[n], 10);
+      puts(buf);
+      puts(")\x0a\x0d");
+      display_links(block_used[n]);
+    }
+  }
+}
 
 #define OS_MARGIN 64
 #define MIN_BLOCK 32
@@ -1014,9 +1303,14 @@ void *malloc(long size)
   char *block, buf[10];
   Circle *link, *next;
 
+  size += ext_malloc;
+  
 #if 0
   debug_out = -1;
 #endif
+
+  if (check_mem)
+    check_memory();
 
 #if 0
   if (!block_space[0]) {
@@ -1109,6 +1403,36 @@ void *malloc(long size)
 
   ((Circle *)block)->size = (((Circle *)block)->size & 0xffff) + (size << 16);
 
+#if 1
+      if (1 || memlink) {
+         Circle *new = (Circle *)block;
+         if (block_used[n]) {
+            new->prev = block_used[n]->prev;
+            new->next = block_used[n];
+            block_used[n]->prev->next = new;
+            block_used[n]->prev = new;
+         } else {
+            block_used[n] = new;
+            new->prev = new;
+            new->next = new;
+         }
+      }
+ #if 0
+      if (debug > 2) {
+	char buf[10];
+	ltoa(buf, (long)block_used[n], 16);
+	puts(buf);
+	puts(" ");
+	ltoa(buf, (long)block_used[n]->prev, 16);
+	puts(buf);
+	puts(" ");
+	ltoa(buf, (long)block_used[n]->next, 16);
+	puts(buf);
+	puts("\x0a\x0d");
+      }
+ #endif
+#endif
+
   free_blocks[n]--;
   used_blocks[n]++;
 
@@ -1154,7 +1478,11 @@ void *realloc(void *addr, long new_size)
    if ((long)new <= 0)
       return 0;
    current = &((Circle *)addr)[-1];
+#if 0
    if (current->prev)
+#else
+   if ((long)current->prev & 1)
+#endif
       old_size = current->size - sizeof(Circle);
    else
       old_size = current->size >> 16;
@@ -1189,7 +1517,11 @@ long free(void *addr)
 
    current = &((Circle *)addr)[-1];
 
+#if 0
    if (!current->prev) {
+#else
+   if (!((long)current->prev & 1)) {
+#endif
      size = current->size & 0xffff;
      if (((debug > 2) && !(silentx[0] & 0x02)) ||
 	 (unsigned int)size >= sizeof(block_space) / sizeof(block_space[0]) ||
@@ -1212,6 +1544,17 @@ long free(void *addr)
 #endif
        puts("\x0a\x0d");
      }
+#if 1
+   if (1 || memlink) {
+     if (block_used[size] == current) {
+       block_used[size] = current->next;
+       if (current->next == current->prev)
+	 block_used[size] = 0;
+     }
+     current->prev->next = current->next;
+     current->next->prev = current->prev;
+   }
+#endif
      current->next = (Circle *)block_free[size];
      block_free[size] = (char *)current;
      free_blocks[size]++;
@@ -1228,7 +1571,11 @@ long free(void *addr)
    }
 
    if (memlink) {
+#if 0
       current->prev->next = current->next;
+#else
+      ((Circle *)((long)current->prev & ~1))->next = current->next;
+#endif
       current->next->prev = current->prev;
    }
    size = current->size;
