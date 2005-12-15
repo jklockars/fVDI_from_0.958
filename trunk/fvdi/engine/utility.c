@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.27 2005-12-14 00:06:21 johan Exp $
+ * $Id: utility.c,v 1.28 2005-12-15 09:17:58 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1020,6 +1020,30 @@ static Circle block_used[]  = { {0,0,0},  {0,0,0},   {0,0,0},   {0,0,0},   {0,0,
   static short used_blocks[] = { 0,  0,   0,   0,   0,    0,    0,    0,    0,     0};
   static short allocated = 0;
 
+#define ADDR_NOT_OK 0xfc000003
+
+
+void memory_statistics(void)
+{
+  const int sizes = sizeof(block_space) / sizeof(block_space[0]);
+  char buf[10];
+  int n;
+
+  puts("       ");
+  ltoa(buf, allocated, 10);
+  puts(buf);
+  puts(": ");
+  for(n = 0; n < sizes; n++) {
+    ltoa(buf, used_blocks[n], 10);
+    puts(buf);
+    puts("/");
+    ltoa(buf, free_blocks[n], 10);
+    puts(buf);
+    puts(" ");
+  }
+  puts("\x0a\x0d");
+}
+
 
 void allocate(long amount)
 {
@@ -1072,7 +1096,7 @@ void search_links(Circle *srch)
   for(n = 0; n < sizes; n++) {
     link = (Circle *)block_free[n];
     while (link) {
-      if (((long)link & 0xfe000003) ||
+      if (((long)link & ADDR_NOT_OK) ||
           ((unsigned int)(link->size & 0xffff) >=
 	   sizeof(block_space) / sizeof(block_space[0])) ||
 	  !(link->size >> 16))
@@ -1090,7 +1114,7 @@ void search_links(Circle *srch)
 
     link = first = block_used[n];
     while (link) {
-      if (((long)link & 0xfe000003) ||
+      if (((long)link & ADDR_NOT_OK) ||
           ((unsigned int)(link->size & 0xffff) >=
 	   sizeof(block_space) / sizeof(block_space[0])) ||
 	  !(link->size >> 16))
@@ -1153,10 +1177,11 @@ void display_links(Circle *first)
 	ltoa(buf, (long)link->prev, 16);
 	puts(buf);
 	puts(")");
+	break;
       }
       last = link;
       link = link->next;
-      if ((long)link & 0xfe000003)
+      if ((long)link & ADDR_NOT_OK)
 	break;
     }
   }
@@ -1170,15 +1195,16 @@ void check_memory(void)
   const int sizes = sizeof(block_space) / sizeof(block_space[0]);
   char *block, buf[10];
   Circle *link, *next, *first;
-  int error;
+  int error, statistics;
 
+  statistics = 0;
   for(n = 0; n < sizes; n++) {
     link = (Circle *)block_free[n];
     m = 0;
     error = 0;
     while (link) {
       m++;
-      if ((long)link & 0xfe000003) {
+      if ((long)link & ADDR_NOT_OK) {
 	puts("Bad free list linkage at ");
 	error = 1;
       }
@@ -1220,15 +1246,20 @@ void check_memory(void)
 #if 0
       display_links(block_free[n]);
 #endif
+      error = 1;
     }
 
+    if (error && !statistics) {
+	statistics = 1;
+	memory_statistics();
+    }
 
     link = first = block_used[n];
     m = 0;
     error = 0;
     while (link) {
       m++;
-      if ((long)link & 0xfe000003) {
+      if ((long)link & ADDR_NOT_OK) {
 	puts("Bad used list link at ");
 	error = 1;
       } else if ((unsigned int)(link->size & 0xffff) >=
@@ -1238,7 +1269,7 @@ void check_memory(void)
 	search_links(link);
 	puts("Bad used list size at ");
 	error = 1;
-      } else if ((long)link->next & 0xfe000003) {
+      } else if ((long)link->next & ADDR_NOT_OK) {
 	puts("\x0a\x0d");
 	search_links(link);
 	puts("Bad used list linkage at ");
@@ -1276,7 +1307,7 @@ void check_memory(void)
       link = next;
     }
 
-    if (error && (m != used_blocks[n])) {
+    if (!error && (m != used_blocks[n])) {
       puts("Wrong number of used blocks (");
       ltoa(buf, n, 10);
       puts(buf);
@@ -1288,6 +1319,12 @@ void check_memory(void)
       puts(buf);
       puts(")\x0a\x0d");
       display_links(block_used[n]);
+      error = 1;
+    }
+
+    if (error && !statistics) {
+	statistics = 1;
+	memory_statistics();
     }
   }
 }
@@ -1437,19 +1474,7 @@ void *malloc(long size)
   used_blocks[n]++;
 
   if ((debug > 2) && !(silentx[0] & 0x02)) {
-    puts("       ");
-    ltoa(buf, allocated, 10);
-    puts(buf);
-    puts(": ");
-    for(n = 0; n < sizes; n++) {
-      ltoa(buf, used_blocks[n], 10);
-      puts(buf);
-      puts("/");
-      ltoa(buf, free_blocks[n], 10);
-      puts(buf);
-      puts(" ");
-    }
-    puts("\x0a\x0d");
+      memory_statistics();
   }
 
 #if 1
