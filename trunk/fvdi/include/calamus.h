@@ -1,9 +1,9 @@
 /*
  * fVDI Calamus declarations
  *
- * $Id: calamus.h,v 1.2 2005-11-21 08:42:29 johan Exp $
+ * $Id: calamus.h,v 1.3 2005-12-15 15:06:48 standa Exp $
  *
- * Copyright 2004, Standa Opichals
+ * Copyright 2004, Standa Opichal
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
