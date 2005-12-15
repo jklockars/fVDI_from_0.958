@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.12 2005-12-13 14:56:57 standa Exp $
+ * $Id: ft2.c,v 1.13 2005-12-15 09:18:45 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -1175,6 +1175,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 	Fontheader *font = vwk->text.current_font;
 	MFDB textbuf, *t;
 
+#if 0
 #ifdef DEBUG_FONTS
 	if (debug > 2) {
 		char buffer[10];
@@ -1182,6 +1183,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 		puts("Text len: ");
 		puts_nl(buffer);
 	}
+#endif
 #endif
 
 	/* FIXME: this should not happen once we have all the font id/size setup routines intercepted */
