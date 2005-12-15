@@ -1,9 +1,9 @@
 /*
  * fVDI Calamus functions
  *
- * $Id: calamus.c,v 1.6 2005-11-30 12:10:40 johan Exp $
+ * $Id: calamus.c,v 1.7 2005-12-15 15:05:30 standa Exp $
  *
- * Copyright 2004, Standa Opichals
+ * Copyright 2004, Standa Opichal
  * This software is licensed under the GNU General Public License.
  * Please, see LICENSE.TXT for further information.
  */
@@ -270,12 +270,6 @@ void CDECL dcsd_blit_to_screen(struct DCSD_BLITARGS *args)
 
 	lib_vdi_sp(&lib_vs_clip, dcsd_vwk, 0, 0);
 	
-	/* FIXME??? BUG?? This doesn't seem to call the fVDI native driver
-	 * according to the logs
-	 *
-	 * (enable nfvdi_soft.cpp and nfvdi.cpp DEBUG define + direct fVDI
-	 * to do puts() to the ARAnyM's native console).
-	 */ 
 	lib_vdi_spppp(&lib_vro_cpyfm, dcsd_vwk, args->mode, coords,
 	              &dcsd_offscreen_mfdb, 0L, 0L);
 
