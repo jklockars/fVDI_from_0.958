@@ -1,3 +1,6 @@
+2005-12-15 - johan
+Some improvements to the memory allocation debug facilities.
+
 2005-12-13 - johan
 Made it possible to preallocate memory.
 Added extensive memory allocation debug facilities.
