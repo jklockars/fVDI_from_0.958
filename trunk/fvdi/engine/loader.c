@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.23 2005-12-13 23:51:34 johan Exp $
+ * $Id: loader.c,v 1.24 2005-12-15 09:22:22 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -104,6 +104,7 @@ short check_mem = 0;
 #else
 short check_mem = 1;
 #endif
+short bconout = 0;
 
 
 static char path[PATH_SIZE];
@@ -181,7 +182,8 @@ static Option options[] = {
    {"movemouse",  &move_mouse,     1},  /* movemouse, forces fVDI to call its movement vector explicitly */
    {"extmalloc",  &ext_malloc,     4},  /* extalloc n, extend all malloc's by n bytes */
    {"checkmem",   &check_mem,      4},  /* checkmem n, check memory allocation consistency at every nth VDI call */
-   {"preallocate",pre_allocate,    -1}  /* preallocate n, allocate n kbyte at startup */
+   {"preallocate",pre_allocate,    -1}, /* preallocate n, allocate n kbyte at startup */
+   {"bconout",   &bconout,          1}  /* bconout, enables handling of BConout the the screen in fVDI */
 };
 
 
