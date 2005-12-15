@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.40 2005-12-13 23:53:09 johan Exp $
+ * $Id: startup.c,v 1.41 2005-12-15 09:17:13 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -24,7 +24,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0966
-#define BETA	8
+#define BETA	9
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -543,7 +543,7 @@ void vdi_debug(VDIpars *pars, char *vector)
       return;
    entered = 1;
 
-   if (check_mem && (--check_count <= 0)) {
+   if ((check_mem > 0) && (--check_count <= 0)) {
      check_memory();
      check_count = check_mem;
    }
