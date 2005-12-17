@@ -1,3 +1,8 @@
+2005-12-16 - standa
+Made aranym debug output not go though the cookie (CVS mint
+kernel says PRIVILEGE VIOLATION if the cookie structure address
+space is accessed (utility.c).
+
 2005-12-15 - johan
 Some improvements to the memory allocation debug facilities.
 
