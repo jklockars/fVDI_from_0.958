@@ -78,6 +78,7 @@ SSRC = \
 	unimpl.s \
 	vdi_misc.s \
 	dcsdstub.s \
+	bconstub.s \
 	setjmp.s
 
 
@@ -98,6 +99,7 @@ CSRC = \
 	colour.c \
 	textlib.c \
 	calamus.c \
+	bconout.c \
 	default.c
 
 ifneq ($(ft2_srcdir),)
