@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.12 2005-11-21 08:32:41 johan Exp $
+ * $Id: workstn.c,v 1.13 2005-12-17 01:05:01 standa Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -395,6 +395,9 @@ void v_opnwk(VDIpars *pars)
 		return;
 	}
 
+	/* redir the output from the WK open */
+	bconout_redir = 1;
+
 	/* Experimenting, 001217/010109 */
 	if (!old_wk_handle && !stand_alone) {
 		short intout[45], ptsout[12];
@@ -546,6 +549,9 @@ void v_clswk(Virtual *vwk, VDIpars *pars)
 		scall_v_clswk(old_wk_handle);
 	}
 #endif
+
+	/* cancel bconout redirection */
+	bconout_redir = 0;
 
 	return;
 }

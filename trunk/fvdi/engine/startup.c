@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.41 2005-12-15 09:17:13 johan Exp $
+ * $Id: startup.c,v 1.42 2005-12-17 01:05:01 standa Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -99,6 +99,13 @@ long vdi_stack_size = sizeof(vdi_stack);
 
 long stack_address;
 
+static long bconout_hook(void)
+{
+   bconout_address = *(long *)0x586;
+   *(long *)0x586 = (long)&bconout_stub;
+
+   return 0;
+}
 
 /*
  * Top level fVDI initialization
@@ -211,6 +218,10 @@ long startup(void)
 #else
 	lineA_address = (long)Setexc(10, (void *)&lineA);		/* Install a LineA handler */
 #endif
+	
+	if ( bconout ) {
+		Supexec(bconout_hook); /* cannot use Setexc() as the 0x586 is not divisible by 4 */; 
+	}
 	
 	stack_address = (long)vdi_stack;
 
