@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.10 2005-12-13 23:57:47 johan Exp $
+ * $Id: globals.h,v 1.11 2005-12-20 11:37:03 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -43,6 +43,9 @@ extern void *eddi_dispatch;
 extern void *init;
 extern void *data_start;
 extern void *bss_start;
+
+extern long bconout_address;
+extern void *bconout_stub;
 
 extern long mint;
 extern long magic;
@@ -111,6 +114,7 @@ extern short fall_back;
 extern short move_mouse;
 extern short ext_malloc;
 extern short check_mem;
+extern short bconout;
 
 extern long pid_addr;
 
