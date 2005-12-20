@@ -6,15 +6,11 @@
 *****
 
 	xdef	_bconout_stub
-	xdef	_bconout_redir
 	xdef	_bconout_address
-	xref	_bconout_char
+
+	xref	_screen_wk
 
 	text
-
-_bconout_redir:
-	dc.w	0
-
 
 * XBRA chain for Bconout()
 	dc.b	"XBRA"
@@ -32,7 +28,7 @@ _bconout_stub:
 
 	movem.l	(a7)+,d0-d2/a0-a2
 
-	tst.w	_bconout_redir
+	tst.l	_screen_wk
 	beq	.bconout_orig
 	
 	rts
