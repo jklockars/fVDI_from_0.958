@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.29 2005-12-17 00:59:12 standa Exp $
+ * $Id: utility.c,v 1.30 2005-12-20 11:36:22 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -52,20 +52,29 @@ long mint = 0;
 long magic = 0;
 
 /* NatFeat functions defined */
+#if 1
 static long _NF_getid = 0x73004e75L;
 static long _NF_call  = 0x73014e75L;
 #define nfGetID(n)  (((long __CDECL (*)(const char *))&_NF_getid)n)
 #define nfCall(n)   (((long __CDECL (*)(long, ...))&_NF_call)n)
 
 long nf_print_id = 0;
+#else
+typedef struct {  /* NatFeat code */
+        long magic;
+        long CDECL(*nfGetID) (const char *);
+        long CDECL(*nfCall) (long ID, ...);
+} NatFeatCookie;
+
+NatFeatCookie *nf_ptr = 0;
+long nf_printf_id = 0;
+#endif
 
 long pid_addr = 0;        /* Copied into 'pid' when fVDI is installed */
 long *pid = 0;
 short mxalloc = 0;
 
 char *block_chain = 0;
-
-long ARAnyM_out = 0x71354e75L;   /* ARAnyM native printing subroutine */
 
 
 /*
@@ -321,7 +330,15 @@ void check_cookies(void)
    if ((addr = get_cookie("MagX", 0)) != -1)
       magic = (long)addr;
    if ((addr = get_cookie("__NF", 0)) != -1) {
+#if 1
       nf_print_id = nfGetID(("NF_STDERR"));
+#else
+      nf_ptr = (NatFeatCookie *)addr;
+      if (nf_ptr->magic != 0x20021021L)   /* NatFeat magic constant */
+        nf_ptr = 0;
+      else {
+        nf_printf_id = nf_ptr->nfGetID("DEBUGPRINTF");
+#endif
    }
 }
 
@@ -1653,8 +1670,13 @@ int puts(const char *text)
 {
    if (debug_out == -2)
       Cconws(text);
-   else if (debug_out == -1 && nf_print_id)
-      nfCall((nf_print_id,text));
+#if 1
+   else if ((debug_out == -1) && nf_print_id)
+      nfCall((nf_print_id, text));
+#else
+   else if ((debug_out == -1) && nf_printf_id)
+     nf_ptr->nfCall(nf_printf_id, text);
+#endif
    else
       while (*text)
          Bconout(debug_out, *text++);
