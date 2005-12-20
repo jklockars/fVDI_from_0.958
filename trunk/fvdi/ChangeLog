@@ -1,12 +1,13 @@
+2005-12-20 - johan
+Minor fix for the Bconout redirection.
+
 2005-12-16 - standa
-Made aranym debug output not go though the cookie (CVS mint
+Made ARAnyM debug output not go through the cookie (CVS MiNT
 kernel says PRIVILEGE VIOLATION if the cookie structure address
 space is accessed (utility.c).
-Bconout option implemenetation: redirects Bconout(con) output
-to puts() from the moment the phys WK is opened and returns
-it back afterwards (now the CVS XaAES boots again with
-lineafix on).
-
+Bconout option implementation: redirects Bconout(con) output
+to puts(), from the moment the physical screen workstation is opened,
+and returns it afterwards (now the CVS XaAES boots again with lineafix).
 
 2005-12-15 - johan
 Some improvements to the memory allocation debug facilities.
