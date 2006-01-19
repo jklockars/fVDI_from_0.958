@@ -1,3 +1,6 @@
+2006-01-19 - johan
+The bitplane driver finally has a fast mouse drawing routine.
+
 2005-12-20 - johan
 Minor fix for the Bconout redirection.
 
