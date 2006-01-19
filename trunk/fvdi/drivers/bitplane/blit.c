@@ -1,7 +1,7 @@
 /*
  * Bitplane blit routines
  *
- * $Id: blit.c,v 1.7 2005-12-07 22:25:40 johan Exp $
+ * $Id: blit.c,v 1.8 2006-01-19 19:18:58 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * Copyright 2003 The EmuTOS development team
@@ -1713,114 +1713,76 @@ c_write_pixel(Virtual *vwk, MFDB *mfdb, long x, long y, long colour)
 }
 
 
-long CDECL
-c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
+short set_mouse_colours(Workstation *wk)
 {
-    static short mask[16], data[16];
-    static short saved[16 * 8];
-    static short old_x = 0;
-    static short old_y = 0;
-    static short old_w = 0;
-    static short old_h = 0;
-    int i;
-    int xs, ys, w, h;
-    MFDB src, dst;
-    short foreground, background;
+    int foreground, background;
+    short i, colours;
 
     foreground = x_get_colour(wk, wk->mouse.colour.foreground);
     background = x_get_colour(wk, wk->mouse.colour.background);
 
-    xs = ys = 0;
-    x -= wk->mouse.hotspot.x;
-    y -= wk->mouse.hotspot.y;
-    w = h = 16;
-
-    if (x < wk->screen.coordinates.min_x) {
-	xs = wk->screen.coordinates.min_x - x;
-	w -= xs;
-	x = wk->screen.coordinates.min_x;
-    }
-    if (x + w - 1 > wk->screen.coordinates.max_x)
-	w = wk->screen.coordinates.max_x - x + 1;
-
-    if (y < wk->screen.coordinates.min_y) {
-	ys = wk->screen.coordinates.min_y - y;
-	h -= ys;
-	y = wk->screen.coordinates.min_y;
-    }
-    if (y + h - 1> wk->screen.coordinates.max_y)
-	h = wk->screen.coordinates.max_y - y + 1;
-
-    if ((w < 0) || (h < 0))
-	w = h = 0;
-
-    src.width     = dst.width     = 16;
-    src.height    = dst.height    = 16;
-    src.wdwidth   = dst.wdwidth   = 1;
-    src.standard  = dst.standard  = 0;
-//    src.bitplanes = dst.bitplanes = 1;
-
-    switch((long)mouse) {
-    case 0:   /* Move */
-        /* Restore old background */
-	src.address = saved;
-	src.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, old_w, old_h, 3);
-	/* Save new background */
-	dst.address = saved;
-	dst.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, 0, x, y, &dst, 0, 0, w, h, 3);
-	old_x = x;
-	old_y = y;
-	old_w = w;
-	old_h = h;
-	/* Draw mask */
-	src.address = mask;
-	src.bitplanes = 1;
-	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, background);
-	/* Draw shape */
-	src.address = data;
-	src.bitplanes = 1;
-	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, foreground);
-	break;
+    switch (wk->screen.mfdb.bitplanes) {
     case 1:
-	break;
-    case 2:   /* Hide */
-        /* Restore old background */
-	src.address = saved;
-	src.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, &src, 0, 0, 0, old_x, old_y, old_w, old_h, 3);
-	break;
-    case 3:   /* Show */
-	/* Save new background */
-	dst.address = saved;
-	dst.bitplanes = wk->screen.mfdb.bitplanes;
-	x_blit_area(wk, 0, x, y, &dst, 0, 0, w, h, 3);
-	old_x = x;
-	old_y = y;
-	old_w = w;
-	old_h = h;
-	/* Draw mask */
-	src.address = mask;
-	src.bitplanes = 1;
-	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, background);
-	/* Draw shape */
-	src.address = data;
-	src.bitplanes = 1;
-	x_expand_area(wk, &src, xs, ys, 0, x, y, w, h, 2, foreground);
-	break;
+	foreground = (foreground << 1) | foreground;
+	background = (background << 1) | background;
+    case 2:
+	foreground = (foreground << 2) | foreground;
+	background = (background << 2) | background;
     case 4:
-    case 5:
-    case 6:
-    case 7:
-        break;
-    default:  /* New mouse shape */
-	for(i = 0; i < 16; i++) {
-	    mask[i] = mouse->mask[i];
-	    data[i] = mouse->data[i];
-	}
+	foreground = (foreground << 4) | foreground;
+	background = (background << 4) | background;
 	break;
     }
+    foreground <<= 7;
+    background <<= 7;
+    for(i = 7; i >= 0; i--) {
+	colours <<= 1;
+	foreground <<= 1;
+	if (foreground & 0x8000)
+	    colours |= 1;
+	colours <<= 1;
+	background <<= 1;
+	if (background & 0x8000)
+	    colours |= 1;
+    }
 
-    return 0; 
+    return colours;
+}
+
+void set_mouse_shape(Mouse *mouse, short *masks)
+{
+    int i;
+
+    for(i = 0; i < 16; i++) {
+	*masks++ = mouse->mask[i];
+	*masks++ = mouse->data[i];
+    }
+}
+
+
+#define PLANES 1
+#include "mouse.c"
+#undef PLANES
+
+#define PLANES 2
+#include "mouse.c"
+#undef PLANES
+
+#define PLANES 4
+#include "mouse.c"
+#undef PLANES
+
+#define PLANES 8
+#include "mouse.c"
+#undef PLANES
+
+long CDECL
+c_mouse_draw(Workstation *wk, long x, long y, Mouse *mouse)
+{
+  static long CDECL (*mouse_draw[])(Workstation *, long, long, Mouse *) = {
+    0, c_mouse_draw_1, c_mouse_draw_2, 0, c_mouse_draw_4,
+    0, 0, 0, c_mouse_draw_8
+  };
+  
+  return mouse_draw[wk->screen.mfdb.bitplanes](wk, x, y, mouse);
 }
