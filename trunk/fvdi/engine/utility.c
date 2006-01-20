@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.30 2005-12-20 11:36:22 johan Exp $
+ * $Id: utility.c,v 1.31 2006-01-20 09:54:32 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -460,6 +460,13 @@ void setmem_aligned(void *d, long v, long n)
 
 
 #ifndef USE_LIBKERN
+/* This function needs an 'int' parameter
+ * to be compatible with gcc's built-in
+ * version.
+ * For module use, a separate version will
+ * be needed since they can't be guaranteed
+ * to have the same size for 'int'.
+ */
 void *memset(void *s, int c, size_t n)
 {
    if ((n > 3) && !((long)s & 1)) {
@@ -484,7 +491,7 @@ long strlen(const char *s)
 }
 
 
-int strcmp(const char *s1, const char *s2)
+long strcmp(const char *s1, const char *s2)
 {
    char c1;
 
@@ -499,7 +506,7 @@ int strcmp(const char *s1, const char *s2)
 }
 
 
-int strncmp(const char *s1, const char *s2, size_t n)
+long strncmp(const char *s1, const char *s2, size_t n)
 {
    char c1;
    long ns;     /* size_t can't be negative */
@@ -521,7 +528,7 @@ int strncmp(const char *s1, const char *s2, size_t n)
 }
 
 
-int memcmp(const void *s1, const void *s2, size_t n)
+long memcmp(const void *s1, const void *s2, size_t n)
 {
    char *s1c, *s2c;
    long ns;     /* size_t can't be negative */
@@ -587,7 +594,7 @@ char *strdup(const char *s)
 
 
 /* This can only deal with some formats (enough for FreeType 2.1.10) */
-int sprintf(char *str, const char *format, ...)
+long sprintf(char *str, const char *format, ...)
 {
    va_list args;
    int mode = 0;
@@ -693,7 +700,7 @@ char *strcat(char *dest, const char *src)
 }
 
 
-char *strchr(const char *s, int c)
+char *strchr(const char *s, long c)
 {
    char ch, c1;
 
@@ -710,7 +717,7 @@ char *strchr(const char *s, int c)
 }
 
 
-char *strrchr(const char *s, int c)
+char *strrchr(const char *s, long c)
 {
    char *found, ch, c1;
 
@@ -726,6 +733,44 @@ char *strrchr(const char *s, int c)
 
    if (found)
       return found - 1;
+
+   return 0;
+}
+
+
+void *memchr(const void *s, long c, size_t n)
+{
+   char ch, c1;
+   char *m;
+   long ns;
+
+   m = (char *)s;
+   c1 = c;
+   ns = n;
+   for(ns--; ns >= 0; ns--) {
+      ch = *m++;
+      if (ch == c1)
+         return (void *)m - 1;
+   }
+
+   return 0;
+}
+
+
+char *memrchr(const void *s, long c, size_t n)
+{
+   char ch, c1;
+   char *m;
+   long ns;
+
+   m = (char *)s + n;
+   c1 = c;
+   ns = n;
+   for(ns--; ns >= 0; ns--) {
+      ch = *--m;
+      if (ch == c1)
+         return (void *)m;
+   }
 
    return 0;
 }
@@ -767,26 +812,26 @@ long check_base(char ch, long base)
 
 
 #ifndef USE_LIBKERN
-int isdigit(int c)
+long isdigit(long c)
 {
    return numeric(c);
 }
 
 
-int isxdigit(int c)
+long isxdigit(long c)
 {
    return check_base(c, 16) >= 0;
 }
 
 
-int isalnum(int c)
+long isalnum(long c)
 {
     return check_base(c, 36) >= 0;   /* Base 36 has 0-9, A-Z */
 }
 #endif
 
 
-int isspace(int c)
+long isspace(long c)
 {
    switch(c) {
    case ' ':
@@ -870,7 +915,7 @@ void ltoa(char *buf, long n, unsigned long base)
 /* Not the best, but short and decent. */
  #if 0
 void fvdi_qsort(void *base, long nmemb, long size,
-                int (*compar)(const void *, const void *))
+                long (*compar)(const void *, const void *))
 {
    long gap, i, j, k, gap_size;
    char *p, *pt, *q, c, *cbase;
@@ -901,7 +946,7 @@ void fvdi_qsort(void *base, long nmemb, long size,
 }
  #else
 void qsort(void *base, long nmemb, long size,
-           int (*compar)(const void *, const void *))
+           long (*compar)(const void *, const void *))
 {
     static long incs[16] = { 1391376, 463792, 198768, 86961, 33936, 13776, 
                              4592, 1968, 861, 336, 112, 48, 21, 7, 3, 1 };
@@ -1666,7 +1711,7 @@ long free_all(void)
 }
 
 
-int puts(const char *text)
+long puts(const char *text)
 {
    if (debug_out == -2)
       Cconws(text);
