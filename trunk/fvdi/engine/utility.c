@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.31 2006-01-20 09:54:32 johan Exp $
+ * $Id: utility.c,v 1.32 2006-01-20 16:24:39 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -591,95 +591,6 @@ char *strdup(const char *s)
 
    return d;
 }
-
-
-/* This can only deal with some formats (enough for FreeType 2.1.10) */
-long sprintf(char *str, const char *format, ...)
-{
-   va_list args;
-   int mode = 0;
-   char *s, *text, ch;
-#if 0
-   long val_l;
-#endif
-   int val_i;
-   short val_s;
-   char val_c;
-
-   s = str;
-   va_start(args, format);
-#if 1
-   while (ch = *format++) {
-      if (mode) {
-         switch(ch) {
-         case 's':
-            text = va_arg(args, char *);
-            while (*str++ = *text++)
-               ;
-            str--;
-            mode = 0;
-            break;
-         case 'c':
-            val_c = va_arg(args, int);    /* char promoted to int */
-            *str++ = val_c;
-            mode = 0;
-            break;
-         case 'd':
-            if (mode == 2) {
-               val_s = va_arg(args, int);    /* short promoted */
-               ltoa(str, val_s, 10);
-            } else {
-               val_i = va_arg(args, int);
-               ltoa(str, val_i, 10);
-            }
-            str += strlen(s);
-            mode = 0;
-            break;
-         case 'h':
-            mode = 2;
-            break;
-         case '%':
-            *str++ = '%';
-            mode = 0;
-            break;
-         default:
-            *str++ = 'B';
-            *str++ = 'A';
-            *str++ = 'D';
-            *str++ = '!';
-            break;
-         }
-      } else if (ch == '%') {
-         mode = 1;
-      } else {
-         *str++ = ch;
-      }
-   }
-   *str = 0;
-#else
-   if (strcmp(format, "%s%c%s") == 0) {
-      char *text, ch;
-
-      text = va_arg(args, char *);
-      while (*str++ = *text++)
-         ;
-      str--;
-      ch = va_arg(args, int);    /* char promoted to int */
-      *str++ = ch;
-      text = va_arg(args, char *);
-      while (*str++ = *text++)
-         ;
-   } else if (strcmp(format, "%hd") == 0) {
-      short val;
-      val = va_arg(args, int);   /* short promoted to int */
-      ltoa(str, val, 10);
-   } else
-       strcpy(str, "BAD!");
-#endif
-   va_end(args);
-
-   return strlen(s);
-}
 #endif
 
 
@@ -880,6 +791,29 @@ long atol(const char *text)
 }
 
 
+void ultoa(char *buf, unsigned long un, unsigned long base)
+{
+   char *tmp, ch;
+   
+   tmp = buf;
+   do {
+      ch = un % base;
+      un = un / base;
+      if (ch <= 9)
+         ch += '0';
+      else
+         ch += 'a' - 10;
+      *tmp++ = ch;
+   } while (un);
+   *tmp = '\0';
+   while (tmp > buf) {
+      ch = *buf;
+      *buf++ = *--tmp;
+      *tmp = ch;
+   }
+}
+
+
 void ltoa(char *buf, long n, unsigned long base)
 {
    unsigned long un;
@@ -911,6 +845,272 @@ void ltoa(char *buf, long n, unsigned long base)
 
 
 #ifndef USE_LIBKERN
+/* Mostly complete, but only simple things tested */
+long sprintf(char *str, const char *format, ...)
+{
+   va_list args;
+   int mode = 0;
+   char *s, *text, ch;
+   long val_l;
+   int base = 10;
+   int field = 0;
+   int precision = 0;
+   int opts = 0;
+   char *num_start;
+
+   s = str;
+   va_start(args, format);
+
+   while (ch = *format++) {
+      if (mode) {
+         switch(ch) {
+         case 's':
+            text = va_arg(args, char *);
+            while (*str++ = *text++)
+               ;
+            str--;
+            mode = 0;
+            break;
+
+         case 'c':
+            *str++ = va_arg(args, int);    /* char promoted to int */
+            mode = 0;
+            break;
+
+         case 'p':
+            opts |= 16;
+            mode = 4;
+         case 'x':
+         case 'X':
+            base = 16;
+            if (opts & 16) {
+               *str++ = '0';
+               *str++ = 'x';
+            }
+         case 'o':
+            if (base == 10) {
+               base = 8;
+               if (opts & 16) {
+                  *str++ = '0';
+               }
+            }
+         case 'u':
+            opts |= 32;   /* Unsigned conversion */
+         case 'd':
+         case 'i':
+           if (!(opts & 0x0100) && (opts & 1) && !(opts & 8)) {
+               precision = field;
+               field = 0;
+            }
+            switch (mode) {
+            case 4:
+               val_l = va_arg(args, long);
+               break;
+            case 3:
+               if (opts & 32)
+                  val_l = va_arg(args, unsigned char);
+               else
+                  val_l = va_arg(args, signed char);
+               break;
+            case 2:
+               if (opts & 32)
+                  val_l = va_arg(args, unsigned short);
+               else
+                  val_l = va_arg(args, short);
+               break;
+            case 1:
+               if (opts & 32)
+                  val_l = va_arg(args, unsigned int);
+               else
+                  val_l = va_arg(args, int);
+               break;
+            default:
+               break;
+            }
+            if (!(opts & 32)) {
+               if (val_l > 0) {
+                  if (opts & 4)
+                     *str++ = '+';
+                  else if (opts & 2)
+                     *str++ = ' ';
+               } else if (val_l < 0) {
+                  *str++ = '-';
+                  val_l = -val_l;
+               }
+            }
+            if (val_l || !(opts & 0x0100) || (precision != 0))
+               ultoa(str, val_l, base);
+            val_l = strlen(str);
+            if (val_l < precision) {
+              memmove(str + precision - val_l, str, val_l + 1);
+              memset(str, '0', precision - val_l);
+            }
+            str += strlen(str);
+            mode = 0;
+            break;
+
+         case '%':
+            *str++ = '%';
+            mode = 0;
+            break;
+
+
+         case 'h':
+            opts |= 0x8000;
+            if (mode == 1)
+               mode = 2;
+            else if (mode == 2)
+               mode = 3;
+            else
+               opts |= 0x4000;
+            break;
+
+         case 'z':
+         case 't':
+         case 'l':
+            opts |= 0x8000;
+            if (mode == 1)
+               mode = 4;
+            else
+               opts |= 0x4000;
+            break;
+
+
+         case '0':
+         case '1':
+         case '2':
+         case '3':
+         case '4':
+         case '5':
+         case '6':
+         case '7':
+         case '8':
+         case '9':
+            if (mode == 1) {
+               ch -= '0';
+               if (!ch && !(opts & 0x8000)) {
+                  if (!(opts & 1))
+                     opts |= 1;   /* Zero padding */
+                  else
+                     opts |= 0x4000;
+               } else {
+                  opts |= 0x8000;
+                  if (opts & 0x0100) {
+                     if (!(opts & 0x0200)) {
+                        opts |= 0x0400;
+                        precision = precision * 10 + ch;
+                     } else
+                        opts |= 0x4000;
+                  } else if (!(opts & 0x0800)) {
+                     opts |= 0x0400;
+                     field = field * 10 + ch;
+                  } else
+                     opts |= 0x4000;
+               }
+            } else
+               opts |= 0x4000;
+            break;
+
+         case '*':
+            if (mode == 1) {
+               if (opts & 0x0100) {
+                  if (!(opts & 0x0600)) {
+                     opts |= 0x0200;
+                     precision = va_arg(args, int);
+                     if (precision < 0)
+                        precision = 0;
+                  } else
+                     opts |= 0x4000;
+               } else if (!(opts & 0x8c00)) {
+                  opts |= 0x8800;
+                  field = va_arg(args, int);
+                  if (field < 0) {
+                     opts |= 8;
+                     field = -field;
+                  }
+               } else
+                  opts |= 0x4000;
+            } else
+               opts |= 0x4000;
+            break;
+
+         case ' ':
+            if (!(opts & 0x8002)) {
+               opts |= 2;   /* Space in front of positive numbers */
+            } else
+               opts |= 0x4000;
+            break;
+
+         case '+':
+            if (!(opts & 0x8004)) {
+               opts |= 4;   /* Sign in front of all numbers */
+            } else
+               opts |= 0x4000;
+            break;
+
+         case '-':
+            if (!(opts & 0x8008)) {
+               opts |= 8;   /* Left justified field */
+            } else
+               opts |= 0x4000;
+            break;
+
+         case '#':
+            if (!(opts & 0x8010)) {
+               opts |= 16;  /* 0x/0 in front of hexadecimal/octal numbers */
+            } else
+               opts |= 0x4000;
+            break;
+
+         case '.':
+            if (!(opts & 0x0100) && (mode == 1)) {
+               opts &= ~0x0400;
+               opts |= 0x8100;
+               precision = 0;
+            } else
+               opts |= 0x4000;
+            break;
+
+         default:
+            opts |= 0x4000;
+            break;
+         }
+
+         if (opts & 0x4000) {
+           *str++ = '%';
+           *str++ = '?';
+           mode = 0;
+         }
+
+         if ((mode == 0) && (field > str - s)) {
+           val_l = field - (str - s);
+           if (opts & 8) {
+             memset(str, ' ', val_l);
+           } else {
+             memmove(s + val_l, s, str - s);
+             memset(s, ' ', val_l);
+           }
+           str += val_l;
+         }
+      } else if (ch == '%') {
+         mode = 1;
+         base = 10;
+         opts = 0;
+         field = 0;
+         precision = 0;
+         s = str;
+      } else {
+         *str++ = ch;
+      }
+   }
+   *str = 0;
+
+   va_end(args);
+
+   return strlen(s);
+}
+
+
 /* This is really a Shell sort. */
 /* Not the best, but short and decent. */
  #if 0
@@ -1038,7 +1238,7 @@ void *fmalloc(long size, long type)
             mblocks->prev = new;
 #else
             ((Circle *)((long)mblocks->prev & ~1))->next = new;
-	    mblocks->prev = (Circle *)((long)new | 1);
+            mblocks->prev = (Circle *)((long)new | 1);
 #endif
          } else {
             mblocks = new;
@@ -1155,15 +1355,15 @@ void search_links(Circle *srch)
     while (link) {
       if (((long)link & ADDR_NOT_OK) ||
           ((unsigned int)(link->size & 0xffff) >=
-	   sizeof(block_space) / sizeof(block_space[0])) ||
-	  !(link->size >> 16))
-	break;
+           sizeof(block_space) / sizeof(block_space[0])) ||
+          !(link->size >> 16))
+        break;
 
       dist = (long)srch - (long)link;
       if ((dist > 0) && (dist < dist_min)) {
-	dist_min = dist;
-	dist_n = n | 0x8000;
-	found = link;
+        dist_min = dist;
+        dist_n = n | 0x8000;
+        found = link;
       }
 
       link = link->next;
@@ -1173,15 +1373,15 @@ void search_links(Circle *srch)
     while (link) {
       if (((long)link & ADDR_NOT_OK) ||
           ((unsigned int)(link->size & 0xffff) >=
-	   sizeof(block_space) / sizeof(block_space[0])) ||
-	  !(link->size >> 16))
-	break;
+           sizeof(block_space) / sizeof(block_space[0])) ||
+          !(link->size >> 16))
+        break;
 
       dist = (long)srch - (long)link;
       if ((dist > 0) && (dist < dist_min)) {
-	dist_min = dist;
-	dist_n = n;
-	found = link;
+        dist_min = dist;
+        dist_n = n;
+        found = link;
       }
 
       next = link->next;
@@ -1225,21 +1425,21 @@ void display_links(Circle *first)
     link = first->next;
     while (link != first) {
       if (m++ > 1000)
-	break;
+        break;
       puts("->");
       ltoa(buf, (long)link, 16);
       puts(buf);
       if (link->prev != last) {
-	puts("(");
-	ltoa(buf, (long)link->prev, 16);
-	puts(buf);
-	puts(")");
-	break;
+        puts("(");
+        ltoa(buf, (long)link->prev, 16);
+        puts(buf);
+        puts(")");
+        break;
       }
       last = link;
       link = link->next;
       if ((long)link & ADDR_NOT_OK)
-	break;
+        break;
     }
   }
   puts("\x0a\x0d");
@@ -1262,31 +1462,31 @@ void check_memory(void)
     while (link) {
       m++;
       if ((long)link & ADDR_NOT_OK) {
-	puts("Bad free list linkage at ");
-	error = 1;
+        puts("Bad free list linkage at ");
+        error = 1;
       }
 #if 0
       else if ((unsigned int)(link->size & 0xffff) >=
-		 sizeof(block_space) / sizeof(block_space[0]) ||
-	         !(link->size >> 16)) {
-	puts("Bad free list size at ");
-	error = 1;
+                 sizeof(block_space) / sizeof(block_space[0]) ||
+                 !(link->size >> 16)) {
+        puts("Bad free list size at ");
+        error = 1;
       }
 #endif
       if (error) {
-	ltoa(buf, (long)link, 16);
-	puts(buf);
-	puts("(");
-	ltoa(buf, m, 10);
-	puts(buf);
-	puts(",");
-	ltoa(buf, n, 10);
-	puts(buf);
-	puts(")\x0\x0d");
+        ltoa(buf, (long)link, 16);
+        puts(buf);
+        puts("(");
+        ltoa(buf, m, 10);
+        puts(buf);
+        puts(",");
+        ltoa(buf, n, 10);
+        puts(buf);
+        puts(")\x0\x0d");
 #if 0
-	display_links(block_free[n]);
+        display_links(block_free[n]);
 #endif
-	break;
+        break;
       }
 
       link = link->next;
@@ -1307,8 +1507,8 @@ void check_memory(void)
     }
 
     if (error && !statistics) {
-	statistics = 1;
-	memory_statistics();
+        statistics = 1;
+        memory_statistics();
     }
 
     link = first = block_used[n];
@@ -1317,47 +1517,47 @@ void check_memory(void)
     while (link) {
       m++;
       if ((long)link & ADDR_NOT_OK) {
-	puts("Bad used list link at ");
-	error = 1;
+        puts("Bad used list link at ");
+        error = 1;
       } else if ((unsigned int)(link->size & 0xffff) >=
                   sizeof(block_space) / sizeof(block_space[0]) ||
-	         !(link->size >> 16)) {
-	puts("\x0a\x0d");
-	search_links(link);
-	puts("Bad used list size at ");
-	error = 1;
+                 !(link->size >> 16)) {
+        puts("\x0a\x0d");
+        search_links(link);
+        puts("Bad used list size at ");
+        error = 1;
       } else if ((long)link->next & ADDR_NOT_OK) {
-	puts("\x0a\x0d");
-	search_links(link);
-	puts("Bad used list linkage at ");
-	error = 1;
+        puts("\x0a\x0d");
+        search_links(link);
+        puts("Bad used list linkage at ");
+        error = 1;
       }
       next = link->next;
       if (next->prev != link) {
-	puts("\x0a\x0d");
-	search_links(next);
-	puts("Bad used list prev linkage ");
-	ltoa(buf, (long)next, 16);
-	puts(buf);
-	puts(" ");
-	ltoa(buf, (long)next->prev, 16);
-	puts(buf);
-	puts(" ");
-	error = 1;
+        puts("\x0a\x0d");
+        search_links(next);
+        puts("Bad used list prev linkage ");
+        ltoa(buf, (long)next, 16);
+        puts(buf);
+        puts(" ");
+        ltoa(buf, (long)next->prev, 16);
+        puts(buf);
+        puts(" ");
+        error = 1;
       }
 
       if (error) {
-	ltoa(buf, (long)link, 16);
-	puts(buf);
-	puts(" (");
-	ltoa(buf, m, 10);
-	puts(buf);
-	puts(",");
-	ltoa(buf, n, 10);
-	puts(buf);
-	puts(")\x0a\x0d");
-	display_links(block_used[n]);
-	break;
+        ltoa(buf, (long)link, 16);
+        puts(buf);
+        puts(" (");
+        ltoa(buf, m, 10);
+        puts(buf);
+        puts(",");
+        ltoa(buf, n, 10);
+        puts(buf);
+        puts(")\x0a\x0d");
+        display_links(block_used[n]);
+        break;
       }
       if (next == first)
         break;
@@ -1380,8 +1580,8 @@ void check_memory(void)
     }
 
     if (error && !statistics) {
-	statistics = 1;
-	memory_statistics();
+        statistics = 1;
+        memory_statistics();
     }
   }
 }
@@ -1513,16 +1713,16 @@ void *malloc(long size)
       }
  #if 0
       if (debug > 2) {
-	char buf[10];
-	ltoa(buf, (long)block_used[n], 16);
-	puts(buf);
-	puts(" ");
-	ltoa(buf, (long)block_used[n]->prev, 16);
-	puts(buf);
-	puts(" ");
-	ltoa(buf, (long)block_used[n]->next, 16);
-	puts(buf);
-	puts("\x0a\x0d");
+        char buf[10];
+        ltoa(buf, (long)block_used[n], 16);
+        puts(buf);
+        puts(" ");
+        ltoa(buf, (long)block_used[n]->prev, 16);
+        puts(buf);
+        puts(" ");
+        ltoa(buf, (long)block_used[n]->next, 16);
+        puts(buf);
+        puts("\x0a\x0d");
       }
  #endif
 #endif
@@ -1606,8 +1806,8 @@ long free(void *addr)
 #endif
      size = current->size & 0xffff;
      if (((debug > 2) && !(silentx[0] & 0x02)) ||
-	 (unsigned int)size >= sizeof(block_space) / sizeof(block_space[0]) ||
-	 !(current->size >> 16)) {
+         (unsigned int)size >= sizeof(block_space) / sizeof(block_space[0]) ||
+         !(current->size >> 16)) {
        char buf[10];
        puts("Freeing at ");
        ltoa(buf, (long)current, 16);
@@ -1631,7 +1831,7 @@ long free(void *addr)
      if (block_used[size] == current) {
        block_used[size] = current->next;
        if (current->next == current->prev)
-	 block_used[size] = 0;
+         block_used[size] = 0;
      }
      current->prev->next = current->next;
      current->next->prev = current->prev;
