@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.9 2005-10-03 22:53:20 johan Exp $
+ * $Id: function.h,v 1.10 2006-01-20 09:51:42 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -117,7 +117,7 @@ extern void opnvwk_values(Virtual *, VDIpars *);
 
 extern short isqrt(unsigned long x);
 
-extern int         (*external_init)(void);
+extern long         (*external_init)(void);
 extern Fontheader* (*external_load_font)(const char *font);
 extern long        (*external_vqt_extent)(Fontheader *font, short *text, long length);
 extern long        (*external_vqt_width)(Fontheader *font, long ch);
@@ -127,4 +127,3 @@ extern long        (*external_renderer)(Virtual *vwk, unsigned long coords,
 extern void*       (*external_char_bitmap)(Fontheader *font, long ch);
 
 #endif
-

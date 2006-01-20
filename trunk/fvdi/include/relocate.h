@@ -40,7 +40,7 @@ typedef struct _Funcs {
 	void CDECL (*error)(const char *text1, const char *text2);
 	void* CDECL (*malloc)(long size, long type);			/* Uses Mxalloc if possible */
 	long CDECL (*free)(void *addr);
-	int CDECL (*puts)(const char *text);
+	long CDECL (*puts)(const char *text);
 	void CDECL (*ltoa)(char *buf, long n, unsigned long base);
 	long CDECL (*get_cookie)(const unsigned char *cname, long super);
 	long CDECL (*set_cookie)(const unsigned char *cname, long value);

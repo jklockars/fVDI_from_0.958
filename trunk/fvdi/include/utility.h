@@ -3,7 +3,7 @@
 /*
  * fVDI utility function declarations
  *
- * $Id: utility.h,v 1.7 2005-12-13 23:57:47 johan Exp $
+ * $Id: utility.h,v 1.8 2006-01-20 09:51:42 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -68,7 +68,7 @@ void allocate(long amount);
 /*
  * Text output
  */
-int puts(const char *text);
+long puts(const char *text);
 void error(const char *text1, const char *text2);
 #define puts_nl(text)	{ puts(text); puts("\x0a\x0d"); }
 

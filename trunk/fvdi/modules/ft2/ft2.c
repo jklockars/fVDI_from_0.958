@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.13 2005-12-15 09:18:45 johan Exp $
+ * $Id: ft2.c,v 1.14 2006-01-20 09:56:17 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -177,7 +177,7 @@ void ft2_term(void)
 	FT_Done_FreeType(library);
 }
 
-int ft2_init(void)
+long ft2_init(void)
 {
 	FT_Error error;
        	error = FT_Init_FreeType(&library);
