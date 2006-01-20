@@ -1,3 +1,9 @@
+2006-01-20 - johan
+Changed some 'int' parameter and return types to 'long' among the libc
+replacement functions, to enable calls from modules with any size 'int'.
+Added memchr() and memrchr().
+Extended sprintf() to cover just about everything.
+
 2006-01-19 - johan
 The bitplane driver finally has a fast mouse drawing routine.
 
