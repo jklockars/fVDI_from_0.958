@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.24 2005-12-15 09:22:22 johan Exp $
+ * $Id: loader.c,v 1.25 2006-01-20 09:52:39 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -40,7 +40,7 @@ long        ft2_text_render_default(Virtual *vwk, unsigned long coords,
                                     short *s, long slen);
 void*       ft2_char_bitmap(Fontheader *font, long ch);
 
-int         (*external_init)(void) = ft2_init;
+long        (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
 long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = ft2_text_width;
 long        (*external_vqt_width)(Fontheader *font, long ch) = ft2_char_width;
@@ -49,7 +49,7 @@ long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = ft2_text_render_default;
 void*       (*external_char_bitmap)(Fontheader *font, long ch) = ft2_char_bitmap;
 #else
-int         (*external_init)(void) = 0;
+long        (*external_init)(void) = 0;
 Fontheader* (*external_load_font)(const char *font) = 0;
 long        (*external_vqt_extent)(Fontheader *font, short *text, long length) = 0;
 long        (*external_vqt_width)(Fontheader *font, long ch) = 0;
