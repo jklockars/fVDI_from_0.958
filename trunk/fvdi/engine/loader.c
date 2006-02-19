@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.25 2006-01-20 09:52:39 johan Exp $
+ * $Id: loader.c,v 1.26 2006-02-19 01:17:06 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -31,7 +31,7 @@
 
 #ifdef FT2
 /* Headers to ft2_* functions ... FIXME: to be moved */
-int         ft2_init(void);
+long        ft2_init(void);
 Fontheader* ft2_load_font(const char *filename);
 long        ft2_char_width(Fontheader *font, long ch);
 long        ft2_text_width(Fontheader *font, short *s, long slen);
@@ -105,8 +105,8 @@ short check_mem = 0;
 short check_mem = 1;
 #endif
 short bconout = 0;
-
-
+short file_cache_size = 0;
+char *debug_file = 0;
 static char path[PATH_SIZE];
 
 static long set_path(Virtual *vwk, const char **ptr);
@@ -133,10 +133,12 @@ static long use_module(Virtual *vwk, const char **ptr);
 static long set_silent(Virtual *vwk, const char **ptr);
 static long set_size(Virtual *vwk, const char **ptr);
 static long pre_allocate(Virtual *vwk, const char **ptr);
+static long file_cache(Virtual *vwk, const char **ptr);
+static long set_debug_file(Virtual *vwk, const char **ptr);
 
 static Option options[] = {
    {"path",       set_path,       -1},  /* path = str, where to look for fonts and drivers */
-   {"fonts",      load_fonts,     -1},  /* fonts = str, where to look for fonts and drivers */
+   {"fonts",      load_fonts,     -1},  /* fonts = str, where to look for FreeType2 fonts */
    {"debug",      &debug,          2},  /* debug, turn on debugging aids */
    {"waitkey",    wait_key,       -1},  /* waitkey n, wait for key press for n seconds */
    {"exitkey",    exit_key,       -1},  /* exitkey c, quit fVDI if 'c' was pressed */
@@ -182,8 +184,10 @@ static Option options[] = {
    {"movemouse",  &move_mouse,     1},  /* movemouse, forces fVDI to call its movement vector explicitly */
    {"extmalloc",  &ext_malloc,     4},  /* extalloc n, extend all malloc's by n bytes */
    {"checkmem",   &check_mem,      4},  /* checkmem n, check memory allocation consistency at every nth VDI call */
-   {"preallocate",pre_allocate,    -1}, /* preallocate n, allocate n kbyte at startup */
-   {"bconout",   &bconout,          1}  /* bconout, enables handling of BConout the the screen in fVDI */
+   {"preallocate",pre_allocate,   -1},  /* preallocate n, allocate n kbyte at startup */
+   {"filecache",  file_cache,     -1},  /* filecache n, allocate n kbyte for FreeType2 font files */
+   {"debugfile",  set_debug_file, -1},  /* debugfile str, file to use for debug output */
+   {"bconout",   &bconout,         1}   /* bconout, enables handling of BConout the the screen in fVDI */
 };
 
 
@@ -468,7 +472,7 @@ long echo_text(Virtual *vwk, const char **ptr)
       ;  /* *********** Error, somehow */
    *ptr = get_token(*ptr, token, TOKEN_SIZE);
    Cconws(token);
-   Cconws("\x0a\x0d");
+   Cconws("\x0d\x0a");
 
    return 1;
 }
@@ -630,6 +634,21 @@ long pre_allocate(Virtual *vwk, const char **ptr)
    return 1;
 }
 
+long file_cache(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   int amount;
+
+   if (!(*ptr = skip_space(*ptr)))
+      ;  /* *********** Error, somehow */
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+   amount = atol(token);
+   if ((amount > 0) && (amount <= 32767))
+     file_cache_size = amount;
+
+   return 1;
+}
+
 long load_palette(Virtual *vwk, const char **ptr)
 {
    char token[TOKEN_SIZE], name[NAME_SIZE];
@@ -639,7 +658,7 @@ long load_palette(Virtual *vwk, const char **ptr)
    void *palette;
 
    if (!(*ptr = skip_space(*ptr))) {
-      error("No file name!", 0);
+      error("No palette file name!", 0);
       return -1;
    }
    *ptr = get_token(*ptr, token, TOKEN_SIZE);
@@ -676,7 +695,7 @@ long load_palette(Virtual *vwk, const char **ptr)
       return -1;
    }
 
-   if ((file = Fopen(name, 0)) < 0) {
+   if ((file = Fopen(name, O_RDONLY)) < 0) {
       error("Can't open palette file!", 0);
       free(palette);
       return -1;
@@ -687,6 +706,41 @@ long load_palette(Virtual *vwk, const char **ptr)
    Fclose(file);
 
    vwk->real_address->screen.palette.colours = palette; /* Currently no other way */
+
+   return 1;
+}
+
+long set_debug_file(Virtual *vwk, const char **ptr)
+{
+   char token[TOKEN_SIZE];
+   int file, bytes;
+
+   if (!(*ptr = skip_space(*ptr))) {
+      error("No debug file name!", 0);
+      return -1;
+   }
+   *ptr = get_token(*ptr, token, TOKEN_SIZE);
+
+   if ((file = Fcreate(token, 0)) < 0) {
+      error("Can't create debug file!", 0);
+      return -1;
+   }
+
+   bytes = Fwrite(file, 19, "fVDI debug output\x0d\x0a");
+   Fclose(file);
+
+   if (bytes != 19) {
+      error("Can't write to debug file!", 0);
+      return -1;
+   }
+
+   debug_file = malloc(strlen(token));
+   if (!debug_file) {
+      error("Can't store debug file name!", 0);
+      return -1;
+   }
+   copy(token, debug_file);
+   debug_out = -3;
 
    return 1;
 }
@@ -923,7 +977,7 @@ int load_driver(const char *name, Driver *driver, Virtual *vwk, char *opts)
    if ((file_size = get_size(name) - sizeof(header)) < 0)
       return 0;
 
-   if ((file = Fopen(name, 0)) < 0)
+   if ((file = Fopen(name, O_RDONLY)) < 0)
       return 0;
 
    Fread(file, sizeof(header), &header);
@@ -1055,7 +1109,7 @@ int load_prefs(Virtual *vwk, char *sysname)
    if (!(buffer = (char *)malloc(file_size + 1)))
       return 0;
 
-   if ((file = Fopen(path, 0)) < 0) {
+   if ((file = Fopen(path, O_RDONLY)) < 0) {
       free(buffer);
       return 0;
    }
