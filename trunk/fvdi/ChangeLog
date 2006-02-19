@@ -1,3 +1,11 @@
+2006-02-18 - johan
+Added whole file caching system for FreeType2 engine.
+Made it possible to redirect debug output to a file.
+
+2006-02-10 - johan
+Added a couple of debug options for the bitplane mouse.
+Made memory settings more configurable for the RageII driver.
+
 2006-01-20 - johan
 Changed some 'int' parameter and return types to 'long' among the libc
 replacement functions, to enable calls from modules with any size 'int'.
