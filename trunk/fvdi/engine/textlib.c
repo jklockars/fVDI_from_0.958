@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.3 2005-12-13 14:59:43 standa Exp $
+ * $Id: textlib.c,v 1.4 2006-02-19 01:13:58 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -869,7 +869,7 @@ int lib_vst_font(Virtual *vwk, long fontID)
     puts("lib_vst_font ");
     ltoa(buf, fontID, 10);
     puts(buf);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
 #endif
 
     font = vwk->real_address->writing.first_font;
@@ -883,10 +883,10 @@ int lib_vst_font(Virtual *vwk, long fontID)
 
     do {
 #if DEB
-	puts("  loop\x0a\x0d");
+	puts("  loop\x0d\x0a");
 	ltoa(buf, font->id, 10);
 	puts(buf);
-	puts("\x0a\x0d");
+	puts("\x0d\x0a");
 #endif
 	if (fontID <= font->id)
 	    break;
@@ -895,7 +895,7 @@ int lib_vst_font(Virtual *vwk, long fontID)
 
     if (!font || (font->id != fontID)) {
 #if DEB
-	puts("  set first\x0a\x0d");
+	puts("  set first\x0d\x0a");
 #endif
 	fontID = 1;
 	font = vwk->real_address->writing.first_font;
@@ -1235,23 +1235,23 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 
     /* Some other method should be used for this! */
 #if DEB
-    puts("lib_vst_point\x0a\x0d");
+    puts("lib_vst_point\x0d\x0a");
 #endif
     if (vwk->text.current_font->flags < 0) {
 #if DEB
-	puts("  vector\x0a\x0d");
+	puts("  vector\x0d\x0a");
 #endif
 	/* Handle differently? This is not really allowed at all! */
 	if (!external_vst_point)
 	    return 0;
 #if DEB
-	puts("  vector ok\x0a\x0d");
+	puts("  vector ok\x0d\x0a");
 #endif
 	font = set_stack_call_p(vdi_stack_top, vdi_stack_size,
 				external_vst_point,
 				vwk, height, sizes, 0);
 #if DEB
-	puts("  vector found\x0a\x0d");
+	puts("  vector found\x0d\x0a");
 #endif
     } else {
 #if DEB
@@ -1269,7 +1269,7 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 #if DEB
 	ltoa(buf, font->height, 10);
 	puts(buf);
-	puts("\x0a\x0d");
+	puts("\x0d\x0a");
 #endif
     }
 

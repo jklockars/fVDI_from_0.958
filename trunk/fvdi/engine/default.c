@@ -1,7 +1,7 @@
 /*
  * fVDI default drawing function code
  *
- * $Id: default.c,v 1.6 2005-08-09 08:37:37 johan Exp $
+ * $Id: default.c,v 1.7 2006-02-19 01:13:58 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -994,12 +994,12 @@ void vr_transfer_bits(Virtual *vwk, GCBITMAP *src_bm, GCBITMAP *dst_bm,
     int i;
 
     puts(error);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
 
     puts("vr_transfer_bits mode "),
     ltoa(buf, mode, 10);
     puts(buf);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
 
     for(i = 0; i < 2; i++) {
       GCBITMAP *bm = (i == 0) ? src_bm : dst_bm;
@@ -1031,7 +1031,7 @@ void vr_transfer_bits(Virtual *vwk, GCBITMAP *src_bm, GCBITMAP *dst_bm,
 	puts(",");
 	ltoa(buf, bm->ymax - bm->ymin, 10);
 	puts(buf);
-	puts("\x0a\x0d");
+	puts("\x0d\x0a");
 
 	puts("    C/ITAB: $");
 	ltoa(buf, (long)bm->ctab, 16);
@@ -1055,17 +1055,17 @@ void vr_transfer_bits(Virtual *vwk, GCBITMAP *src_bm, GCBITMAP *dst_bm,
 	  puts(buf);
 	}
 
-	puts("\x0a\x0d");
+	puts("\x0d\x0a");
       }
     }
 
-    puts("--------\x0a\x0d");
+    puts("--------\x0d\x0a");
   } else if ((mode != 0) && (mode != 32)) {
     ltoa(buf, mode, 10);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
     puts("vr_transform_bits mode ");
     puts(buf);
-    puts("\x0a\x0d\x0a\x0d");
+    puts("\x0d\x0a\x0d\x0a");
   }
 }
 

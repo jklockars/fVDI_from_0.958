@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.14 2005-12-20 11:34:05 johan Exp $
+ * $Id: workstn.c,v 1.15 2006-02-19 01:13:58 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -92,7 +92,7 @@ static Virtual** find_handle_entry(short hnd)
 	while (link) {
 		hnd -= handles;
 		if (debug) {
-			puts("Looking for handle in extra table\x0a\x0d");
+			puts("Looking for handle in extra table\x0d\x0a");
 		}
 		handles = (long)handle_table[-2];
 		if (hnd < handles)
@@ -121,7 +121,7 @@ static short find_free_handle(Virtual ***handle_entry)
 	last = link;
 	while (handle_table = *link) {
 		if (debug) {
-			puts("Looking for free handle in extra table\x0a\x0d");
+			puts("Looking for free handle in extra table\x0d\x0a");
 		}
 		handles += (long)handle_table[-2];
 		for(; hnd < handles; hnd++) {
@@ -141,7 +141,7 @@ static short find_free_handle(Virtual ***handle_entry)
 			puts("Allocated space for ");
 			ltoa((char *)handle_table, handles, 10);
 			puts((char *)handle_table);
-			puts(" extra handles\x0a\x0d");
+			puts(" extra handles\x0d\x0a");
 		}
 		handle_table[0] = (Virtual *)((long)handles);
 		handle_table[1] = 0;
@@ -378,14 +378,14 @@ void v_opnwk(VDIpars *pars)
 				puts("call_other failed (");
 				ltoa(buf, pars->intin[0], 10);
 				puts(buf);
-				puts(")\x0a\x0d");
+				puts(")\x0d\x0a");
 			    }
 			} else
-			    puts("malloc failed\x0a\x0d");
+			    puts("malloc failed\x0d\x0a");
 		    } else
-			puts("find_free_handle failed\x0a\x0d");
+			puts("find_free_handle failed\x0d\x0a");
 		} else
-		    puts("no old GDOS\x0a\x0d");
+		    puts("no old GDOS\x0d\x0a");
 
 		if (failed) {
 		    if (vwk)
@@ -487,9 +487,9 @@ void v_clsvwk(Virtual *vwk, VDIpars *pars)
 	/* Reset VDI structure address to default */
 	handle_entry = find_handle_entry(hnd);
 	if (!handle_entry)
-		puts("Handle could not be found in tables!\x0a\x0d");
+		puts("Handle could not be found in tables!\x0d\x0a");
 	else if (*handle_entry != vwk)
-		puts("Wrong handle entry!\x0a\x0d");
+		puts("Wrong handle entry!\x0d\x0a");
 	else
 	        *handle_entry = non_fvdi_vwk;
 
@@ -577,23 +577,23 @@ void vq_devinfo(VDIpars *pars)
 			puts(",");
 			ltoa(buf, pars->intout[1], 10);
 			puts(buf);
-			puts("\x0a\x0d");
+			puts("\x0d\x0a");
 		} else
-		    puts("no old GDOS (vq_devinfo)\x0a\x0d");
+		    puts("no old GDOS (vq_devinfo)\x0d\x0a");
 #endif
 		display_output(pars);
 		puts(*(char **)&pars->intin[1]);
-		puts("\x0a\x0d");
+		puts("\x0d\x0a");
 		puts(*(char **)&pars->intin[3]);
-		puts("\x0a\x0d");
+		puts("\x0d\x0a");
 		puts(*(char **)&pars->intin[5]);
-		puts("\x0a\x0d");
+		puts("\x0d\x0a");
 		return;
 	}
 
 	pars->intout[0] = 1;
 	pars->intout[1] = 1;
-	puts("fVDI handles currently don't support vq_devinfo\x0a\x0d");
+	puts("fVDI handles currently don't support vq_devinfo\x0d\x0a");
 
 #if 0
  #if 0

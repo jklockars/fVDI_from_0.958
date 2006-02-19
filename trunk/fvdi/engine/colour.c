@@ -1,7 +1,7 @@
 /*
  * fVDI colour handling
  *
- * $Id: colour.c,v 1.2 2005-12-12 01:20:30 johan Exp $
+ * $Id: colour.c,v 1.3 2006-02-19 01:13:58 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -32,7 +32,7 @@ static Colour *get_clut(Virtual *vwk)
     addr = malloc((wk->screen.palette.size + neg_pal_n) * sizeof(Colour));
     if (!addr) {                              /* If no memory for local palette, */
       palette = wk->screen.palette.colours;   /*  modify in global (BAD!) */
-      puts("Could not allocate space for palette!\x0a\x0d");
+      puts("Could not allocate space for palette!\x0d\x0a");
     } else {
       if (!palette) {                         /* No palette allocated? */
 	palette = vwk->palette = (Colour *)(addr + neg_pal_n * sizeof(Colour));   /* Point to index 0 */
@@ -201,7 +201,7 @@ int lib_vs_fg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
   if (!palette) {
     addr = malloc(neg_pal_n * sizeof(Colour));
     if (!addr) {
-      puts("Could not allocate space for negative palette!\x0a\x0d");
+      puts("Could not allocate space for negative palette!\x0d\x0a");
       return -1;
     }
     palette = vwk->palette = (Colour *)(((long)addr + neg_pal_n * sizeof(Colour)) | 1);   /* Point to index 0 */
@@ -241,7 +241,7 @@ int lib_vs_bg_color(Virtual *vwk, long subfunction, long colour_space, COLOR_ENT
   if (!palette) {
     addr = malloc(neg_pal_n * sizeof(Colour));
     if (!addr) {
-      puts("Could not allocate space for negative palette!\x0a\x0d");
+      puts("Could not allocate space for negative palette!\x0d\x0a");
       return -1;
     }
     palette = vwk->palette = (Colour *)(((long)addr + neg_pal_n * sizeof(Colour)) | 1);   /* Point to index 0 */
@@ -313,21 +313,21 @@ int colour_entry(Virtual *vwk, long subfunction, short *intin, short *intout)
 {
   switch(subfunction) {
   case 0:     /* v_color2value */
-    puts("v_color2value not yet supported\x0a\x0d");
+    puts("v_color2value not yet supported\x0d\x0a");
     return 2;
   case 1:     /* v_value2color */
-    puts("v_value2color not yet supported\x0a\x0d");
+    puts("v_value2color not yet supported\x0d\x0a");
     return 6;
   case 2:     /* v_color2nearest */
-    puts("v_color2nearest not yet supported\x0a\x0d");
+    puts("v_color2nearest not yet supported\x0d\x0a");
     return 6;
   case 3:     /* vq_px_format */
-    puts("vq_px_format not yet supported\x0a\x0d");
+    puts("vq_px_format not yet supported\x0d\x0a");
     *(long *)&intout[0] = 1;
     *(long *)&intout[2] = 0x03421820;
     return 4;
   default:
-    puts("Unknown colour entry operation\x0a\x0d");
+    puts("Unknown colour entry operation\x0d\x0a");
     return 0;
   }
 }
@@ -367,7 +367,7 @@ int set_colour_table(Virtual *vwk, long subfunction, short *intin)
   case 0:     /* vs_ctab */
     ctab = (COLOR_TAB *)intin;
 #if 0
-    puts("vs_ctab still not verified\x0a\x0d");
+    puts("vs_ctab still not verified\x0d\x0a");
     {
       long *lptr;
       short *sptr;
@@ -380,13 +380,13 @@ int set_colour_table(Virtual *vwk, long subfunction, short *intin)
 	puts(buf);
 	puts(" ");
       }
-      puts("\x0a\x0d");
+      puts("\x0d\x0a");
       for(i = 0; i < 6; i++) {
 	ltoa(buf, *lptr++, 16);
 	puts(buf);
 	puts(" ");
       }
-      puts("\x0a\x0d");
+      puts("\x0d\x0a");
       sptr = (short *)&ctab->colors;
       for(j = 0; j < 64; j++) {
 	for(i = 0; i < 16; i++) {
@@ -394,19 +394,19 @@ int set_colour_table(Virtual *vwk, long subfunction, short *intin)
 	  puts(buf);
 	  puts(" ");
 	}
-	puts("\x0a\x0d");
+	puts("\x0d\x0a");
       }
     }
 #endif
     return set_col_table(vwk, ctab->no_colors, 0, ctab->colors);
   case 1:     /* vs_ctab_entry */
-    puts("vs_ctab_entry not yet supported\x0a\x0d");
+    puts("vs_ctab_entry not yet supported\x0d\x0a");
     return 1;      /* Seems to be the only possible value for non-failure */
   case 2:     /* vs_dflt_ctab */
-    puts("vs_dflt_ctab not yet supported\x0a\x0d");
+    puts("vs_dflt_ctab not yet supported\x0d\x0a");
     return 256;    /* Not really correct */
   default:
-    puts("Unknown set colour table operation\x0a\x0d");
+    puts("Unknown set colour table operation\x0d\x0a");
     return 0;
   }
 }
@@ -425,7 +425,7 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
 #else
       long length = 48 + 256 * 8;
 #endif
-      puts("vq_ctab not yet really supported\x0a\x0d");
+      puts("vq_ctab not yet really supported\x0d\x0a");
       if (length > *(long *)&intin[0]) {
 	char buf[10];
 	puts("  Too little space available for ctab (");
@@ -434,7 +434,7 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
 	puts(" when ctab needs ");
 	ltoa(buf, length, 10);
 	puts(buf);
-	puts(")!\x0a\x0d");
+	puts(")!\x0d\x0a");
 	return 0;
       }
       ctab->magic = str2long("ctab");
@@ -457,10 +457,10 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
       return 256;    /* Depending on palette size */
     }
   case 1:     /* vq_ctab_entry */
-    puts("vq_ctab_entry not yet supported\x0a\x0d");
+    puts("vq_ctab_entry not yet supported\x0d\x0a");
     return 6;
   case 2:     /* vq_ctab_id */
-    puts("vq_ctab_id not yet supported\x0a\x0d");
+    puts("vq_ctab_id not yet supported\x0d\x0a");
     *(long *)&intout[0] = 0xbadc0de1;   /* Not really correct */
     return 2;
   case 3:     /* v_ctab_idx2vdi */
@@ -470,24 +470,24 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
     intout[0] = vdi2idx(vwk->real_address, intin[0]);
     return 1;
   case 5:     /* v_ctab_idx2value */
-    puts("v_ctab_idx2value not yet supported\x0a\x0d");
+    puts("v_ctab_idx2value not yet supported\x0d\x0a");
     return 2;
   case 6:     /* v_get_ctab_id */
-    puts("v_get_ctab_id not yet supported\x0a\x0d");
+    puts("v_get_ctab_id not yet supported\x0d\x0a");
     *(long *)&intout[0] = 0xbadc0de1;   /* Should always be different */
     return 2;
   case 7:     /* vq_dflt_ctab */
-    puts("vq_dflt_ctan not yet supported\x0a\x0d");
+    puts("vq_dflt_ctan not yet supported\x0d\x0a");
     return 256;    /* Depending on palette size */
   case 8:     /* v_create_ctab */
-    puts("v_create_ctab not yet supported\x0a\x0d");
+    puts("v_create_ctab not yet supported\x0d\x0a");
     return 2;
   case 9:     /* v_delete_ctab */
-    puts("v_delete_ctab not yet supported\x0a\x0d");
+    puts("v_delete_ctab not yet supported\x0d\x0a");
     intout[0] = 1;   /* OK */
     return 1;
   default:
-    puts("Unknown colour table operation\x0a\x0d");
+    puts("Unknown colour table operation\x0d\x0a");
     return 0;
   }
 }
@@ -500,16 +500,16 @@ int inverse_table(Virtual *vwk, long subfunction, short *intin, short *intout)
     {
       COLOR_TAB *ctab = (COLOR_TAB *)*(long *)&intin[0];
       int bits = intin[2];
-      puts("v_create_itab not yet supported\x0a\x0d");
+      puts("v_create_itab not yet supported\x0d\x0a");
       *(long *)&intout[0] = 0xbadc0de1;
       return 2;
     }
   case 1:     /* v_delete_itab */
-    puts("v_delete_itab not yet supported\x0a\x0d");
+    puts("v_delete_itab not yet supported\x0d\x0a");
     intout[0] = 1;   /* OK */
     return 1;
   default:
-    puts("Unknown inverse colour table operation\x0a\x0d");
+    puts("Unknown inverse colour table operation\x0d\x0a");
     return 0;
   }
 }
