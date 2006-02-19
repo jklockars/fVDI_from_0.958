@@ -39,6 +39,7 @@
 
 #include "globals.h"
 #include "utility.h"
+#include "function.h"
 
 /* We are not a FreeMiNT kernel driver for now
  * -> we close the files immediately as we are done with the I/O operation.
@@ -52,6 +53,32 @@
 #ifndef KERNEL
 short keep_open = 0;
 #endif
+
+#define FC_MASK 0xfffffff0L
+#define FC_CODE 0xbadc0de0L
+
+#define FC_NAMELEN 16
+#define FC_ENTRIES 15
+
+struct file_cache_entry {
+  unsigned long used;
+  unsigned long size;
+  unsigned long position;
+  char *ptr;
+  char name[FC_NAMELEN];
+};
+
+static char *file_cache_area = 0;
+static long file_cache_free = 0;
+static struct file_cache_entry file_cache[FC_ENTRIES];
+static unsigned long use_count = 0;
+static long fc_io(FT_Stream      stream,
+                  unsigned long  offset,
+                  unsigned char *buffer,
+                  unsigned long  count);
+static int fc_open(FT_Stream stream,
+                   const char *filepathname);
+
 
 void ft_keep_open(void)
 {
@@ -212,14 +239,11 @@ ft_ansi_stream_close(FT_Stream stream)
   Fclose(STREAM_FILE(stream));
 #else
  #if 0
- #else
-#if 0
   access->funcs.puts("FT2: close\r\n");
-#endif
-  if (STREAM_FILE(stream) != 0xbadc0de1) {
+ #endif
+  if ((stream->descriptor.value & FC_MASK) != FC_CODE) {
     Fclose(STREAM_FILE(stream));
   }
- #endif
 #endif
 
   stream->descriptor.value = 0;
@@ -270,11 +294,17 @@ ft_ansi_stream_io(FT_Stream      stream,
   return ret;
  #else
   unsigned long ret;
-#if 0
+  #if 0
   access->funcs.puts("FT2: io\r\n");
-#endif
-  if (stream->descriptor.value == 0xbadc0de1) {
-    int file = Fopen(stream->pathname.pointer, O_RDONLY);
+  #endif
+  if (!count)
+    return 0;
+  if (ret = fc_io(stream, offset, buffer, count))
+    return ret;
+  if ((stream->descriptor.value & FC_MASK) == FC_CODE) {
+    int file;
+
+    file = Fopen(stream->pathname.pointer, O_RDONLY);
     Fseek(offset, file, SEEK_SET);
     ret = (unsigned long)Fread(file, count, buffer);
     if (!keep_open) {
@@ -290,8 +320,8 @@ ft_ansi_stream_io(FT_Stream      stream,
 
     ret = (unsigned long)Fread(file, count, buffer);
     if (!keep_open) {
-      Fclose( file);
-      stream->descriptor.value = 0xbadc0de1;
+      Fclose(file);
+      stream->descriptor.value = FC_CODE;
     }
     return ret;
   }
@@ -311,6 +341,9 @@ FT_Stream_Open(FT_Stream   stream,
   if (!stream)
     return FT_Err_Invalid_Stream_Handle;
 
+  if (fc_open(stream, filepathname))
+    return FT_Err_Ok;
+
   file = Fopen(filepathname, O_RDONLY);
   if (file < 0) {
     FT_ERROR(("FT_Stream_Open:"));
@@ -326,12 +359,12 @@ FT_Stream_Open(FT_Stream   stream,
  #if 0
   Fclose(file);
  #else
-#if 0
+  #if 0
   access->funcs.puts("FT2: open\r\n");
-#endif
+  #endif
   if (!keep_open) {
     Fclose(file);
-    file = 0xbadc0de1;
+    file = FC_CODE;
   }
  #endif
 #endif
@@ -348,6 +381,199 @@ FT_Stream_Open(FT_Stream   stream,
 	     filepathname, stream->size));
   
   return FT_Err_Ok;
+}
+
+
+static void fc_init(void)
+{
+  int i;
+
+  file_cache_area = malloc(file_cache_size * 1024L);
+  if (!file_cache_area)
+    return;
+
+  use_count = 1;
+  file_cache_free = file_cache_size * 1024;
+
+  for(i = 0; i < FC_ENTRIES; i++) {
+    file_cache[i].used = 0;
+    file_cache[i].size = 0;
+    file_cache[i].position = 0;
+    file_cache[i].ptr = 0;
+    file_cache[i].name[0] = 0;
+  }
+}
+
+
+static int fc_discard(void)
+{
+  int i, oldest;
+  unsigned long oldest_used;
+
+  oldest = -1;
+  oldest_used = 0xffffffffL;
+  for(i = 0; i < FC_ENTRIES; i++) {
+    if (file_cache[i].used && (file_cache[i].used < oldest_used)) {
+      oldest = i;
+      oldest_used = file_cache[i].used;
+    }
+  }
+
+  file_cache_free += file_cache[oldest].size;
+  memmove(file_cache[oldest].ptr,
+          file_cache[oldest].ptr + file_cache[oldest].size,
+          file_cache_size * 1024 - file_cache_free -
+          (file_cache[oldest].ptr - file_cache_area) -
+          file_cache[oldest].size);
+  file_cache[oldest].used = 0;
+  file_cache[oldest].size = 0;
+  file_cache[oldest].position = 0;
+  file_cache[oldest].ptr = 0;
+  file_cache[oldest].name[0] = 0;
+
+  if (debug)
+    access->funcs.puts("Discarded file from cache\x0d\x0a");
+
+  return oldest;
+}
+
+
+static int fc_find(FT_Stream stream)
+{
+  int i, len;
+  const char *sname;
+  int file;
+  long size;
+
+  if (!file_cache_area) {
+    if (!file_cache_size)
+      return 0;
+    if (!use_count)
+      fc_init();
+    if (!file_cache_area) {
+      file_cache_size = 0;
+      return 0;
+    }
+  }
+
+  sname = stream->pathname.pointer;
+  len = strlen(sname);
+  if (len > FC_NAMELEN - 1)
+    sname = &sname[len - (FC_NAMELEN - 1)];
+
+  if ((stream->descriptor.value & FC_MASK) == FC_CODE) {
+    i = (stream->descriptor.value & 0x0f) - 1;
+    if (strcmp(sname, file_cache[i].name) == 0) {
+      if (debug > 1)
+        access->funcs.puts("FC find, direct\x0d\x0a");
+      goto open_ok;
+    }
+  }
+
+  for(i = 0; i < FC_ENTRIES; i++) {
+    if (strcmp(sname, file_cache[i].name) == 0)
+      break;
+  }
+  if (i < FC_ENTRIES) {
+    if (debug > 1)
+      access->funcs.puts("FC find, search\x0d\x0a");
+    goto open_ok;
+  }
+
+  file = Fopen(stream->pathname.pointer, O_RDONLY);
+  if (file < 0) {
+    FT_ERROR(("fc_open:"));
+    FT_ERROR((" could not open `%s'\n", stream->pathname.pointer));
+    
+    return 0;
+  }
+
+  size = Fseek(0, file, SEEK_END);
+  Fseek(0, file, SEEK_SET);
+
+  if (size > file_cache_size * 1024L) {
+    Fclose(file);
+    return 0;
+  }
+
+  while (file_cache_free < size) {
+    fc_discard();
+  }
+
+  for(i = 0; i < FC_ENTRIES; i++) {
+    if (!file_cache[i].used)
+      break;
+  }
+  if (i >= FC_ENTRIES)
+    i = fc_discard();
+
+  file_cache[i].size = size;
+  file_cache[i].position = 0;
+  file_cache[i].ptr = file_cache_area + file_cache_size * 1024L - file_cache_free;
+  file_cache_free -= size;
+  strcpy(file_cache[i].name, sname);
+
+  size = (unsigned long)Fread(file, size, file_cache[i].ptr);
+  Fclose(file);
+
+  if (size != file_cache[i].size) {
+    access->funcs.puts("Wrong number of bytes\x0d\x0a");
+  }
+
+  if (debug) {
+    access->funcs.puts("FC cached ");
+    access->funcs.puts(stream->pathname.pointer);
+    access->funcs.puts("\x0d\x0a");
+  }
+
+open_ok:
+  file_cache[i].used = use_count++;
+
+  stream->size             = file_cache[i].size;
+  stream->descriptor.value = FC_CODE | (i + 1);
+
+  return i + 1;
+}
+
+static int fc_open(FT_Stream stream,
+                   const char *filepathname)
+{
+  int ret;
+  const char *oldname;
+
+  oldname = stream->pathname.pointer;
+  stream->pathname.pointer = (char *)filepathname;
+  if (ret = fc_find(stream)) {
+    stream->pos   = 0;
+  
+    stream->read  = ft_ansi_stream_io;
+    stream->close = ft_ansi_stream_close;
+  } else
+    stream->pathname.pointer = (char *)oldname;
+
+  return ret;
+}
+
+static long fc_io(FT_Stream      stream,
+                  unsigned long  offset,
+                  unsigned char *buffer,
+                  unsigned long  count)
+{
+  int index;
+
+  index = fc_find(stream);
+  if (!index)
+    return 0;
+  index--;
+
+  if (offset + count > file_cache[index].size)
+    count = file_cache[index].size - offset;
+
+  memcpy(buffer, file_cache[index].ptr + offset, count);
+
+  file_cache[index].position = offset + count;
+
+  return count;
 }
 
 
