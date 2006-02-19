@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.32 2006-01-20 16:24:39 johan Exp $
+ * $Id: utility.c,v 1.33 2006-02-19 01:15:22 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1298,7 +1298,7 @@ void memory_statistics(void)
     puts(buf);
     puts(" ");
   }
-  puts("\x0a\x0d");
+  puts("\x0d\x0a");
 }
 
 
@@ -1321,7 +1321,7 @@ void allocate(long amount)
     puts("       Malloc at ");
     ltoa(buf, (long)buf, 16);
     puts(buf);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
   }
 
   last = (Circle *)block_free[sizes - 1];
@@ -1405,7 +1405,7 @@ void search_links(Circle *srch)
   else
     puts(" used)");
   
-  puts("\x0a\x0d");
+  puts("\x0d\x0a");
 }
 
 
@@ -1442,7 +1442,7 @@ void display_links(Circle *first)
         break;
     }
   }
-  puts("\x0a\x0d");
+  puts("\x0d\x0a");
 }
 
 
@@ -1499,7 +1499,7 @@ void check_memory(void)
       puts("/");
       ltoa(buf, free_blocks[n], 10);
       puts(buf);
-      puts(")\x0a\x0d");
+      puts(")\x0d\x0a");
 #if 0
       display_links(block_free[n]);
 #endif
@@ -1522,19 +1522,19 @@ void check_memory(void)
       } else if ((unsigned int)(link->size & 0xffff) >=
                   sizeof(block_space) / sizeof(block_space[0]) ||
                  !(link->size >> 16)) {
-        puts("\x0a\x0d");
+        puts("\x0d\x0a");
         search_links(link);
         puts("Bad used list size at ");
         error = 1;
       } else if ((long)link->next & ADDR_NOT_OK) {
-        puts("\x0a\x0d");
+        puts("\x0d\x0a");
         search_links(link);
         puts("Bad used list linkage at ");
         error = 1;
       }
       next = link->next;
       if (next->prev != link) {
-        puts("\x0a\x0d");
+        puts("\x0d\x0a");
         search_links(next);
         puts("Bad used list prev linkage ");
         ltoa(buf, (long)next, 16);
@@ -1555,7 +1555,7 @@ void check_memory(void)
         puts(",");
         ltoa(buf, n, 10);
         puts(buf);
-        puts(")\x0a\x0d");
+        puts(")\x0d\x0a");
         display_links(block_used[n]);
         break;
       }
@@ -1574,7 +1574,7 @@ void check_memory(void)
       puts("/");
       ltoa(buf, used_blocks[n], 10);
       puts(buf);
-      puts(")\x0a\x0d");
+      puts(")\x0d\x0a");
       display_links(block_used[n]);
       error = 1;
     }
@@ -1631,7 +1631,7 @@ void *malloc(long size)
     puts("/");
     ltoa(buf, size, 10);
     puts(buf);
-    puts("\x0a\x0d");
+    puts("\x0d\x0a");
   }
 
   if (!block_free[n]) {
@@ -1648,7 +1648,7 @@ void *malloc(long size)
         puts("       Malloc at ");
         ltoa(buf, (long)block_free[m], 16);
         puts(buf);
-        puts("\x0a\x0d");
+        puts("\x0d\x0a");
       }
       link = (Circle *)block_free[m];
       link->next = 0;
@@ -1659,7 +1659,7 @@ void *malloc(long size)
     }
     for(; m > n; m--) {
       if ((debug > 2) && !(silentx[0] & 0x02)) {
-        puts("       Splitting\x0a\x0d");
+        puts("       Splitting\x0d\x0a");
       }
       block_free[m - 1] = block_free[m];
       link = (Circle *)block_free[m];
@@ -1678,7 +1678,7 @@ void *malloc(long size)
     }
   } else {
     if ((debug > 2) && !(silentx[0] & 0x02)) {
-      puts("       Available\x0a\x0d");
+      puts("       Available\x0d\x0a");
     }
   }
 
@@ -1692,7 +1692,7 @@ void *malloc(long size)
     puts(" (next at ");
     ltoa(buf, (long)block_free[n], 16);
     puts(buf);
-    puts(")\x0a\x0d");
+    puts(")\x0d\x0a");
   }
 
   ((Circle *)block)->size = (((Circle *)block)->size & 0xffff) + (size << 16);
@@ -1722,7 +1722,7 @@ void *malloc(long size)
         puts(" ");
         ltoa(buf, (long)block_used[n]->next, 16);
         puts(buf);
-        puts("\x0a\x0d");
+        puts("\x0d\x0a");
       }
  #endif
 #endif
@@ -1824,7 +1824,7 @@ long free(void *addr)
        puts(buf);
        puts(")");
 #endif
-       puts("\x0a\x0d");
+       puts("\x0d\x0a");
      }
 #if 1
    if (1 || memlink) {
@@ -1848,7 +1848,7 @@ long free(void *addr)
        puts("Standard free at ");
        ltoa(buf, (long)current, 16);
        puts(buf);
-       puts("\x0a\x0d");
+       puts("\x0d\x0a");
      }
    }
 
@@ -1913,7 +1913,23 @@ long free_all(void)
 
 long puts(const char *text)
 {
-   if (debug_out == -2)
+   int file, bytes;
+
+   if ((debug_out == -3) && debug_file) {
+      file = -1;
+      if (((file = Fopen(debug_file, O_WRONLY)) < 0) ||
+          (Fseek(0, file, SEEK_END) <= 0) ||
+          (Fwrite(file, strlen(text), text) < 0)) {
+         free(debug_file);
+         debug_file = 0;
+         debug_out = -2;
+         Cconws("Write to debug file failed!\x0d\x0a");
+         Cconws(text);
+      }
+      if (file >= 0)
+         Fclose(file);
+   }
+   else if (debug_out == -2)
       Cconws(text);
 #if 1
    else if ((debug_out == -1) && nf_print_id)
@@ -1973,7 +1989,7 @@ void error(const char *text1, const char *text2)
    puts(text1);
    if (text2)
       puts(text2);
-   puts("\x0a\x0d");
+   puts("\x0d\x0a");
 }
 
 
