@@ -1,7 +1,7 @@
 /*
  * fVDI device driver specific setup
  *
- * $Id: spec.c,v 1.3 2005-12-06 08:06:43 johan Exp $
+ * $Id: spec.c,v 1.4 2006-02-19 01:24:07 johan Exp $
  *
  * Copyright 1998-2002, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -80,7 +80,9 @@ Mode *graphics_mode = &mode[0];
 
 short colour_bits = 18;
 
-int shadow = 0;
+short shadow = 0;
+short fix_shape = 0;
+short no_restore = 0;
 
 short debug = 0;
 
@@ -94,6 +96,10 @@ void check_token(char *token, const char **ptr)
 {
 	if (access->funcs.equal(token, "shadow"))
 		shadow = 1;
+	if (access->funcs.equal(token, "fixshape"))
+		fix_shape = 1;
+	if (access->funcs.equal(token, "norestore"))
+		no_restore = 1;
 }
 
 

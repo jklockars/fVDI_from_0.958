@@ -1,7 +1,7 @@
 /*
  * Bitplane mouse routine
  *
- * $Id: mouse.c,v 1.1 2006-01-19 19:18:01 johan Exp $
+ * $Id: mouse.c,v 1.2 2006-02-19 01:21:51 johan Exp $
  *
  * Copyright 2006, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -18,6 +18,9 @@
 #define UWORD unsigned short
 #define ULONG unsigned long
 #endif
+
+extern short fix_shape;
+extern short no_restore;
 
 
 #if 0
@@ -100,6 +103,8 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
   static short saved[16 * 8 * 2];
   
   if ((long)mouse > 7) {   /* New mouse shape */
+    if (fix_shape)
+      return 0;
     if (*(long *)&wk->mouse.colour != old_colours) {
       colours = set_mouse_colours(wk);
       old_colours = *(long *)&wk->mouse.colour;
@@ -111,7 +116,7 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
   
 
   state = save_state;
-  if (state &&
+  if (state && !no_restore &&
       (((long)mouse == 0) || ((long)mouse == 2))) { /* Move or Hide */
 #if LOCAL_PTR
     UWORD *dst, *save_w;
