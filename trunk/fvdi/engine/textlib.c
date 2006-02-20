@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.5 2006-02-20 00:42:18 johan Exp $
+ * $Id: textlib.c,v 1.6 2006-02-20 01:55:50 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1001,7 +1001,7 @@ long lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
     index = 1;
   }
 
-  while (font && (id < font->id)) {
+  while (font && (id > font->id)) {
     font = font->next;
     index++;
   }
