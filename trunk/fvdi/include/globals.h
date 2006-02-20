@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.12 2006-02-19 01:18:50 johan Exp $
+ * $Id: globals.h,v 1.13 2006-02-20 17:03:15 standa Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -34,10 +34,12 @@ extern long trap2_address;
 extern long vdi_address;
 extern long trap14_address;
 extern long lineA_address;
+extern long bconout_address;
 
 extern void *trap2_temp;
 extern void *trap14;
 extern void *lineA;
+extern void *bconout_stub;
 extern void *vdi_dispatch;
 extern void *eddi_dispatch;
 extern void *init;
@@ -90,6 +92,8 @@ extern short oldmouse;
 extern short debug;
 extern short nvdifix;
 extern short lineafix;
+extern short bconout;
+extern short bconout_redir;
 extern short xbiosfix;
 extern short singlebend;
 extern short memlink;
