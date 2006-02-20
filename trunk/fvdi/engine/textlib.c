@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.4 2006-02-19 01:13:58 johan Exp $
+ * $Id: textlib.c,v 1.5 2006-02-20 00:42:18 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -15,6 +15,22 @@
 #include "globals.h"
 
 #define BLACK 1
+
+
+typedef struct {
+  long        size;               
+  short       format;             
+  short       id;                 
+  short       index;              
+  char        font_name[50];      
+  char        family_name[50];    
+  char        style_name[50];     
+  char        file_name1[200];    
+  char        file_name2[200];    
+  char        file_name3[200];    
+  short       pt_cnt;             
+  short       pt_sizes[64];       
+} XFNT_INFO;
 
 void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points);
 
@@ -960,121 +976,98 @@ void lib_vqt_font_info(Virtual *vwk, short *minchar, short *maxchar,
 }
 
 
-#if 0
-// Todo: More bits to test! Check size!
-// lib_vqt_xfntinfo(flag, id, index, info)
-lib_vqt_xfntinfo:
-	move.l	d2,-(a7)
-	move.l	vwk_real_address(a0),a2
-	move.l	wk_writing_first_font(a2),a2
+long lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
+                      XFNT_INFO *info)
+{
+  int i;
+  Fontheader *font;
 
-	move.w	2(a1),d0
-	lbne	.id_ok,1
-	move.w	4(a1),d1
-	lbne	.index_ok,6
+  font = vwk->real_address->writing.first_font;
 
-	moveq	#1,d0
-	moveq	#1,d1
-	move.l	vwk_text_current_font(a0),d2
-	lbeq	.found,5
-	move.w	font_id(a2),d0
+  if (index) {
+    for(i = index - 1; i >= 0; i--) {
+      if (!(font = font->next))
+	break;
+    }
+    if (font) {
+      id = font->id;
+    }
+  } else if (id) {
+    index = 1;
+  } else {
+    if (!vwk->text.current_font)
+      vwk->text.current_font = font;
+    id = vwk->text.current_font->id;
+    index = 1;
+  }
 
- label .id_ok,1
-	moveq	#0,d1
- label .search,2
-	addq.w	#1,d1
-	cmp.w	font_id(a2),d0
-	lbls	.maybe,3
-	move.l	font_next(a2),a2
-	move.l	a2,d2
-	lbne	.search,2
-	lbra	.not_found,4
- label .maybe,3
-	lbne	.not_found,4
-	moveq	#1,d2
-	lbra	.found,5
+  while (font && (id < font->id)) {
+    font = font->next;
+    index++;
+  }
+  if (font && (id != font->id))
+    font = 0;
 
- label .index_ok,6
-	move.w	d1,d0
- label .search2,7
-	subq.w	#1,d1
-	lbeq	.counted,8
-	move.l	font_next(a2),a2
-	move.l	a2,d2
-	lbne	.search2,7
-	lbra	.not_found,4
- label .counted,8
-	move.w	d0,d1
-	move.w	font_id(a2),d0
-	moveq	#1,d2
-	lbra	.found,5
+  if (!font) {
+    info->format = 0;
+    info->id     = 0;
+    info->index  = 0;
+    return;
+  }
 
- label .not_found,4
-	moveq	#0,d0
-	moveq	#0,d1
-	moveq	#0,d2
- label .found,5
-	swap	d2
-	move.w	d0,d2
-	move.w	(a1),d0
-	move.l	6(a1),a1
-	addq.l	#4,a1
-	move.l	d2,(a1)+
-	move.w	d1,(a1)+
-	lbeq	.end,9
+  info->format = (font->flags & 0x4000) ? 4 : 1;
+  info->id     = id;
+  info->index  = index;
 
-	move.l	a2,d2
-	btst	#0,d0
-	lbeq	.l10,10
-	move.l	d2,a2
-	lea	font_name(a2),a2
-	swap	d0
-	moveq	#16-1,d0
- label .loop1,11
-	move.w	(a2)+,d1
-	move.b	d1,(a1)+
-	ldbra	d0,.loop1,11
-	swap	d0
-	move.b	#0,(a1)+
-	add.w	#50-17,a1
+  if (flags & 0x01) {
+    for(i = 0; i < 32; i++) {
+      info->font_name[i] = font->name[i];
+    }
+    info->font_name[i] = 0;
+  }
 
- label .l10,10
-	btst	#1,d0
-	lbeq	.l12,12
-	move.l	d2,a2
-	lea	font_name(a2),a2
-	swap	d0
-	moveq	#8-1,d0
- label .loop2,13
-	move.w	(a2)+,d1
-	move.b	d1,(a1)+
-	ldbra	d0,.loop2,13
-	swap	d0
-	move.b	#0,(a1)+
-	add.w	#50-9,a1
+  if (flags & 0x02) {
+    strcpy(info->family_name, "Century 725 Italic BT");
+  }
 
- label .l12,12
-	btst	#2,d0
-	lbeq	.l14,14
-	move.l	d2,a2
-	lea	font_name(a2),a2
-	add.w	#16,a2
-	swap	d0
-	moveq	#8-1,d0
- label .loop3,15
-	move.w	(a2)+,d1
-	move.b	d1,(a1)+
-	ldbra	d0,.loop3,15
-	swap	d0
-	move.b	#0,(a1)+
-	add.w	#50-9,a1
+  if (flags & 0x04) {
+    strcpy(info->style_name, "Italic");
+  }
 
- label .l14,14
+  if (flags & 0x08) {
+    if (font->flags & 0x8000)
+      strcpy(info->file_name1, font->extra.filename);
+    else
+      info->file_name1[0] = 0;
+  }
 
- label .end,9
-	move.l	(a7)+,d2
-	rts
-#endif
+  if (flags & 0x10) {
+    info->file_name2[0] = 0;
+  }
+
+  if (flags & 0x20) {
+    info->file_name3[0] = 0;
+  }
+
+  /* 0x100 is without enlargement, 0x200 with */
+  if (flags & 0x300) {
+    if (font->flags & 0x8000) {
+      info->pt_cnt = size_count;
+      for(i = 0; i < size_count; i++)
+	info->pt_sizes[i] = sizes[i];
+    } else {
+      i = 0;
+      font = font->extra.first_size;
+      while (font) {
+	info->pt_sizes[i] = font->size;
+	i++;
+	font = font->extra.next_size;
+      }
+      info->pt_cnt = i;
+    }
+  }
+}
+
 
 // lib_vqt_extent(length, &string, points)
 //_get_extent:

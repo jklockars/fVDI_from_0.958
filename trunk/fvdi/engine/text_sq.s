@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.13 2005-11-09 23:06:13 johan Exp $
+* $Id: text_sq.s,v 1.14 2006-02-20 00:42:18 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,7 +19,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
 	xref	_external_char_bitmap
 	xref	_sizes
-	xref	_lib_vqt_name
+	xref	_lib_vqt_name,_lib_vqt_xfntinfo
 	xref	_display_output
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
@@ -612,6 +612,33 @@ lib_vqt_font_info:
 *       a0      VDI struct
 vqt_xfntinfo:
 	uses_d1
+	movem.l	d2/a1,-(a7)
+	move.l	intin(a1),a2
+	move.l	6(a2),d0
+	move.l	d0,-(a7)
+	move.w	4(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.w	2(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vqt_xfntinfo
+	add.w	#20,a7
+	movem.l	(a7)+,d2/a1
+	move.l	intin(a1),a2
+	move.l	6(a2),a2
+	addq.l	#4,a2
+	move.l	intout(a1),a1
+	move.l	(a2)+,(a1)+
+	move.w	(a2)+,(a1)
+	used_d1
+	done_return
+  ifne 0
+	uses_d1
 	move.l	a1,-(a7)
 	move.l	intin(a1),a1
 	bsr	lib_vqt_xfntinfo
@@ -624,7 +651,9 @@ vqt_xfntinfo:
 	move.w	(a2)+,(a1)
 	used_d1
 	done_return
+ endc
 
+ ifne 0
 * lib_vqt_xfntinfo - Standard Library function
 * Todo: More bits to test! Check size!
 * In:	a1	Parameters   lib_vqt_xfntinfo(flag, id, index, info)
@@ -740,6 +769,7 @@ lib_vqt_xfntinfo:
  label .end,9
 	move.l	(a7)+,d2
 	rts
+ endc
 
 
 	dc.b	0,"vqt_extent",0
