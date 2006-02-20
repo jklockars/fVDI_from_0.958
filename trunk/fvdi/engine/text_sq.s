@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.16 2006-02-20 17:04:47 standa Exp $
+* $Id: text_sq.s,v 1.17 2006-02-20 20:49:44 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -17,7 +17,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	xref	_vdi_stack_top,_vdi_stack_size
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
-	xref	_external_char_bitmap
+	xref	_external_char_bitmap, _external_char_advance
 	xref	_sizes
 	xref	_lib_vqt_name,_lib_vqt_xfntinfo,_lib_vqt_fontheader
 	xref	_display_output
@@ -111,7 +111,7 @@ v_getbitmap_info:
 	move.w	#6,(a2)+	; Width
 	move.w	#12,(a2)+	; Height
 	move.l	#$00080000,(a2)+ ; X advance
-	move.l	#$00100000,(a2)+ ; Y advance
+	move.l	#$00000000,(a2)+ ; Y advance
 	move.l	#$00000000,(a2)+ ; X offset
 	move.l	#$00100000,(a2)+ ; Y offset
 	move.l	#v_getbitmap_info,(a2) ; Dummy bitmap pointer
@@ -128,6 +128,36 @@ v_getbitmap_info:
 * In:   a1      Parameter block
 *       a0      VDI struct
 vqt_advance:
+	uses_d1
+	movem.l	d2/a3,-(a7)
+
+	move.l	vwk_text_current_font(a0),a2
+* Some other method should be used for this!
+	tst.w	font_flags(a2)
+	lbpl	.no_external,1
+	move.l	_external_char_advance,d2	; (Handle differently?)
+	lbeq	.no_external,1			; Not really allowed!
+	move.l	d2,a3
+
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	move.l	_vdi_stack_size,-(a7)
+	move.l	ptsout(a1),a2
+	move.l	intin(a1),a1
+	move.w	(a1),d0
+	ext.l	d0
+	move.l	a2,-(a7)			; advance block
+	move.l	d0,-(a7)			; char code
+	move.l	vwk_text_current_font(a0),-(a7) ; Fontheader
+	jsr	(a3)
+	add.w	#4*4,a7
+
+	move.l	(a7),a7				; Return to original stack
+	lbra	.done,2
+
+ label .no_external,1
 	move.l	ptsout(a1),a2
 	move.w	#8,(a2)+
 	move.w	#0,(a2)+
@@ -135,6 +165,10 @@ vqt_advance:
 	move.w	#0,(a2)+
 	move.l	#$00080000,(a2)+
 	move.l	#0,(a2)+
+
+ label .done,2
+	movem.l	(a7)+,d2/a3
+	used_d1
 	done_return
 
 

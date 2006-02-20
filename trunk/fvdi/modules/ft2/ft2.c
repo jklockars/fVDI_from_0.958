@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.15 2006-02-20 17:04:01 standa Exp $
+ * $Id: ft2.c,v 1.16 2006-02-20 20:49:44 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -811,6 +811,33 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 	return retval;
 }
 
+void *ft2_char_advance(Fontheader *font, long ch, short *advance_info)
+{
+  if ( ! ft2_find_glyph(font, ch, CACHED_METRICS) ) {
+	  c_glyph *g = (c_glyph *)font->extra.current;
+
+	  /* X advance */
+	  *advance_info++ = g->advance;
+	  /* Y advance */
+	  *advance_info++ = 0;
+
+	  /* advance reminders */
+	  /* remX */
+	  *advance_info++ = 0;
+	  /* remY */
+	  *advance_info++ = 0;
+
+	  /* vqt_advance32() - SpeedoGDOS only */
+	  /* X advance */
+	  *advance_info++ = g->advance;
+	  *advance_info++ = 0;
+	  /* Y advance */
+	  *advance_info++ = 0;
+	  *advance_info++ = 0;
+  }
+  return 0;
+}
+
 void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
 {
   if ( ! ft2_find_glyph(font, ch, CACHED_METRICS | CACHED_BITMAP) ) {
@@ -848,6 +875,7 @@ void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
   }
   return 0;
 }
+
 
 int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
 {

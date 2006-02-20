@@ -1,3 +1,7 @@
+2006-02-20 - standa
+FT2 alternatives for vqt_xfntinfo(), vqt_getbitmap_info() and
+vqt_advance() -> PapyrusX displays the text quite reasonably now.
+
 2006-02-20 - johan
 Nearly complete implementation of vqt_xfntinfo.
 Preliminary implementation of vqt_fontheader.
