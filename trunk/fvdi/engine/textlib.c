@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.7 2006-02-20 11:35:57 johan Exp $
+ * $Id: textlib.c,v 1.8 2006-02-20 17:04:01 standa Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -16,21 +16,6 @@
 
 #define BLACK 1
 
-
-typedef struct {
-  long        size;               
-  short       format;             
-  short       id;                 
-  short       index;              
-  char        font_name[50];      
-  char        family_name[50];    
-  char        style_name[50];     
-  char        file_name1[200];    
-  char        file_name2[200];    
-  char        file_name3[200];    
-  short       pt_cnt;             
-  short       pt_sizes[64];       
-} XFNT_INFO;
 
 typedef struct {
   char           fh_fmver[8];
@@ -947,12 +932,16 @@ int lib_vst_font(Virtual *vwk, long fontID)
 	font = vwk->real_address->writing.first_font;
     }
 
-    vwk->text.font = fontID;
-    vwk->text.current_font = font;
-    vwk->text.character.width = font->widest.character;
-    vwk->text.character.height = font->distance.top;
-    vwk->text.cell.width = font->widest.cell;
-    vwk->text.cell.height = font->distance.top + 1 + font->distance.bottom;
+    {
+	    short dummy;
+	    int size = (vwk->text.current_font) ? vwk->text.current_font->size : 10;
+
+	    vwk->text.font = fontID;
+	    vwk->text.current_font = font;
+
+	    /* choose the right size */
+	    lib_vst_point(vwk, size, &dummy,&dummy,&dummy,&dummy);
+    }
 
     return fontID;
 }
@@ -1045,6 +1034,11 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
     return;
   }
 
+  if (font->flags & 0x8000 && external_xfntinfo) {
+	  external_xfntinfo( vwk, font, flags, index, info);
+	  return;
+  }
+
   info->format = (font->flags & 0x4000) ? 4 : 1;
   info->id     = id;
   info->index  = index;
@@ -1065,9 +1059,6 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
   }
 
   if (flags & 0x08) {
-    if (font->flags & 0x8000)
-      strcpy(info->file_name1, font->extra.filename);
-    else
       info->file_name1[0] = 0;
   }
 
@@ -1081,11 +1072,6 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
 
   /* 0x100 is without enlargement, 0x200 with */
   if (flags & 0x300) {
-    if (font->flags & 0x8000) {
-      info->pt_cnt = size_count;
-      for(i = 0; i < size_count; i++)
-	info->pt_sizes[i] = sizes[i];
-    } else {
       i = 0;
       font = font->extra.first_size;
       while (font) {
@@ -1094,7 +1080,6 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
 	font = font->extra.next_size;
       }
       info->pt_cnt = i;
-    }
   }
 }
 

@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.12 2005-08-09 08:37:37 johan Exp $
+ * $Id: fvdi.h,v 1.13 2006-02-20 17:04:01 standa Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -199,6 +199,21 @@ typedef struct DrvLine_ {
    long draw_last;
 } DrvLine;
 
+typedef struct Fontcharmap_ {
+   short id;			/*  charmap header ('00',01,02,10,11,12,TT,T1) */
+   short map[224];		/*  mapping information c = map[c] like */
+} Fontcharmap;
+
+typedef struct Fontspdcharmap_ {
+   Fontcharmap bs_int;
+   Fontcharmap bs_symbol;
+   Fontcharmap bs_dingbats;
+   Fontcharmap ps_int;
+   Fontcharmap ps_symbol;
+   Fontcharmap ps_dingbats;
+   Fontcharmap true_type;
+   Fontcharmap type_1;
+} Fontspdcharmap;
 
 typedef struct Fontextra_ {
    struct distance1_ {		/* Calculated from the */
@@ -407,6 +422,22 @@ typedef struct function_ {
    	short retvals[2];
    	void *code;
 } Function;
+
+
+typedef struct XFNT_INFO_ {
+  long        size;               
+  short       format;             
+  short       id;                 
+  short       index;              
+  char        font_name[50];      
+  char        family_name[50];    
+  char        style_name[50];     
+  char        file_name1[200];    
+  char        file_name2[200];    
+  char        file_name3[200];    
+  short       pt_cnt;             
+  short       pt_sizes[64];       
+} XFNT_INFO;
 
 
 typedef struct MFDB_ {

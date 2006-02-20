@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.14 2006-01-20 09:56:17 johan Exp $
+ * $Id: ft2.c,v 1.15 2006-02-20 17:04:01 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -216,13 +216,17 @@ static void ft2_close_face(Fontheader *font)
 
 static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize)
 {
+       	/* SM124 640x400px -> 238x149mm */
+	//static long ydpi = ( 64 /*26.6 float*/ * 25.4 /*per inch*/ * 400 ) / 149;
+	//static long ydpi = 64 /*26.6 float*/ * 72 /* dots per inch */;
+
 	FT_Error error;
 
 	if (FT_IS_SCALABLE(face)) {
 		FT_Fixed scale;
 
 		/* Set the character size and use default DPI (72) */
-		error = FT_Set_Char_Size(face, 0, ptsize * 64, 0, 0);
+		error = FT_Set_Char_Size(face, 0, ptsize * /*FIXME!*/ 72, 0, 0);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
 			ft2_close_face(font);
@@ -551,6 +555,51 @@ static void ft2_dispose_font(Fontheader *font)
 	free(font);
 }
 
+void ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, long index,
+	       XFNT_INFO *info)
+{
+  int i;
+  FT_Face face = ft2_get_face(font);
+
+  info->format = (font->flags & 0x4000) ? 4 : 1;
+  info->id     = font->id;
+  info->index  = index;
+
+  if (flags & 0x01) {
+    for(i = 0; i < 32; i++) {
+      info->font_name[i] = font->name[i];
+    }
+    info->font_name[i] = 0;
+  }
+
+  if (flags & 0x02) {
+    strcpy(info->family_name, face->family_name);
+  }
+
+  if (flags & 0x04) {
+    strcpy(info->style_name, face->style_name);
+  }
+
+  if (flags & 0x08) {
+      strcpy(info->file_name1, font->extra.filename);
+  }
+
+  if (flags & 0x10) {
+    info->file_name2[0] = 0;
+  }
+
+  if (flags & 0x20) {
+    info->file_name3[0] = 0;
+  }
+
+  /* 0x100 is without enlargement, 0x200 with */
+  if (flags & 0x300) {
+      info->pt_cnt = size_count;
+      for(i = 0; i < size_count; i++)
+	info->pt_sizes[i] = sizes[i];
+  }
+}
+
 static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int want)
 {
 	FT_Face face;
@@ -762,12 +811,42 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 	return retval;
 }
 
-void *ft2_char_bitmap(Fontheader *font, long ch)
+void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
 {
-  if (ft2_find_glyph(font, ch, CACHED_BITMAP))
-    return 0;
+  if ( ! ft2_find_glyph(font, ch, CACHED_METRICS | CACHED_BITMAP) ) {
+	  c_glyph *g = (c_glyph *)font->extra.current;
 
-  return ((c_glyph *)font->extra.current)->bitmap.buffer;
+	  *bitmap_info++ = g->bitmap.width;	/* width */
+	  *bitmap_info++ = g->bitmap.rows;	/* height */
+
+	  /* X advance */
+	  *bitmap_info++ = g->advance;
+	  *bitmap_info++ = 0;
+	  /* Y advance */
+	  *bitmap_info++ = 0;
+	  *bitmap_info++ = 0;
+	  /* X offset */
+	  *bitmap_info++ = 0;
+	  *bitmap_info++ = 0;
+	  /* Y offset */
+	  *bitmap_info++ = font->height - g->yoffset;
+	  *bitmap_info++ = 0;
+
+	  if (debug > 1) {
+		  char buf[10];
+		  ltoa(buf, (long)g->maxx, 10);
+		  puts("FT2 bitmap_info: w="); puts(buf);
+		  ltoa(buf, (long)font->height, 10);
+		  puts(" h="); puts(buf);
+		  ltoa(buf, (long)g->advance, 10);
+		  puts(" ad="); puts(buf);
+		  ltoa(buf, (long)g->yoffset, 10);
+		  puts(" yo="); puts_nl(buf);
+	  }
+
+	  return g->bitmap.buffer;
+  }
+  return 0;
 }
 
 int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
