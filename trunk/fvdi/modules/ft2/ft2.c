@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.16 2006-02-20 20:49:44 standa Exp $
+ * $Id: ft2.c,v 1.17 2006-02-20 21:13:44 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -226,7 +226,7 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 		FT_Fixed scale;
 
 		/* Set the character size and use default DPI (72) */
-		error = FT_Set_Char_Size(face, 0, ptsize * /*FIXME!*/ 72, 0, 0);
+		error = FT_Set_Char_Size(face, 0, ptsize * /*FIXME!*/ 144, 0, 0);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
 			ft2_close_face(font);
