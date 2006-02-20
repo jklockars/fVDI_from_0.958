@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.6 2006-02-20 01:55:50 johan Exp $
+ * $Id: textlib.c,v 1.7 2006-02-20 11:35:57 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -31,6 +31,36 @@ typedef struct {
   short       pt_cnt;             
   short       pt_sizes[64];       
 } XFNT_INFO;
+
+typedef struct {
+  char           fh_fmver[8];
+  unsigned long  fh_fntsz;
+  unsigned long  fh_fbfsz;
+  unsigned short fh_cbfsz;
+  unsigned short fh_hedsz;
+  unsigned short fh_fntid;
+  unsigned short fh_sfvnr;
+  char           fh_fntnm[70];
+  char           fh_mdate[10];
+  char           fh_laynm[70];
+  char           fh_cpyrt[78];
+  unsigned short fh_nchrl;
+  unsigned short fh_nchrf;
+  unsigned short fh_fchrf;
+  unsigned short fh_nktks;
+  unsigned short fh_nkprs;
+  char           fh_flags;
+  char           fh_cflgs;
+  char           fh_famcl;
+  char           fh_frmcl;
+  char           fh_sfntn[32];
+  char           fh_sfacn[16];
+  char           fh_fntfm[14];
+  unsigned short fh_itang;
+  unsigned short fh_orupm;
+  /* There should really be a bunch of more things here! */
+} VQT_FHDR;
+
 
 void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points);
 
@@ -976,7 +1006,7 @@ void lib_vqt_font_info(Virtual *vwk, short *minchar, short *maxchar,
 }
 
 
-long lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
+void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
                       XFNT_INFO *info)
 {
   int i;
@@ -1066,6 +1096,111 @@ long lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
       info->pt_cnt = i;
     }
   }
+}
+
+
+/* Which one of these is really correct? */
+#if 0
+void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr, const char *filename)
+#else
+void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr)
+#endif
+{
+  int i;
+  Fontheader *font;
+
+  /* Strings should not have NUL termination if max size. */
+  /* Normally 1000 ORUs per Em square (width of 'M'), but header says. */
+  /* 6 byte transformation parameters contain:
+   *  short y offset (ORUs)
+   *  short x scaling (units of 1/4096)
+   *  short y scaling (units of 1/4096)
+   */
+
+  /* Is this correct? */
+  font = vwk->text.current_font;
+
+  memcpy(fhdr->fh_fmver, "D1.0\x0d\x0a\0\0", 8);  /* Format identifier */
+  fhdr->fh_fntsz = 0;     /* Font file size */
+  fhdr->fh_fbfsz = 0;     /* Minimum font buffer size (non-image data) */
+  fhdr->fh_cbfsz = 0;     /* Minimum character buffer size (largest char) */
+  fhdr->fh_hedsz = sizeof(VQT_FHDR);  /* Header size */
+  fhdr->fh_fntid = 0;     /* Font ID (Bitstream) */
+  fhdr->fh_sfvnr = 0;     /* Font version number */
+  for(i = 0; i < 32; i++) {   /* Font full name (vqt_name) */
+    fhdr->fh_fntnm[i] = font->name[i];
+  }
+  fhdr->fh_fntnm[i] = 0;
+  fhdr->fh_mdate[0] = 0;  /* Manufacturing date (DD Mon YY) */
+  fhdr->fh_laynm[0] = 0;  /* Character set name, vendor ID, character set ID */
+  /* Last two is char set, usually the second two characters in font filename
+   *   Bitstream International Character Set = '00'
+   * Two before that is manufacturer, usually first two chars in font filename
+   *   Bitstream fonts use 'BX'
+   */
+  fhdr->fh_cpyrt[0] = 0;  /* Copyright notice */
+  fhdr->fh_nchrl = 0;     /* Number of character indices in character set */
+  fhdr->fh_nchrf = 0;     /* Total number of character indices in font */
+  fhdr->fh_fchrf = 0;     /* Index of first character */
+  fhdr->fh_nktks = 0;     /* Number of kerning tracks */
+  fhdr->fh_nkprs = 0;     /* Number of kerning pairs */
+  fhdr->fh_flags = 0;     /* Font flags, bit 0 - extended mode */
+  /* Extended mode is for fonts that require higher quality of rendering,
+   * such as chess pieces. Otherwise compact, the default.
+   */
+  fhdr->fh_cflgs = 1;     /* Classification flags */
+  /* bit 0 - Italic
+   * bit 1 - Monospace
+   * bit 2 - Serif
+   * bit 3 - Display
+   */
+  fhdr->fh_famcl = 0;     /* Family classification */
+  /* 0 - Don't care
+   * 1 - Serif
+   * 2 - Sans serif
+   * 3 - Monospace
+   * 4 - Script
+   * 5 - Decorative
+   */
+  fhdr->fh_frmcl = 0x68;  /* Font form classification */
+  /* 0x_4 - Condensed
+   * 0x_5 - (Reserved for 3/4 condensed)
+   * 0x_6 - Semi-condensed
+   * 0x_7 - (Reserved for 1/4 condensed)
+   * 0x_8 - Normal
+   * 0x_9 - (Reserved for 3/4 expanded)
+   * 0x_a - Semi-expanded
+   * 0x_b - (Reserved for 1/4 expanded)
+   * 0x_c - Expanded
+   * 0x1_ - Thin
+   * 0x2_ - Ultralight
+   * 0x3_ - Extralight
+   * 0x4_ - Light
+   * 0x5_ - Book
+   * 0x6_ - Normal
+   * 0x7_ - Medium
+   * 0x8_ - Semibold
+   * 0x9_ - Demibold
+   * 0xa_ - Bold
+   * 0xb_ - Extrabold
+   * 0xc_ - Ultrabold
+   * 0xd_ - Heavy
+   * 0xe_ - Black
+   */
+
+  strcpy(fhdr->fh_sfntn, "Century725BT-Italic"); /* Short font name */
+  /* Abbreviation of Postscript equivalent font name */
+  strcpy(fhdr->fh_sfacn, "Century 725 BT");  /* Short face name */
+  /* Abbreviation of the typeface family name */
+  strcpy(fhdr->fh_fntfm, "Italic");  /* Font form (as above), style */
+  fhdr->fh_itang = 0;     /* Italic angle */
+  /* Skew in 1/256 of degrees clockwise, if italic font */
+  fhdr->fh_orupm = 2048;  /* ORUs per Em */
+  /* Outline Resolution Units */
+
+  /* There's actually a bunch of more values, but they are not
+   * in the struct definition, so skip them
+   */
 }
 
 

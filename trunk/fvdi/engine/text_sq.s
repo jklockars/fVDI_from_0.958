@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.14 2006-02-20 00:42:18 johan Exp $
+* $Id: text_sq.s,v 1.15 2006-02-20 11:35:57 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -19,17 +19,17 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
 	xref	_external_char_bitmap
 	xref	_sizes
-	xref	_lib_vqt_name,_lib_vqt_xfntinfo
+	xref	_lib_vqt_name,_lib_vqt_xfntinfo,_lib_vqt_fontheader
 	xref	_display_output
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
 	xdef	vst_load_fonts,vst_unload_fonts,vqt_width
-	xdef	vqt_f_extent,vqt_xfntinfo
+	xdef	vqt_f_extent,vqt_xfntinfo,vqt_fontheader
 
 	xdef	lib_vst_effects,lib_vst_alignment,lib_vst_rotation
 	xdef	lib_vqt_font_info,lib_vst_height,lib_vqt_attributes,lib_vqt_extent
-	xdef	lib_vst_load_fonts,lib_vst_unload_fonts,lib_vqt_width,lib_vqt_xfntinfo
+	xdef	lib_vst_load_fonts,lib_vst_unload_fonts,lib_vqt_width
 
 	xdef	vst_arbpt
 
@@ -605,6 +605,25 @@ lib_vqt_font_info:
   endc
 
 
+	dc.b	0,"vqt_fontheader",0
+* vqt_fontheader - Standard Trap function
+* Todo:	?
+* In:   a1      Parameter block
+*       a0      VDI struct
+vqt_fontheader:
+	uses_d1
+	movem.l	d2/a1,-(a7)
+	move.l	intin(a1),a2
+	move.l	(a2),d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vqt_fontheader
+	addq.l	#8,a7
+	movem.l	(a7)+,d2/a1
+	used_d1
+	done_return
+
+	
 	dc.b	0,"vqt_xfntinfo",0
 * vqt_xfntinfo - Standard Trap function
 * Todo:	?

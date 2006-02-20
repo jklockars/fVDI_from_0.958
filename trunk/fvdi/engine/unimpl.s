@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.15 2005-11-21 13:05:48 johan Exp $
+* $Id: unimpl.s,v 1.16 2006-02-20 11:35:57 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -36,7 +36,7 @@ transparent	equ	1		; Fall through?
 ;	xdef	vst_error,vq_devinfo,v_savecache
 	xdef	vst_error,v_savecache
 	xdef	v_loadcache,v_flushcache,vst_setsize,vqt_cachesize
-	xdef	vqt_get_table,vqt_fontheader
+	xdef	vqt_get_table
 	xdef	v_set_app_buff
 	xdef	vq_tabstatus,v_hardcopy,v_rmcur,v_form_adv
 	xdef	v_output_window,v_clear_disp_list,v_bit_image
@@ -122,7 +122,6 @@ v_flushcache:
 vst_setsize:
 vqt_cachesize:
 vqt_get_table:
-vqt_fontheader:
 v_set_app_buff:
 	done_return
 

@@ -24,7 +24,7 @@ endif
 DEBUG  = no
 
 # CPU to compile for
-CPU    = 040
+CPU    = 000
 
 # General compilation and optimization options (CFLAGS)
 OPTS   = -O2 -fomit-frame-pointer
@@ -40,7 +40,8 @@ endif
 # Set these to point to the correct directories for FreeType support!
 #stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
 #ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
-ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.10
+#ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.10
+ft2_srcdir     = $(top_srcdir)/../freetype2
 #libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
 #stdlib_srcdir  =

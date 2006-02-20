@@ -1,5 +1,6 @@
 2006-02-20 - johan
 Nearly complete implementation of vqt_xfntinfo.
+Preliminary implementation of vqt_fontheader.
 
 2006-02-18 - johan
 Added whole file caching system for FreeType2 engine.
