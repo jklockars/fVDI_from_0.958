@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.15 2006-02-20 11:35:57 johan Exp $
+* $Id: text_sq.s,v 1.16 2006-02-20 17:04:47 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -73,19 +73,8 @@ vst_kern:
 v_getbitmap_info:
 	uses_d1
 	movem.l	d2/a3,-(a7)
-	
-	move.l	intout(a1),a2
-	move.w	#6,(a2)+	; Width
-	move.w	#12,(a2)+	; Height
-	move.l	#$00080000,(a2)+ ; X advance
-	move.l	#$00100000,(a2)+ ; Y advance
-	move.l	#0,(a2)+	; X offset
-	move.l	#0,(a2)+	; Y offset
-	move.l	#v_getbitmap_info,(a2) ; Dummy bitmap pointer
-
 
 	move.l	vwk_text_current_font(a0),a2
-
 * Some other method should be used for this!
 	tst.w	font_flags(a2)
 	bpl	.no_external_char_bitmap
@@ -97,25 +86,37 @@ v_getbitmap_info:
 	move.l	_vdi_stack_top,a7		;  extra stack space!
 	move.l	d2,-(a7)			; (Should be improved)
 
-	move.l	a1,-(a7)
+	;move.l	a1,-(a7)
 	move.l	_vdi_stack_size,-(a7)
+	move.l	intout(a1),a2
 	move.l	intin(a1),a1
 	move.w	(a1),d0
 	ext.l	d0
-	move.l	d0,-(a7)
-	move.l	a2,-(a7)			; Fontheader
+	move.l	a2,-(a7)			; bitmap block
+	move.l	d0,-(a7)			; char code
+	move.l	vwk_text_current_font(a0),-(a7) ; Fontheader
 	jsr	(a3)
-	add.w	#3*4,a7
-	move.l	(a7)+,a1
+	add.w	#4*4,a7
+	;move.l	(a7)+,a1
 
 	move.l	(a7),a7				; Return to original stack
 
 	tst.l	d0
-	beq	.no_external_char_bitmap
-	move.l	intout(a1),a2
+	beq	.char_bitmap_done
 	move.l	d0,20(a2)
+	bra	.char_bitmap_done
 	
 .no_external_char_bitmap:
+	move.l	intout(a1),a2
+	move.w	#6,(a2)+	; Width
+	move.w	#12,(a2)+	; Height
+	move.l	#$00080000,(a2)+ ; X advance
+	move.l	#$00100000,(a2)+ ; Y advance
+	move.l	#$00000000,(a2)+ ; X offset
+	move.l	#$00100000,(a2)+ ; Y offset
+	move.l	#v_getbitmap_info,(a2) ; Dummy bitmap pointer
+
+.char_bitmap_done:
 	movem.l	(a7)+,d2/a3
 	used_d1
 	done_return
