@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.13 2006-02-20 17:04:01 standa Exp $
+ * $Id: fvdi.h,v 1.14 2006-02-21 01:07:17 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -425,19 +425,49 @@ typedef struct function_ {
 
 
 typedef struct XFNT_INFO_ {
-  long        size;               
-  short       format;             
-  short       id;                 
-  short       index;              
-  char        font_name[50];      
-  char        family_name[50];    
-  char        style_name[50];     
-  char        file_name1[200];    
-  char        file_name2[200];    
-  char        file_name3[200];    
-  short       pt_cnt;             
-  short       pt_sizes[64];       
+   long  size;               
+   short format;             
+   short id;                 
+   short index;              
+   char  font_name[50];      
+   char  family_name[50];    
+   char  style_name[50];     
+   char  file_name1[200];    
+   char  file_name2[200];    
+   char  file_name3[200];    
+   short pt_cnt;             
+   short pt_sizes[64];       
 } XFNT_INFO;
+
+
+typedef struct VQT_FHDR_ {
+  char           fh_fmver[8];
+  unsigned long  fh_fntsz;
+  unsigned long  fh_fbfsz;
+  unsigned short fh_cbfsz;
+  unsigned short fh_hedsz;
+  unsigned short fh_fntid;
+  unsigned short fh_sfvnr;
+  char           fh_fntnm[70];
+  char           fh_mdate[10];
+  char           fh_laynm[70];
+  char           fh_cpyrt[78];
+  unsigned short fh_nchrl;
+  unsigned short fh_nchrf;
+  unsigned short fh_fchrf;
+  unsigned short fh_nktks;
+  unsigned short fh_nkprs;
+  char           fh_flags;
+  char           fh_cflgs;
+  char           fh_famcl;
+  char           fh_frmcl;
+  char           fh_sfntn[32];
+  char           fh_sfacn[16];
+  char           fh_fntfm[14];
+  unsigned short fh_itang;
+  unsigned short fh_orupm;
+  /* There should really be a bunch of more things here! */
+} VQT_FHDR;
 
 
 typedef struct MFDB_ {
