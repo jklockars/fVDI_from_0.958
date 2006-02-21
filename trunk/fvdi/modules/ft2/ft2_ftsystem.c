@@ -419,12 +419,86 @@ static int fc_discard(void)
     }
   }
 
-  file_cache_free += file_cache[oldest].size;
+#if 0
+  {
+    char buf[10];
+    ltoa(buf, file_cache_free, 10);
+    puts(buf);
+    puts(" ");
+    ltoa(buf, oldest, 10);
+    puts(buf);
+    puts(" ");
+    ltoa(buf, (long)file_cache[oldest].ptr, 16);
+    puts(buf);
+    puts(" ");
+    ltoa(buf, (long)file_cache[oldest].ptr + file_cache[oldest].size, 16);
+    puts(buf);
+    puts(" ");
+    ltoa(buf, file_cache_size * 1024L - file_cache_free -
+              (file_cache[oldest].ptr - file_cache_area) -
+              file_cache[oldest].size, 10);
+    puts(buf);
+    puts("\x0d\x0a");
+  }
+#endif
+#if 0
+    {
+      char buf[10];
+      int n;
+      for(i = 0; i < FC_ENTRIES; i++) {
+        ltoa(buf, i, 10);
+        puts(buf);
+        puts(" ");
+        ltoa(buf, (long)file_cache[i].ptr, 16);
+        puts(buf);
+        puts(" ");
+        for(n = 16; n < 20; n++) {
+          ltoa(buf, file_cache[i].ptr[n] & 0xff, 16);
+          puts(buf);
+        }
+        puts("\x0d\x0a");
+      }
+    }
+#endif
   memmove(file_cache[oldest].ptr,
           file_cache[oldest].ptr + file_cache[oldest].size,
-          file_cache_size * 1024 - file_cache_free -
+          file_cache_size * 1024L - file_cache_free -
           (file_cache[oldest].ptr - file_cache_area) -
           file_cache[oldest].size);
+  file_cache_free += file_cache[oldest].size;
+
+  for(i = 0; i < FC_ENTRIES; i++) {
+    if (file_cache[i].used && (file_cache[i].ptr > file_cache[oldest].ptr)) {
+      file_cache[i].ptr -= file_cache[oldest].size;
+    }
+#if 0
+    {
+      char buf[10];
+      int n;
+      ltoa(buf, i, 10);
+      puts(buf);
+      puts(" ");
+      puts(file_cache[i].name);
+      puts(" ");
+      if (i == oldest)
+	puts("Replaced");
+      else {
+        ltoa(buf, (long)file_cache[i].ptr, 16);
+        puts(buf);
+        puts(" ");
+        ltoa(buf, file_cache[i].size, 10);
+        puts(buf);
+        puts(" ");
+        for(n = 16; n < 20; n++) {
+          ltoa(buf, file_cache[i].ptr[n] & 0xff, 16);
+          puts(buf);
+        }
+      }
+      puts("\x0d\x0a");
+    }
+#endif
+  }
+
   file_cache[oldest].used = 0;
   file_cache[oldest].size = 0;
   file_cache[oldest].position = 0;
@@ -529,6 +603,29 @@ static int fc_find(FT_Stream stream)
     access->funcs.puts(stream->pathname.pointer);
     access->funcs.puts("\x0d\x0a");
   }
+
+#if 0
+  {
+    char buf[10];
+    int n;
+    ltoa(buf, i, 10);
+    puts(buf);
+    puts(" ");
+    puts(file_cache[i].name);
+    puts(" ");
+    ltoa(buf, (long)file_cache[i].ptr, 16);
+    puts(buf);
+    puts(" ");
+    ltoa(buf, (long)file_cache[i].size, 10);
+    puts(buf);
+    puts(" ");
+    for(n = 16; n < 20; n++) {
+      ltoa(buf, file_cache[i].ptr[n] & 0xff, 16);
+      puts(buf);
+    }
+    puts("\x0d\x0a");
+  }
+#endif
 
 open_ok:
   file_cache[i].used = use_count++;
