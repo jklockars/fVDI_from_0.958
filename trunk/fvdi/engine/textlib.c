@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.8 2006-02-20 17:04:01 standa Exp $
+ * $Id: textlib.c,v 1.9 2006-02-21 01:11:26 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -15,36 +15,6 @@
 #include "globals.h"
 
 #define BLACK 1
-
-
-typedef struct {
-  char           fh_fmver[8];
-  unsigned long  fh_fntsz;
-  unsigned long  fh_fbfsz;
-  unsigned short fh_cbfsz;
-  unsigned short fh_hedsz;
-  unsigned short fh_fntid;
-  unsigned short fh_sfvnr;
-  char           fh_fntnm[70];
-  char           fh_mdate[10];
-  char           fh_laynm[70];
-  char           fh_cpyrt[78];
-  unsigned short fh_nchrl;
-  unsigned short fh_nchrf;
-  unsigned short fh_fchrf;
-  unsigned short fh_nktks;
-  unsigned short fh_nkprs;
-  char           fh_flags;
-  char           fh_cflgs;
-  char           fh_famcl;
-  char           fh_frmcl;
-  char           fh_sfntn[32];
-  char           fh_sfacn[16];
-  char           fh_fntfm[14];
-  unsigned short fh_itang;
-  unsigned short fh_orupm;
-  /* There should really be a bunch of more things here! */
-} VQT_FHDR;
 
 
 void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points);
@@ -892,6 +862,7 @@ int lib_vst_font(Virtual *vwk, long fontID)
 {
     Fontheader *font;
     char buf[10];
+    short dummy, size;
 
     if (!fontID)
 	fontID = 1;
@@ -932,16 +903,16 @@ int lib_vst_font(Virtual *vwk, long fontID)
 	font = vwk->real_address->writing.first_font;
     }
 
-    {
-	    short dummy;
-	    int size = (vwk->text.current_font) ? vwk->text.current_font->size : 10;
+    if (vwk->text.current_font)
+        size = vwk->text.current_font->size;
+    else
+        size = 10;
 
-	    vwk->text.font = fontID;
-	    vwk->text.current_font = font;
+    vwk->text.font = fontID;
+    vwk->text.current_font = font;
 
-	    /* choose the right size */
-	    lib_vst_point(vwk, size, &dummy,&dummy,&dummy,&dummy);
-    }
+    /* Choose the right size */
+    lib_vst_point(vwk, size, &dummy, &dummy, &dummy, &dummy);
 
     return fontID;
 }
@@ -1034,14 +1005,17 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
     return;
   }
 
-  if (font->flags & 0x8000 && external_xfntinfo) {
-	  external_xfntinfo( vwk, font, flags, index, info);
-	  return;
-  }
-
-  info->format = (font->flags & 0x4000) ? 4 : 1;
   info->id     = id;
   info->index  = index;
+
+  if ((font->flags & 0x8000) && external_xfntinfo) {
+    set_stack_call(vdi_stack_top, vdi_stack_size,
+                   external_xfntinfo,
+                   vwk, font, flags, info);
+    return;
+  }
+
+  info->format = 1;
 
   if (flags & 0x01) {
     for(i = 0; i < 32; i++) {
@@ -1050,10 +1024,12 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
     info->font_name[i] = 0;
   }
 
+  /* Dummy text */
   if (flags & 0x02) {
     strcpy(info->family_name, "Century 725 Italic BT");
   }
 
+  /* Dummy text */
   if (flags & 0x04) {
     strcpy(info->style_name, "Italic");
   }
@@ -1072,14 +1048,14 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
 
   /* 0x100 is without enlargement, 0x200 with */
   if (flags & 0x300) {
-      i = 0;
-      font = font->extra.first_size;
-      while (font) {
-	info->pt_sizes[i] = font->size;
-	i++;
-	font = font->extra.next_size;
-      }
-      info->pt_cnt = i;
+    i = 0;
+    font = font->extra.first_size;
+    while (font) {
+      info->pt_sizes[i] = font->size;
+      i++;
+      font = font->extra.next_size;
+    }
+    info->pt_cnt = i;
   }
 }
 
@@ -1104,6 +1080,13 @@ void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr)
 
   /* Is this correct? */
   font = vwk->text.current_font;
+
+  if ((font->flags & 0x8000) && external_fontheader) {
+    set_stack_call(vdi_stack_top, vdi_stack_size,
+                   external_fontheader,
+                   vwk, font, fhdr, 0);
+    return;
+  }
 
   memcpy(fhdr->fh_fmver, "D1.0\x0d\x0a\0\0", 8);  /* Format identifier */
   fhdr->fh_fntsz = 0;     /* Font file size */
@@ -1172,7 +1155,7 @@ void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr)
    * 0xd_ - Heavy
    * 0xe_ - Black
    */
-
+  /* Dummy text */
   strcpy(fhdr->fh_sfntn, "Century725BT-Italic"); /* Short font name */
   /* Abbreviation of Postscript equivalent font name */
   strcpy(fhdr->fh_sfacn, "Century 725 BT");  /* Short face name */

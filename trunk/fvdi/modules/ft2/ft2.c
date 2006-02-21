@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.17 2006-02-20 21:13:44 standa Exp $
+ * $Id: ft2.c,v 1.18 2006-02-21 01:15:22 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -505,7 +505,14 @@ static inline FT_Face ft2_get_face(Fontheader *font)
 {
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
+#if 0
 		font = ft2_open_face(font, font->size);
+#else
+		if (font->size)
+			font = ft2_open_face(font, font->size);
+		else
+			font = ft2_open_face(font, 10);
+#endif
 	}
 
 	return (FT_Face)font->extra.unpacked.data;
@@ -555,49 +562,151 @@ static void ft2_dispose_font(Fontheader *font)
 	free(font);
 }
 
-void ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, long index,
-	       XFNT_INFO *info)
+void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 {
-  int i;
-  FT_Face face = ft2_get_face(font);
+	int i;
+	FT_Face face = ft2_get_face(font);
 
-  info->format = (font->flags & 0x4000) ? 4 : 1;
-  info->id     = font->id;
-  info->index  = index;
+	/* Strings should not have NUL termination if max size. */
+	/* Normally 1000 ORUs per Em square (width of 'M'), but header says. */
+	/* 6 byte transformation parameters contain:
+	 *  short y offset (ORUs)
+	 *  short x scaling (units of 1/4096)
+	 *  short y scaling (units of 1/4096)
+	 */
 
-  if (flags & 0x01) {
-    for(i = 0; i < 32; i++) {
-      info->font_name[i] = font->name[i];
-    }
-    info->font_name[i] = 0;
-  }
+	memcpy(fhdr->fh_fmver, "D1.0\x0d\x0a\0\0", 8);  /* Format identifier */
+	fhdr->fh_fntsz = 0;     /* Font file size */
+	fhdr->fh_fbfsz = 0;     /* Minimum font buffer size (non-image data) */
+	fhdr->fh_cbfsz = 0;     /* Minimum character buffer size (largest char) */
+	fhdr->fh_hedsz = sizeof(VQT_FHDR);  /* Header size */
+	fhdr->fh_fntid = 0;     /* Font ID (Bitstream) */
+	fhdr->fh_sfvnr = 0;     /* Font version number */
+	for(i = 0; i < 32; i++) {   /* Font full name (vqt_name) */
+		fhdr->fh_fntnm[i] = font->name[i];
+	}
+	fhdr->fh_fntnm[i] = 0;
+	fhdr->fh_mdate[0] = 0;  /* Manufacturing date (DD Mon YY) */
+	fhdr->fh_laynm[0] = 0;  /* Character set name, vendor ID, character set ID */
+	/* Last two is char set, usually the second two characters in font filename
+	 *   Bitstream International Character Set = '00'
+	 * Two before that is manufacturer, usually first two chars in font filename
+	 *   Bitstream fonts use 'BX'
+	 */
+	fhdr->fh_cpyrt[0] = 0;  /* Copyright notice */
+	fhdr->fh_nchrl = 0;     /* Number of character indices in character set */
+	fhdr->fh_nchrf = face->num_glyphs;  /* Total number of character indices in font */
+	fhdr->fh_fchrf = 0;     /* Index of first character */
+	fhdr->fh_nktks = 0;     /* Number of kerning tracks */
+	fhdr->fh_nkprs = 0;     /* Number of kerning pairs */
+	fhdr->fh_flags = 0;     /* Font flags, bit 0 - extended mode */
+	/* Extended mode is for fonts that require higher quality of rendering,
+	 * such as chess pieces. Otherwise compact, the default.
+	 */
+	fhdr->fh_cflgs = 0;     /* Classification flags */
+	/* bit 0 - Italic
+	 * bit 1 - Monospace
+	 * bit 2 - Serif
+	 * bit 3 - Display
+	 */
+	if (face->style_flags & FT_STYLE_FLAG_ITALIC)
+		fhdr->fh_cflgs |= 1;
+	if (face->face_flags & FT_FACE_FLAG_FIXED_SIZES)
+		fhdr->fh_cflgs |= 2;
+	fhdr->fh_famcl = 0;     /* Family classification */
+	/* 0 - Don't care
+	 * 1 - Serif
+	 * 2 - Sans serif
+	 * 3 - Monospace
+	 * 4 - Script
+	 * 5 - Decorative
+	 */
+	if (face->face_flags & FT_FACE_FLAG_FIXED_SIZES)
+		fhdr->fh_famcl |= 8;
+	fhdr->fh_frmcl = 0x68;  /* Font form classification */
+	/* 0x_4 - Condensed
+	 * 0x_5 - (Reserved for 3/4 condensed)
+	 * 0x_6 - Semi-condensed
+	 * 0x_7 - (Reserved for 1/4 condensed)
+	 * 0x_8 - Normal
+	 * 0x_9 - (Reserved for 3/4 expanded)
+	 * 0x_a - Semi-expanded
+	 * 0x_b - (Reserved for 1/4 expanded)
+	 * 0x_c - Expanded
+	 * 0x1_ - Thin
+	 * 0x2_ - Ultralight
+	 * 0x3_ - Extralight
+	 * 0x4_ - Light
+	 * 0x5_ - Book
+	 * 0x6_ - Normal
+	 * 0x7_ - Medium
+	 * 0x8_ - Semibold
+	 * 0x9_ - Demibold
+	 * 0xa_ - Bold
+	 * 0xb_ - Extrabold
+	 * 0xc_ - Ultrabold
+	 * 0xd_ - Heavy
+	 * 0xe_ - Black
+	 */
+	if (face->style_flags & FT_STYLE_FLAG_BOLD)
+		fhdr->fh_frmcl = (fhdr->fh_frmcl & 0x0f) | 0xa0;
+	/* The below should likely include "Italic" etc */
+	strcpy(fhdr->fh_sfntn, face->family_name); /* Short font name */
+	/* Abbreviation of Postscript equivalent font name */
+	strcpy(fhdr->fh_sfacn, face->family_name);  /* Short face name */
+	/* Abbreviation of the typeface family name */
+	strcpy(fhdr->fh_fntfm, face->style_name);  /* Font form (as above), style */
+	fhdr->fh_itang = 0;     /* Italic angle */
+	/* Skew in 1/256 of degrees clockwise, if italic font */
+	fhdr->fh_orupm = face->units_per_EM;  /* ORUs per Em */
+	/* Outline Resolution Units */
+	
+	/* There's actually a bunch of more values, but they are not
+	 * in the struct definition, so skip them
+	 */
+}
 
-  if (flags & 0x02) {
-    strcpy(info->family_name, face->family_name);
-  }
+void ft2_xfntinfo(Virtual *vwk, Fontheader *font,
+                  long flags, XFNT_INFO *info)
+{
+	int i;
+	FT_Face face = ft2_get_face(font);
 
-  if (flags & 0x04) {
-    strcpy(info->style_name, face->style_name);
-  }
+	info->format = (font->flags & 0x4000) ? 4 : 1;
 
-  if (flags & 0x08) {
-      strcpy(info->file_name1, font->extra.filename);
-  }
+	if (flags & 0x01) {
+		for(i = 0; i < 32; i++) {
+			info->font_name[i] = font->name[i];
+		}
+		info->font_name[i] = 0;
+	}
 
-  if (flags & 0x10) {
-    info->file_name2[0] = 0;
-  }
+	if (flags & 0x02) {
+		strcpy(info->family_name, face->family_name);
+	}
 
-  if (flags & 0x20) {
-    info->file_name3[0] = 0;
-  }
+	if (flags & 0x04) {
+		strcpy(info->style_name, face->style_name);
+	}
 
-  /* 0x100 is without enlargement, 0x200 with */
-  if (flags & 0x300) {
-      info->pt_cnt = size_count;
-      for(i = 0; i < size_count; i++)
-	info->pt_sizes[i] = sizes[i];
-  }
+	if (flags & 0x08) {
+		strcpy(info->file_name1, font->extra.filename);
+	}
+
+	if (flags & 0x10) {
+		info->file_name2[0] = 0;
+	}
+
+	if (flags & 0x20) {
+		info->file_name3[0] = 0;
+	}
+
+	/* 0x100 is without enlargement, 0x200 with */
+	if (flags & 0x300) {
+		info->pt_cnt = size_count;
+		for(i = 0; i < size_count; i++)
+			info->pt_sizes[i] = sizes[i];
+	}
 }
 
 static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int want)
@@ -813,67 +922,73 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
 
 void *ft2_char_advance(Fontheader *font, long ch, short *advance_info)
 {
-  if ( ! ft2_find_glyph(font, ch, CACHED_METRICS) ) {
-	  c_glyph *g = (c_glyph *)font->extra.current;
+	if (!ft2_find_glyph(font, ch, CACHED_METRICS)) {
+		c_glyph *g = (c_glyph *)font->extra.current;
 
-	  /* X advance */
-	  *advance_info++ = g->advance;
-	  /* Y advance */
-	  *advance_info++ = 0;
+		/* X advance */
+		*advance_info++ = g->advance;
+		/* Y advance */
+		*advance_info++ = 0;
 
-	  /* advance reminders */
-	  /* remX */
-	  *advance_info++ = 0;
-	  /* remY */
-	  *advance_info++ = 0;
+		/* Advance reminders */
+		/* remX */
+		*advance_info++ = 0;
+		/* remY */
+		*advance_info++ = 0;
+		
+		/* vqt_advance32() - SpeedoGDOS only */
+		/* X advance */
+		*advance_info++ = g->advance;
+		*advance_info++ = 0;
+		/* Y advance */
+		*advance_info++ = 0;
+		*advance_info++ = 0;
+	}
 
-	  /* vqt_advance32() - SpeedoGDOS only */
-	  /* X advance */
-	  *advance_info++ = g->advance;
-	  *advance_info++ = 0;
-	  /* Y advance */
-	  *advance_info++ = 0;
-	  *advance_info++ = 0;
-  }
-  return 0;
+	return 0;
 }
 
 void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
 {
-  if ( ! ft2_find_glyph(font, ch, CACHED_METRICS | CACHED_BITMAP) ) {
-	  c_glyph *g = (c_glyph *)font->extra.current;
+	if (!ft2_find_glyph(font, ch, CACHED_METRICS | CACHED_BITMAP)) {
+		c_glyph *g = (c_glyph *)font->extra.current;
 
-	  *bitmap_info++ = g->bitmap.width;	/* width */
-	  *bitmap_info++ = g->bitmap.rows;	/* height */
+		*bitmap_info++ = g->bitmap.width;	/* Width */
+		*bitmap_info++ = g->bitmap.rows;	/* Height */
 
-	  /* X advance */
-	  *bitmap_info++ = g->advance;
-	  *bitmap_info++ = 0;
-	  /* Y advance */
-	  *bitmap_info++ = 0;
-	  *bitmap_info++ = 0;
-	  /* X offset */
-	  *bitmap_info++ = 0;
-	  *bitmap_info++ = 0;
-	  /* Y offset */
-	  *bitmap_info++ = font->height - g->yoffset;
-	  *bitmap_info++ = 0;
+		/* X advance */
+		*bitmap_info++ = g->advance;
+		*bitmap_info++ = 0;
+		/* Y advance */
+		*bitmap_info++ = 0;
+		*bitmap_info++ = 0;
+		/* X offset */
+		*bitmap_info++ = 0;
+		*bitmap_info++ = 0;
+		/* Y offset */
+		*bitmap_info++ = font->height - g->yoffset;
+		*bitmap_info++ = 0;
 
-	  if (debug > 1) {
-		  char buf[10];
-		  ltoa(buf, (long)g->maxx, 10);
-		  puts("FT2 bitmap_info: w="); puts(buf);
-		  ltoa(buf, (long)font->height, 10);
-		  puts(" h="); puts(buf);
-		  ltoa(buf, (long)g->advance, 10);
-		  puts(" ad="); puts(buf);
-		  ltoa(buf, (long)g->yoffset, 10);
-		  puts(" yo="); puts_nl(buf);
-	  }
+		if (debug > 1) {
+			char buf[10];
+			ltoa(buf, (long)g->maxx, 10);
+			puts("FT2 bitmap_info: w=");
+			puts(buf);
+			ltoa(buf, (long)font->height, 10);
+			puts(" h=");
+			puts(buf);
+			ltoa(buf, (long)g->advance, 10);
+			puts(" ad=");
+			puts(buf);
+			ltoa(buf, (long)g->yoffset, 10);
+			puts(" yo=");
+			puts_nl(buf);
+		}
 
-	  return g->bitmap.buffer;
-  }
-  return 0;
+		return g->bitmap.buffer;
+	}
+
+	return 0;
 }
 
 
@@ -1210,13 +1325,13 @@ Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
 	Fontheader *f;
 	FontheaderListItem *i;
 
-	if ( !(font->flags & 0x4000) ) {
-		/* fall back to the common add way of finding the right font size */
+	if (!(font->flags & 0x4000)) {
+		/* Fall back to the common add way of finding the right font size */
 		f = font->extra.first_size;
 		while (f->extra.next_size && (f->extra.next_size->size <= ptsize)) {
 			f = f->extra.next_size;
 		}
-		/* set the closest available bitmap font size */
+		/* Set the closest available bitmap font size */
 		ptsize = f->size;
 	}
 
@@ -1232,37 +1347,42 @@ Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
 	if (debug > 1) {
 		char buf[10];
 		ltoa(buf, (long)ptsize, 10);
-		puts("FT2 find_font: fetch size="); puts_nl(buf);
+		puts("FT2 find_font: fetch size=");
+		puts_nl(buf);
 	}
 
 	/* FIXME: handle maximum number of fonts in the cache here (configurable) */
 	if (font_count > 10) {
 		FontheaderListItem *x = (FontheaderListItem *)listLast(&fonts);
 		listRemove((LINKABLE *)x);
-		if ( x->font->flags & 0x4000 ) {
-			ft2_dispose_font(x->font); /* remove the whole font */
+		if (x->font->flags & 0x4000) {
+			ft2_dispose_font(x->font); /* Remove the whole font */
 		} else {
-			ft2_close_face(x->font); /* just close the FT2 face */
+			ft2_close_face(x->font);   /* Just close the FT2 face */
 		}
 		free(x);
 		font_count--;
 	}
 
-	/* create additional size face as it is scalable font */
-	if ( font->flags & 0x4000 ) {
+	/* Create additional size face as it is scalable font */
+	if (font->flags & 0x4000) {
 		f = ft2_dup_font(font, ptsize);
 	} else {
 		f = font;
 
-		/* read the font metrics before */
-		if ( !font->underline ) {
+		/* Read the font metrics before */
+		if (!font->underline) {
 			f = ft2_open_face(font, font->size);
 		}
 
 		if (debug > 1) {
 			char buf[10];
-			puts("FT2 find_font: bitmap id="); ltoa(buf, (long)f->id, 10); puts(buf);
-			puts(" size="); ltoa(buf, (long)f->size, 10); puts_nl(buf);
+			puts("FT2 find_font: bitmap id=");
+			ltoa(buf, (long)f->id, 10);
+			puts(buf);
+			puts(" size=");
+			ltoa(buf, (long)f->size, 10);
+			puts_nl(buf);
 		}
 	}
 
