@@ -1,3 +1,7 @@
+2006-02-21 - johan
+FT2 alternative for vqt_fontheader -> PapyrusX knows about font names.
+A couple of bug fixes.
+
 2006-02-20 - standa
 FT2 alternatives for vqt_xfntinfo(), vqt_getbitmap_info() and
 vqt_advance() -> PapyrusX displays the text quite reasonably now.
