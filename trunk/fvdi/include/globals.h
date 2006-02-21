@@ -3,7 +3,7 @@
 /*
  * fVDI global variable declarations
  *
- * $Id: globals.h,v 1.13 2006-02-20 17:03:15 standa Exp $
+ * $Id: globals.h,v 1.14 2006-02-21 20:16:44 standa Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -120,6 +120,7 @@ extern short ext_malloc;
 extern short check_mem;
 extern short bconout;
 extern short file_cache_size;
+extern short antialiasing;
 extern char *debug_file;
 
 extern long pid_addr;

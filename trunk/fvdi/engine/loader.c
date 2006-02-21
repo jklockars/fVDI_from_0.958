@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.29 2006-02-21 01:09:06 johan Exp $
+ * $Id: loader.c,v 1.30 2006-02-21 20:16:44 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -115,6 +115,7 @@ short check_mem = 1;
 #endif
 short bconout = 0;
 short file_cache_size = 0;
+short antialiasing = 0;
 char *debug_file = 0;
 static char path[PATH_SIZE];
 
@@ -195,8 +196,9 @@ static Option options[] = {
    {"checkmem",   &check_mem,      4},  /* checkmem n, check memory allocation consistency at every nth VDI call */
    {"preallocate",pre_allocate,   -1},  /* preallocate n, allocate n kbyte at startup */
    {"filecache",  file_cache,     -1},  /* filecache n, allocate n kbyte for FreeType2 font files */
+   {"antialias",  &antialiasing,   1},  /* use FT2 antialiasing */
    {"debugfile",  set_debug_file, -1},  /* debugfile str, file to use for debug output */
-   {"bconout",   &bconout,         1}   /* bconout, enables handling of BConout the the screen in fVDI */
+   {"bconout",    &bconout,         1}   /* bconout, enables handling of BConout the the screen in fVDI */
 };
 
 

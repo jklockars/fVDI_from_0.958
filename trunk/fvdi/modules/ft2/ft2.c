@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.18 2006-02-21 01:15:22 johan Exp $
+ * $Id: ft2.c,v 1.19 2006-02-21 20:16:45 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -55,6 +55,7 @@ typedef struct cached_glyph {
 
 #define CACHED_METRICS	0x10
 #define CACHED_BITMAP	0x01
+#define CACHED_PIXMAP	0x02
 
 #if 1
 #define DEBUG_FONTS 1
@@ -611,7 +612,7 @@ void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 	 */
 	if (face->style_flags & FT_STYLE_FLAG_ITALIC)
 		fhdr->fh_cflgs |= 1;
-	if (face->face_flags & FT_FACE_FLAG_FIXED_SIZES)
+	if (face->face_flags & FT_FACE_FLAG_FIXED_WIDTH)
 		fhdr->fh_cflgs |= 2;
 	fhdr->fh_famcl = 0;     /* Family classification */
 	/* 0 - Don't care
@@ -621,7 +622,7 @@ void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 	 * 4 - Script
 	 * 5 - Decorative
 	 */
-	if (face->face_flags & FT_FACE_FLAG_FIXED_SIZES)
+	if (face->face_flags & FT_FACE_FLAG_FIXED_WIDTH)
 		fhdr->fh_famcl |= 8;
 	fhdr->fh_frmcl = 0x68;  /* Font form classification */
 	/* 0x_4 - Condensed
@@ -651,7 +652,7 @@ void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 	if (face->style_flags & FT_STYLE_FLAG_BOLD)
 		fhdr->fh_frmcl = (fhdr->fh_frmcl & 0x0f) | 0xa0;
 	/* The below should likely include "Italic" etc */
-	strcpy(fhdr->fh_sfntn, face->family_name); /* Short font name */
+	strcpy(fhdr->fh_sfntn, font->name); /* Short font name */
 	/* Abbreviation of Postscript equivalent font name */
 	strcpy(fhdr->fh_sfacn, face->family_name);  /* Short face name */
 	/* Abbreviation of the typeface family name */
@@ -772,7 +773,8 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 		cached->stored |= CACHED_METRICS;
 	}
 
-	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP))) { 
+	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP)) ||
+	    ((want & CACHED_PIXMAP) && !(cached->stored & CACHED_PIXMAP))) { 
 		int i;
 		FT_Bitmap* src;
 		FT_Bitmap* dst;
@@ -791,8 +793,13 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 		}
 #endif
 
+		/* FIXME! What if we enable antialiasing here ;) */
+
 		/* Render the glyph */
-		error = FT_Render_Glyph(glyph, ft_render_mode_mono);
+		if (want & CACHED_PIXMAP)
+			error = FT_Render_Glyph(glyph, ft_render_mode_normal);
+		else
+			error = FT_Render_Glyph(glyph, ft_render_mode_mono);
 		if (error) {
 			return error;
 		}
@@ -813,11 +820,13 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 			dst->width += bump;
 		}
 #endif
-#if 0
-		dst->pitch = (dst->width + 7) >> 3;
-#else
-		dst->pitch = ((dst->width + 15) >> 4) * 2;   /* Only whole words */
-#endif
+
+		/* NOTE: This all assumes that the ft_render_mode_normal result is 8bit */
+
+		dst->pitch = ((dst->width + 15) >> 4) << 1;   /* Only whole words */
+		if (want & CACHED_PIXMAP) {
+			dst->pitch <<= 3; /* multiply by 8 */
+		}
 
 		if (dst->rows != 0) {
 			dst->buffer = malloc(dst->pitch * dst->rows);
@@ -826,11 +835,42 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 			}
 			setmem(dst->buffer, 0, dst->pitch * dst->rows);
 
-			for(i = 0; i < src->rows; i++) {
-				int soffset = i * src->pitch;
-				int doffset = i * dst->pitch;
-				memcpy(dst->buffer + doffset,
-				       src->buffer + soffset, src->pitch);
+			if ( !FT_IS_SCALABLE(face) ) {
+				/* This special case wouldn't
+				 * be here if the FT_Render_Glyph()
+				 * function wasn't buggy when it tried
+				 * to render a .fon font with 256
+				 * shades of gray.  Instead, it
+				 * returns a black and white surface
+				 * and we have to translate it back
+				 * to a 256 gray shaded surface. 
+				 * */
+				for(i = 0; i < src->rows; i++) {
+					int soffset = i * src->pitch;
+					int doffset = i * dst->pitch;
+					unsigned char *srcp = src->buffer + soffset;
+					unsigned char *dstp = dst->buffer + doffset;
+					unsigned char ch;
+					int j, k;
+					for ( j = 0; j < src->width; j += 8) {
+						ch = *srcp++;
+						for (k = 0; k < 8; ++k) {
+							if ((ch&0x80) >> 7) {
+								*dstp++ = 0xff;
+							} else {
+								*dstp++ = 0x00;
+							}
+							ch <<= 1;
+						}
+					}
+				}
+			} else {
+				for(i = 0; i < src->rows; i++) {
+					int soffset = i * src->pitch;
+					int doffset = i * dst->pitch;
+					memcpy(dst->buffer + doffset,
+							src->buffer + soffset, src->pitch);
+				}
 			}
 		}
 
@@ -865,7 +905,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 #endif
 
 		/* Mark that we rendered this format */
-		cached->stored |= CACHED_BITMAP;
+		cached->stored |= want & (CACHED_BITMAP|CACHED_PIXMAP);
 	}
 
 	/* We're done, mark this glyph cached */
@@ -925,6 +965,8 @@ void *ft2_char_advance(Fontheader *font, long ch, short *advance_info)
 	if (!ft2_find_glyph(font, ch, CACHED_METRICS)) {
 		c_glyph *g = (c_glyph *)font->extra.current;
 
+		/* FIXME! Text orientation not taken care of here */
+
 		/* X advance */
 		*advance_info++ = g->advance;
 		/* Y advance */
@@ -955,6 +997,8 @@ void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
 
 		*bitmap_info++ = g->bitmap.width;	/* Width */
 		*bitmap_info++ = g->bitmap.rows;	/* Height */
+
+		/* FIXME! Text orientation not taken care of here */
 
 		/* X advance */
 		*bitmap_info++ = g->advance;
@@ -1086,6 +1130,96 @@ int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
 	return status;
 }
 
+MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y, const short *text, MFDB *textbuf)
+{
+	int xstart = 0;
+	int width;
+	const short *ch;
+	c_glyph *glyph;
+
+	FT_Bitmap *current;
+	FT_Face face;
+	FT_Error error;
+	FT_Long use_kerning;
+	FT_UInt prev_index = 0;
+
+       	face = (FT_Face)font->extra.unpacked.data;
+
+	/* Check kerning */
+	use_kerning = 0; /* FIXME: FT_HAS_KERNING(face); */
+
+	y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
+
+	for(ch = text; *ch; ++ch) {
+		short c = *ch;
+
+		error = ft2_find_glyph(font, c, CACHED_METRICS|CACHED_PIXMAP);
+		if (error) {
+			free(textbuf->address);
+			return NULL;
+		}
+		glyph = font->extra.current;
+
+		current = &glyph->bitmap;
+		/* Ensure the width of the pixmap is correct. In some cases,
+		 * FreeType may report a larger pixmap than possible.
+		 */
+		width = current->width;
+		if (width > glyph->maxx - glyph->minx) {
+			width = glyph->maxx - glyph->minx;
+		}
+		/* Do kerning, if possible AC-Patch */
+		if (use_kerning && prev_index && glyph->index) {
+			FT_Vector delta; 
+			FT_Get_Kerning(face, prev_index, glyph->index,
+			               ft_kerning_default, &delta); 
+			xstart += delta.x >> 6;
+		}
+		/* Compensate for wrap around bug with negative minx's */
+		if ((ch == text) && (glyph->minx < 0)) {
+			xstart -= glyph->minx;
+		}
+
+		/* FIXME? For now this is char by char */
+		{
+			MFDB textbuf, *t;
+			short colors[2];
+			short pxy[8];
+
+			/* NOTE:
+			 * This MFDB is now only suppored by the aranym driver
+			 *
+			 * standard = 0x0100  ~  chunky data
+			 * bitplane = 8       ~  will aplha expand the data
+			 **/
+
+			/* Fill in the target surface */
+			textbuf.width     = width;
+			textbuf.height    = current->rows;
+			textbuf.standard  = 0x0100;		/* chunky! */
+			textbuf.bitplanes = 8;
+			textbuf.wdwidth   = current->pitch >> 1; /* Words per line */
+			textbuf.address = (void*)current->buffer;
+			t = &textbuf;
+
+			colors[1] = vwk->text.colour.background;
+			colors[0] = vwk->text.colour.foreground;
+
+			pxy[0] = 0;
+			pxy[1] = 0;
+			pxy[2] = t->width - 1;
+			pxy[3] = t->height - 1;
+			pxy[4] = x + xstart;
+			pxy[5] = y + glyph->yoffset;
+			pxy[6] = pxy[4] + t->width - 1;
+			pxy[7] = pxy[5] + t->height - 1;
+			lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, t, NULL, colors);
+		}
+
+		xstart += glyph->advance;
+		prev_index = glyph->index;
+	}
+}
 
 MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 {
@@ -1426,29 +1560,36 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 
 	/* Terminate text */
 	s[slen] = 0;
-	t = ft2_text_render(font, s, &textbuf); 
-	if (t && t->address) {
-		short colors[2];
-		short pxy[8];
+
+	if ( antialiasing ) {
 		short x = coords >> 16;
 		short y = coords & 0xffffUL;
+		ft2_text_render_antialias(vwk, font, x, y, s, &textbuf); 
+	} else {
+		t = ft2_text_render(font, s, &textbuf); 
+		if (t && t->address) {
+			short colors[2];
+			short pxy[8];
+			short x = coords >> 16;
+			short y = coords & 0xffffUL;
 
-		colors[1] = vwk->text.colour.background;
-		colors[0] = vwk->text.colour.foreground;
+			colors[1] = vwk->text.colour.background;
+			colors[0] = vwk->text.colour.foreground;
 
-		y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
+			y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
 
-		pxy[0] = 0;
-		pxy[1] = 0;
-		pxy[2] = t->width - 1;
-		pxy[3] = t->height - 1;
-		pxy[4] = x;
-		pxy[5] = y;
-		pxy[6] = x + t->width - 1;
-		pxy[7] = y + t->height - 1;
-		
-		lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, t, NULL, colors);
-		free(t->address);
+			pxy[0] = 0;
+			pxy[1] = 0;
+			pxy[2] = t->width - 1;
+			pxy[3] = t->height - 1;
+			pxy[4] = x;
+			pxy[5] = y;
+			pxy[6] = x + t->width - 1;
+			pxy[7] = y + t->height - 1;
+
+			lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, t, NULL, colors);
+			free(t->address);
+		}
 	}
 
 	/* Dispose of the FreeType2 objects */
