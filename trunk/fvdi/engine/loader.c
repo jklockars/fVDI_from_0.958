@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.28 2006-02-20 20:49:44 standa Exp $
+ * $Id: loader.c,v 1.29 2006-02-21 01:09:06 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -40,7 +40,8 @@ long        ft2_text_render_default(Virtual *vwk, unsigned long coords,
                                     short *s, long slen);
 void*       ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info);
 void*       ft2_char_advance(Fontheader *font, long ch, short *advance_info);
-void        ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, long index, XFNT_INFO *info);
+void        ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *info);
+void        ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr);
 
 long        (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
@@ -51,7 +52,8 @@ long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = ft2_text_render_default;
 void*       (*external_char_bitmap)(Fontheader *font, long ch, short *bitmap_info) = ft2_char_bitmap;
 void*       (*external_char_advance)(Fontheader *font, long ch, short *advance_info) = ft2_char_advance;
-void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, long index, XFNT_INFO *info) = ft2_xfntinfo;
+void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *info) = ft2_xfntinfo;
+void        (*external_fontheader)(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr) = ft2_fontheader;
 #else
 long        (*external_init)(void) = 0;
 Fontheader* (*external_load_font)(const char *font) = 0;
@@ -62,7 +64,8 @@ long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = 0;
 void*       (*external_char_bitmap)(Fontheader *font, long ch, short *bitmap_info) = 0;
 void*       (*external_char_advance)(Fontheader *font, long ch, short *advance_info) = 0;
-void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, long index, XFNT_INFO *info) = 0;
+void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *info) = 0;
+void        (*external_fontheader)(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr) = 0;
 #endif
 
 List *driver_list = 0;
@@ -1077,9 +1080,10 @@ long load_fonts(Virtual *vwk, const char **ptr)
 
 #if 0
    {
-	char buf[15];
-	puts("   Load fonts done: ");
-	ltoa(buf, vwk->real_address->writing.fonts, 10); puts_nl(buf);
+      char buf[10];
+      puts("   Load fonts done: ");
+      ltoa(buf, vwk->real_address->writing.fonts, 10);
+      puts_nl(buf);
    }
 #endif
 }
