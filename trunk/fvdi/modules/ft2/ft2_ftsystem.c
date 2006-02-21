@@ -464,8 +464,10 @@ static int fc_find(FT_Stream stream)
   if ((stream->descriptor.value & FC_MASK) == FC_CODE) {
     i = (stream->descriptor.value & 0x0f) - 1;
     if (strcmp(sname, file_cache[i].name) == 0) {
+#if 0
       if (debug > 1)
         access->funcs.puts("FC find, direct\x0d\x0a");
+#endif
       goto open_ok;
     }
   }
@@ -475,8 +477,10 @@ static int fc_find(FT_Stream stream)
       break;
   }
   if (i < FC_ENTRIES) {
+#if 0
     if (debug > 1)
       access->funcs.puts("FC find, search\x0d\x0a");
+#endif
     goto open_ok;
   }
 
