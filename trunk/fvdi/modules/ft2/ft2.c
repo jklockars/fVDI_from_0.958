@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.19 2006-02-21 20:16:45 standa Exp $
+ * $Id: ft2.c,v 1.20 2006-02-23 01:15:05 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -227,6 +227,12 @@ static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 		FT_Fixed scale;
 
 		/* Set the character size and use default DPI (72) */
+#if 1
+		if (!ptsize) {
+			access->funcs.puts("Attempt to load metrics with bad point size!\x0d\x0a");
+			ptsize = 10;
+		}
+#endif
 		error = FT_Set_Char_Size(face, 0, ptsize * /*FIXME!*/ 144, 0, 0);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
@@ -484,10 +490,10 @@ static Fontheader* ft2_open_face(Fontheader *font, short ptsize)
 	}
 
 	if (!font->extra.cache) {
-	   font->extra.cache = malloc(sizeof(c_glyph) * 256);	/* Cache */
-	   memset(font->extra.cache, 0, sizeof(c_glyph) * 256);	/* Cache */
-	   font->extra.scratch = malloc(sizeof(c_glyph));	/* Scratch */
-	   memset(font->extra.scratch, 0, sizeof(c_glyph));
+		font->extra.cache = malloc(sizeof(c_glyph) * 256);	/* Cache */
+		memset(font->extra.cache, 0, sizeof(c_glyph) * 256);	/* Cache */
+		font->extra.scratch = malloc(sizeof(c_glyph));		/* Scratch */
+		memset(font->extra.scratch, 0, sizeof(c_glyph));
 	}
 
 	font = ft2_load_metrics(font, face, ptsize);
@@ -1230,7 +1236,9 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	unsigned char *src;
 	unsigned char *dst;
 	unsigned char *dst_check;
+#if 0
 	int row, col;
+#endif
 	c_glyph *glyph;
 
 	FT_Bitmap *current;
@@ -1295,7 +1303,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 #endif
 
-#if 1
+#if 0
 		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_BITMAP);
 		if (error) {
 			free(textbuf->address);
@@ -1304,9 +1312,9 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		glyph = font->extra.current;
 #else
 		/* This should be done via a macro! */
-#if 0
+ #if 0
 		c = Atari2Unicode[c];
-#endif
+ #endif
 		if (c < 256) {
 			glyph = &((c_glyph *)font->extra.cache)[c];
 		} else {
@@ -1325,6 +1333,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 #endif
 		current = &glyph->bitmap;
+#if 0
 		/* Ensure the width of the pixmap is correct. In some cases,
 		 * FreeType may report a larger pixmap than possible.
 		 */
@@ -1332,6 +1341,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		if (width > glyph->maxx - glyph->minx) {
 			width = glyph->maxx - glyph->minx;
 		}
+#endif
 		/* Do kerning, if possible AC-Patch */
 		if (use_kerning && prev_index && glyph->index) {
 			FT_Vector delta; 
@@ -1350,6 +1360,18 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			short shift = offset % 8;
 			unsigned char rmask = (1 << shift) - 1;
 			unsigned char lmask = ~rmask;
+ #if 1
+			int row, col;
+ #endif
+ #if 1
+			/* Ensure the width of the pixmap is correct. In some cases,
+			 * FreeType may report a larger pixmap than possible.
+			 */
+			width = current->width;
+			if (width > glyph->maxx - glyph->minx) {
+				width = glyph->maxx - glyph->minx;
+			}
+ #endif
 
 			for(row = 0; row < current->rows; ++row) {
 				/* Make sure we don't go either over, or under the
@@ -1382,7 +1404,19 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			int offset = xstart + glyph->minx;
 			short shift = offset % 8;
 			int last_row;
+ #if 0
 			unsigned char *dst_base, *src_base, byte;
+ #else
+			unsigned char *dst_base, *src_base;
+			unsigned long byte;
+			short row, col, width;
+  #if 0
+			short dst_inc = textbuf->wdwidth * 2;
+			short src_inc = current->pitch;
+  #else
+			short dst_inc, src_inc;
+  #endif
+ #endif
 			
 			row = 0;
 			src_base = current->buffer;
@@ -1394,28 +1428,95 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			} else if (glyph->yoffset) {
 			    dst_base += glyph->yoffset * textbuf->wdwidth * 2;
 			}
+ #if 1
+			dst = dst_base;
+			src = src_base;
+ #endif
 
 			/* Over limit? */
 			last_row = current->rows - 1;
 			if (last_row + glyph->yoffset >= textbuf->height)
 			    last_row = textbuf->height - glyph->yoffset - 1;
 
+ #if 1
+			/* Ensure the width of the pixmap is correct. In some cases,
+			 * FreeType may report a larger pixmap than possible.
+			 */
+			width = current->width;
+			if (width > glyph->maxx - glyph->minx) {
+				width = glyph->maxx - glyph->minx;
+			}
+ #endif
+
+ #if 0
 			width = (width + 7) >> 3;
-
+  #if 1
+			width--;
+  #endif
+ #else
+			width = ((width + 7) >> 3) - 1;
+  #if 1
+			dst_inc = textbuf->wdwidth * 2 - (width + 1);
+			src_inc = current->pitch - (width + 1);
+  #endif
+ #endif
+ #if 0
 			for(; row <= last_row; ++row) {
+ #else
+			for(row = last_row - row; row >= 0; --row) {
+ #endif
 
+ #if 0
 				dst = dst_base;
 				dst_base += textbuf->wdwidth * 2;
 				src = src_base;
 				src_base += current->pitch;
+ #else
+  #if 0
+				dst = dst_base;
+				dst_base += dst_inc;
+				src = src_base;
+				src_base += src_inc;
+  #endif
+ #endif
 
+ #if 1
 				byte = *dst;
+ #else
+				byte = (byte & 0xffffff00L) | *dst;
+ #endif
+ #if 0
 				for(col = width; col > 0; --col) {
 					unsigned char x = *src++;
 					*dst++ = byte | (x >> shift);
 					byte = x << (8 - shift);
 				}
-				*dst = byte;
+ #else
+  #if 0
+				for(col = width; col >= 0; --col) {
+  #else
+				col = width;
+				do {
+  #endif
+					unsigned long x = *src++;
+  #if 0
+					*dst++ = byte | (x >> shift);
+  #else
+	/* We need to OR in case previous character "encroached" far into "our" space */
+					*dst++ |= byte | (x >> shift);
+  #endif
+					byte = x << (8 - shift);
+  #if 0
+				}
+  #else
+				} while (--col >= 0);
+  #endif
+ #endif
+				*dst |= byte;
+ #if 1
+				dst += dst_inc;
+				src += src_inc;
+ #endif
 			}
 #endif
 		}
