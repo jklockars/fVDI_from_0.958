@@ -60,13 +60,42 @@ short keep_open = 0;
 #define FC_NAMELEN 16
 #define FC_ENTRIES 15
 
+/* Define this to turn on file cache consistency checks */
+#undef FC_CHECK
+
 struct file_cache_entry {
   unsigned long used;
   unsigned long size;
   unsigned long position;
+#ifdef FC_CHECK
+  long at_16;
+  long at_end;
+#endif
   char *ptr;
   char name[FC_NAMELEN];
 };
+
+#ifdef FC_CHECK
+long get_at_16(struct file_cache_entry *entry)
+{
+  long v, i;
+
+  for(i = 16; i < 20; i++)
+    v = (v << 8) | entry->ptr[i];
+
+  return v;
+}
+
+long get_at_end(struct file_cache_entry *entry)
+{
+  long v, i;
+
+  for(i = entry->size - 4; i < entry->size; i++)
+    v = (v << 8) | entry->ptr[i];
+
+  return v;
+}
+#endif
 
 static char *file_cache_area = 0;
 static long file_cache_free = 0;
@@ -460,6 +489,16 @@ static int fc_discard(void)
       }
     }
 #endif
+
+#ifdef FC_CHECK
+    if (file_cache[oldest].at_16 != get_at_16(&file_cache[oldest])) {
+      puts("Beginning of discarded file different!\x0d\x0a");
+    }
+    if (file_cache[oldest].at_end != get_at_end(&file_cache[oldest])) {
+      puts("End of discarded file different!\x0d\x0a");
+    }
+#endif
+
   memmove(file_cache[oldest].ptr,
           file_cache[oldest].ptr + file_cache[oldest].size,
           file_cache_size * 1024L - file_cache_free -
@@ -495,6 +534,23 @@ static int fc_discard(void)
         }
       }
       puts("\x0d\x0a");
+    }
+#endif
+#ifdef FC_CHECK
+    if (i != oldest) {
+      char buf[10];
+      if (file_cache[i].at_16 != get_at_16(&file_cache[i])) {
+        puts("Beginning of repositioned file ");
+	ltoa(buf, i, 10);
+	puts(buf);
+	puts(" different!\x0d\x0a");
+      }
+      if (file_cache[i].at_end != get_at_end(&file_cache[i])) {
+        puts("End of repositioned file ");
+	ltoa(buf, i, 10);
+	puts(buf);
+	puts(" different!\x0d\x0a");
+      }
     }
 #endif
   }
@@ -593,6 +649,11 @@ static int fc_find(FT_Stream stream)
 
   size = (unsigned long)Fread(file, size, file_cache[i].ptr);
   Fclose(file);
+
+#ifdef FC_CHECK
+  file_cache[i].at_16 = get_at_16(&file_cache[i]);
+  file_cache[i].at_end = get_at_end(&file_cache[i]);
+#endif
 
   if (size != file_cache[i].size) {
     access->funcs.puts("Wrong number of bytes\x0d\x0a");
