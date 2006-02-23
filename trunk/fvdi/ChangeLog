@@ -1,3 +1,8 @@
+2006-02-23 - standa
+Fixed an obvious bug which might have caused a buffer overflow for
+'non-antialias' mode and bitmap FT2 fonts.
+A memory optimization in PIXMAP glyph pitch size.
+
 2006-02-23 - johan
 Replaced a bunch of strcpy() with strncpy().
 
