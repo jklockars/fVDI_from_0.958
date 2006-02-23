@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.21 2006-02-23 09:36:09 johan Exp $
+ * $Id: ft2.c,v 1.22 2006-02-23 13:03:21 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -837,7 +837,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 
 		dst->pitch = ((dst->width + 15) >> 4) << 1;   /* Only whole words */
 		if (want & CACHED_PIXMAP) {
-			dst->pitch <<= 3; /* multiply by 8 */
+			dst->pitch = (dst->width + 1) & ~1;   /* Even width is the pitch */
 		}
 
 		if (dst->rows != 0) {
@@ -847,7 +847,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 			}
 			setmem(dst->buffer, 0, dst->pitch * dst->rows);
 
-			if ( !FT_IS_SCALABLE(face) ) {
+			if ( (want & CACHED_PIXMAP) && !FT_IS_SCALABLE(face) ) {
 				/* This special case wouldn't
 				 * be here if the FT_Render_Glyph()
 				 * function wasn't buggy when it tried
