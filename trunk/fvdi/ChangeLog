@@ -1,3 +1,9 @@
+2006-02-22 - johan
+Significant optimizations for FreeType2 rendering from cached bitmaps.
+Fixed rendering bug for overlapping characters.
+File cache system consistency check added.
+Bug fix for problem with zero size FreeType2 font request.
+
 2006-02-21 - standa
 FT2 antialiasing with a small help of the aranym driver which is now
 able to expandArea() with 8bit chunky data (mfdb_standard = 0x0100).
