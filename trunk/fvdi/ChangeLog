@@ -1,3 +1,6 @@
+2006-02-23 - johan
+Replaced a bunch of strcpy() with strncpy().
+
 2006-02-22 - johan
 Significant optimizations for FreeType2 rendering from cached bitmaps.
 Fixed rendering bug for overlapping characters.

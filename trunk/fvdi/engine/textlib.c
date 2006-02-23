@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.9 2006-02-21 01:11:26 johan Exp $
+ * $Id: textlib.c,v 1.10 2006-02-23 09:36:09 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1026,12 +1026,14 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
 
   /* Dummy text */
   if (flags & 0x02) {
-    strcpy(info->family_name, "Century 725 Italic BT");
+    strncpy(info->family_name, "Century 725 Italic BT",
+            sizeof(info->family_name));
   }
 
   /* Dummy text */
   if (flags & 0x04) {
-    strcpy(info->style_name, "Italic");
+    strncpy(info->style_name, "Italic",
+            sizeof(info->style_name));
   }
 
   if (flags & 0x08) {
@@ -1156,11 +1158,14 @@ void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr)
    * 0xe_ - Black
    */
   /* Dummy text */
-  strcpy(fhdr->fh_sfntn, "Century725BT-Italic"); /* Short font name */
+  strncpy(fhdr->fh_sfntn, "Century725BT-Italic",  /* Short font name */
+          sizeof(fhdr->fh_sfntn));
   /* Abbreviation of Postscript equivalent font name */
-  strcpy(fhdr->fh_sfacn, "Century 725 BT");  /* Short face name */
+  strncpy(fhdr->fh_sfacn, "Century 725 BT",  /* Short face name */
+          sizeof(fhdr->fh_sfacn));
   /* Abbreviation of the typeface family name */
-  strcpy(fhdr->fh_fntfm, "Italic");  /* Font form (as above), style */
+  strncpy(fhdr->fh_fntfm, "Italic",   /* Font form (as above), style */
+          sizeof(fhdr->fh_fntfm));
   fhdr->fh_itang = 0;     /* Italic angle */
   /* Skew in 1/256 of degrees clockwise, if italic font */
   fhdr->fh_orupm = 2048;  /* ORUs per Em */

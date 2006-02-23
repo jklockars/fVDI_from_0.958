@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.20 2006-02-23 01:15:05 johan Exp $
+ * $Id: ft2.c,v 1.21 2006-02-23 09:36:09 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -658,11 +658,14 @@ void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 	if (face->style_flags & FT_STYLE_FLAG_BOLD)
 		fhdr->fh_frmcl = (fhdr->fh_frmcl & 0x0f) | 0xa0;
 	/* The below should likely include "Italic" etc */
-	strcpy(fhdr->fh_sfntn, font->name); /* Short font name */
+	strncpy(fhdr->fh_sfntn, font->name, /* Short font name */
+                sizeof(fhdr->fh_sfntn));
 	/* Abbreviation of Postscript equivalent font name */
-	strcpy(fhdr->fh_sfacn, face->family_name);  /* Short face name */
+	strncpy(fhdr->fh_sfacn, face->family_name,  /* Short face name */
+                sizeof(fhdr->fh_sfacn));
 	/* Abbreviation of the typeface family name */
-	strcpy(fhdr->fh_fntfm, face->style_name);  /* Font form (as above), style */
+	strncpy(fhdr->fh_fntfm, face->style_name,  /* Font form (as above), style */
+                sizeof(fhdr->fh_fntfm));
 	fhdr->fh_itang = 0;     /* Italic angle */
 	/* Skew in 1/256 of degrees clockwise, if italic font */
 	fhdr->fh_orupm = face->units_per_EM;  /* ORUs per Em */
@@ -689,15 +692,18 @@ void ft2_xfntinfo(Virtual *vwk, Fontheader *font,
 	}
 
 	if (flags & 0x02) {
-		strcpy(info->family_name, face->family_name);
+	  strncpy(info->family_name, face->family_name,
+                  sizeof(info->family_name));
 	}
 
 	if (flags & 0x04) {
-		strcpy(info->style_name, face->style_name);
+	  strncpy(info->style_name, face->style_name,
+                  sizeof(info->style_name));
 	}
 
 	if (flags & 0x08) {
-		strcpy(info->file_name1, font->extra.filename);
+	  strncpy(info->file_name1, font->extra.filename,
+                  sizeof(info->file_name1));
 	}
 
 	if (flags & 0x10) {
