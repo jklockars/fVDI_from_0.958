@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.22 2006-02-23 13:03:21 standa Exp $
+ * $Id: ft2.c,v 1.23 2006-02-24 12:14:07 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -101,7 +101,7 @@ struct _TTF_Font {
 static int TTF_initialized = 0;
 
 
-TTF_Font* TTF_OpenFontIndex(const char *file, int ptsize, long index)
+TTF_Font *TTF_OpenFontIndex(const char *file, int ptsize, long index)
 {
 	TTF_Font* font;
 
@@ -119,7 +119,7 @@ TTF_Font* TTF_OpenFontIndex(const char *file, int ptsize, long index)
 	return TTF_FTOpen(font);
 }
 
-TTF_Font* TTF_OpenFont(const char *file, int ptsize)
+TTF_Font *TTF_OpenFont(const char *file, int ptsize)
 {
 	return TTF_OpenFontIndex(file, ptsize, 0);
 }
@@ -141,7 +141,7 @@ static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want);
 
 #define USE_FREETYPE_ERRORS 1
 
-static char* ft2_error(const char *msg, FT_Error error)
+static char *ft2_error(const char *msg, FT_Error error)
 {
 	static char buffer[1024] = "uninitialized\r\n";
 #ifdef USE_FREETYPE_ERRORS
@@ -215,7 +215,7 @@ static void ft2_close_face(Fontheader *font)
 	font->extra.unpacked.data = NULL;
 }
 
-static Fontheader* ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize)
+static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize)
 {
        	/* SM124 640x400px -> 238x149mm */
 	//static long ydpi = ( 64 /*26.6 float*/ * 25.4 /*per inch*/ * 400 ) / 149;
@@ -429,7 +429,7 @@ Fontheader *ft2_load_font(const char *filename)
 		   access->funcs.puts("\r\n");
 	   }
 
-	   /* By default faces should not be kept in memory... (void*)face */;
+	   /* By default faces should not be kept in memory... (void *)face */;
 	   font->extra.unpacked.data = NULL;
 	   font->extra.cache         = NULL;
 	   font->extra.scratch       = NULL;
@@ -439,7 +439,7 @@ Fontheader *ft2_load_font(const char *filename)
 }
 
 
-static Fontheader* ft2_open_face(Fontheader *font, short ptsize)
+static Fontheader *ft2_open_face(Fontheader *font, short ptsize)
 {
 	FT_Error error;
 	FT_Face face;
@@ -693,17 +693,20 @@ void ft2_xfntinfo(Virtual *vwk, Fontheader *font,
 
 	if (flags & 0x02) {
 	  strncpy(info->family_name, face->family_name,
-                  sizeof(info->family_name));
+                  sizeof(info->family_name) - 1);
+          info->family_name[sizeof(info->family_name) - 1] = 0;
 	}
 
 	if (flags & 0x04) {
 	  strncpy(info->style_name, face->style_name,
-                  sizeof(info->style_name));
+                  sizeof(info->style_name) - 1);
+          info->style_name[sizeof(info->style_name) - 1] = 0;
 	}
 
 	if (flags & 0x08) {
 	  strncpy(info->file_name1, font->extra.filename,
-                  sizeof(info->file_name1));
+                  sizeof(info->file_name1) - 1);
+          info->file_name1[sizeof(info->file_name1) - 1] = 0;
 	}
 
 	if (flags & 0x10) {
@@ -788,8 +791,8 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP)) ||
 	    ((want & CACHED_PIXMAP) && !(cached->stored & CACHED_PIXMAP))) { 
 		int i;
-		FT_Bitmap* src;
-		FT_Bitmap* dst;
+		FT_Bitmap *src;
+		FT_Bitmap *dst;
 
 #if 0
 		/* Handle the italic style */
@@ -833,7 +836,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 		}
 #endif
 
-		/* NOTE: This all assumes that the ft_render_mode_normal result is 8bit */
+		/* NOTE: This all assumes that the ft_render_mode_normal result is 8 bit */
 
 		dst->pitch = ((dst->width + 15) >> 4) << 1;   /* Only whole words */
 		if (want & CACHED_PIXMAP) {
@@ -847,7 +850,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 			}
 			setmem(dst->buffer, 0, dst->pitch * dst->rows);
 
-			if ( (want & CACHED_PIXMAP) && !FT_IS_SCALABLE(face) ) {
+			if ((want & CACHED_PIXMAP) && !FT_IS_SCALABLE(face)) {
 				/* This special case wouldn't
 				 * be here if the FT_Render_Glyph()
 				 * function wasn't buggy when it tried
@@ -864,10 +867,10 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 					unsigned char *dstp = dst->buffer + doffset;
 					unsigned char ch;
 					int j, k;
-					for ( j = 0; j < src->width; j += 8) {
+					for(j = 0; j < src->width; j += 8) {
 						ch = *srcp++;
-						for (k = 0; k < 8; ++k) {
-							if ((ch&0x80) >> 7) {
+						for(k = 0; k < 8; ++k) {
+							if (ch & 0x80) {
 								*dstp++ = 0xff;
 							} else {
 								*dstp++ = 0x00;
@@ -881,7 +884,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 					int soffset = i * src->pitch;
 					int doffset = i * dst->pitch;
 					memcpy(dst->buffer + doffset,
-							src->buffer + soffset, src->pitch);
+					       src->buffer + soffset, src->pitch);
 				}
 			}
 		}
@@ -926,7 +929,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	return 0;
 }
 
-static void ft2_flush_glyph(c_glyph* glyph)
+static void ft2_flush_glyph(c_glyph *glyph)
 {
 	glyph->stored = 0;
 	glyph->index = 0;
@@ -953,7 +956,7 @@ static void ft2_flush_cache(Fontheader *font)
 	}
 }
 
-static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want)
+static FT_Error ft2_find_glyph(Fontheader *font, short ch, int want)
 {
 	int retval = 0;
 
@@ -1165,7 +1168,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
 
-		error = ft2_find_glyph(font, c, CACHED_METRICS|CACHED_PIXMAP);
+		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_PIXMAP);
 		if (error) {
 			free(textbuf->address);
 			return NULL;
@@ -1199,10 +1202,10 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 			short pxy[8];
 
 			/* NOTE:
-			 * This MFDB is now only suppored by the aranym driver
+			 * This MFDB is only supported by the aranym driver so far
 			 *
 			 * standard = 0x0100  ~  chunky data
-			 * bitplane = 8       ~  will aplha expand the data
+			 * bitplane = 8       ~  will alpha expand the data
 			 **/
 
 			/* Fill in the target surface */
@@ -1211,7 +1214,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 			textbuf.standard  = 0x0100;		/* chunky! */
 			textbuf.bitplanes = 8;
 			textbuf.wdwidth   = current->pitch >> 1; /* Words per line */
-			textbuf.address = (void*)current->buffer;
+			textbuf.address   = (void *)current->buffer;
 			t = &textbuf;
 
 			colors[1] = vwk->text.colour.background;
@@ -1242,9 +1245,6 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	unsigned char *src;
 	unsigned char *dst;
 	unsigned char *dst_check;
-#if 0
-	int row, col;
-#endif
 	c_glyph *glyph;
 
 	FT_Bitmap *current;
@@ -1318,9 +1318,6 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		glyph = font->extra.current;
 #else
 		/* This should be done via a macro! */
- #if 0
-		c = Atari2Unicode[c];
- #endif
 		if (c < 256) {
 			glyph = &((c_glyph *)font->extra.cache)[c];
 		} else {
@@ -1339,15 +1336,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 #endif
 		current = &glyph->bitmap;
-#if 0
-		/* Ensure the width of the pixmap is correct. In some cases,
-		 * FreeType may report a larger pixmap than possible.
-		 */
-		width = current->width;
-		if (width > glyph->maxx - glyph->minx) {
-			width = glyph->maxx - glyph->minx;
-		}
-#endif
+
 		/* Do kerning, if possible AC-Patch */
 		if (use_kerning && prev_index && glyph->index) {
 			FT_Vector delta; 
@@ -1366,10 +1355,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			short shift = offset % 8;
 			unsigned char rmask = (1 << shift) - 1;
 			unsigned char lmask = ~rmask;
- #if 1
 			int row, col;
- #endif
- #if 1
+
 			/* Ensure the width of the pixmap is correct. In some cases,
 			 * FreeType may report a larger pixmap than possible.
 			 */
@@ -1377,7 +1364,6 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			if (width > glyph->maxx - glyph->minx) {
 				width = glyph->maxx - glyph->minx;
 			}
- #endif
 
 			for(row = 0; row < current->rows; ++row) {
 				/* Make sure we don't go either over, or under the
@@ -1410,41 +1396,29 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			int offset = xstart + glyph->minx;
 			short shift = offset % 8;
 			int last_row;
- #if 0
-			unsigned char *dst_base, *src_base, byte;
- #else
-			unsigned char *dst_base, *src_base;
 			unsigned long byte;
 			short row, col, width;
-  #if 0
-			short dst_inc = textbuf->wdwidth * 2;
-			short src_inc = current->pitch;
-  #else
 			short dst_inc, src_inc;
-  #endif
- #endif
+			unsigned char *src_base, *dst_base;
 			
 			row = 0;
 			src_base = current->buffer;
 			dst_base = (unsigned char *)textbuf->address +
 			           (offset >> 3);
 			if (glyph->yoffset < 0) {   /* Under limit? */
-			    row      -= glyph->yoffset;
+			    row -= glyph->yoffset;
 			    src_base += row * current->pitch;
 			} else if (glyph->yoffset) {
 			    dst_base += glyph->yoffset * textbuf->wdwidth * 2;
 			}
- #if 1
-			dst = dst_base;
 			src = src_base;
- #endif
+			dst = dst_base;
 
 			/* Over limit? */
 			last_row = current->rows - 1;
 			if (last_row + glyph->yoffset >= textbuf->height)
 			    last_row = textbuf->height - glyph->yoffset - 1;
 
- #if 1
 			/* Ensure the width of the pixmap is correct. In some cases,
 			 * FreeType may report a larger pixmap than possible.
 			 */
@@ -1452,77 +1426,27 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			if (width > glyph->maxx - glyph->minx) {
 				width = glyph->maxx - glyph->minx;
 			}
- #endif
 
- #if 0
-			width = (width + 7) >> 3;
-  #if 1
-			width--;
-  #endif
- #else
 			width = ((width + 7) >> 3) - 1;
-  #if 1
 			dst_inc = textbuf->wdwidth * 2 - (width + 1);
 			src_inc = current->pitch - (width + 1);
-  #endif
- #endif
- #if 0
-			for(; row <= last_row; ++row) {
- #else
+
+			/* We need to OR with memory in case previous
+			 * character "encroached" far into "our" space.
+			 * Could be special case.
+			 */
 			for(row = last_row - row; row >= 0; --row) {
- #endif
-
- #if 0
-				dst = dst_base;
-				dst_base += textbuf->wdwidth * 2;
-				src = src_base;
-				src_base += current->pitch;
- #else
-  #if 0
-				dst = dst_base;
-				dst_base += dst_inc;
-				src = src_base;
-				src_base += src_inc;
-  #endif
- #endif
-
- #if 1
 				byte = *dst;
- #else
-				byte = (byte & 0xffffff00L) | *dst;
- #endif
- #if 0
-				for(col = width; col > 0; --col) {
-					unsigned char x = *src++;
-					*dst++ = byte | (x >> shift);
-					byte = x << (8 - shift);
-				}
- #else
-  #if 0
-				for(col = width; col >= 0; --col) {
-  #else
 				col = width;
 				do {
-  #endif
 					unsigned long x = *src++;
-  #if 0
-					*dst++ = byte | (x >> shift);
-  #else
-	/* We need to OR in case previous character "encroached" far into "our" space */
 					*dst++ |= byte | (x >> shift);
-  #endif
 					byte = x << (8 - shift);
-  #if 0
-				}
-  #else
 				} while (--col >= 0);
-  #endif
- #endif
+
 				*dst |= byte;
- #if 1
 				dst += dst_inc;
 				src += src_inc;
- #endif
 			}
 #endif
 		}
@@ -1544,7 +1468,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			row = (textbuf->height - 1) - font->underline_height;
 		}
 		dst = (unsigned char *)textbuf->address + row * textbuf->wdwidth * 2;
-		for (row = font->underline_height; row > 0; --row) {
+		for(row = font->underline_height; row > 0; --row) {
 			/* 1 because 0 is the bg color */
 			setmem(dst, 1, textbuf->width);
 			dst += textbuf->wdwidth * 2;
@@ -1605,7 +1529,7 @@ Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
 		font_count--;
 	}
 
-	/* Create additional size face as it is scalable font */
+	/* Create additional size face as it is a scalable font */
 	if (font->flags & 0x4000) {
 		f = ft2_dup_font(font, ptsize);
 	} else {
@@ -1668,7 +1592,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 	/* Terminate text */
 	s[slen] = 0;
 
-	if ( antialiasing ) {
+	if (antialiasing) {
 		short x = coords >> 16;
 		short y = coords & 0xffffUL;
 		ft2_text_render_antialias(vwk, font, x, y, s, &textbuf); 
@@ -1896,13 +1820,13 @@ int TTF_GlyphMetrics(TTF_Font *font, Uint16 ch,
 }
 
 
-void TTF_SetFontStyle(TTF_Font* font, int style)
+void TTF_SetFontStyle(TTF_Font *font, int style)
 {
 	font->style = style;
 	ft2_flush_cache(font);
 }
 
-int TTF_GetFontStyle(TTF_Font* font)
+int TTF_GetFontStyle(TTF_Font *font)
 {
 	return font->style;
 }
