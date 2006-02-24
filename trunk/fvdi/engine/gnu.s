@@ -14,15 +14,20 @@
 
 	xdef	_lib_vdi_s,_lib_vdi_sp,_lib_vdi_spppp,_lib_vdi_pp
 
-	xdef	_set_stack_call,_set_stack_call_p
+	xdef	_set_stack_call_pvlpl,_set_stack_call_lppll
+	xdef	_set_stack_call_lplll,_set_stack_call_lvplp
+	xdef	_set_stack_call_lvppl
 
 	
 	text
 
 * long set_stack_call(new_stack, stack_size, function, par1, par2, par3, par4)
 * Calls with new stack function(par1, par2, par3, par4)
-_set_stack_call_p:
-_set_stack_call:
+_set_stack_call_pvlpl:
+_set_stack_call_lppll:
+_set_stack_call_lplll:
+_set_stack_call_lvplp:
+_set_stack_call_lvppl:
 	move.l	a7,a0		; Set new stack and remember old
 	move.l	4(a7),a7
 	move.l	a0,-(a7)

@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.13 2006-02-21 01:06:00 johan Exp $
+ * $Id: function.h,v 1.14 2006-02-24 12:08:12 johan Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -60,8 +60,11 @@ extern void lib_vdi_spppp(void *, void *, short, void *, void *, void *, void *)
 extern void lib_vdi_pp(void *, void *, void *, void *);
 #else
  #ifdef __GNUC__
-void *set_stack_call_p(void *stk, long size, void *func, long, long, long, long);
-long set_stack_call(void *stk, long size, void *func, long, long, long, long);
+void *set_stack_call_pvlpl(void *stk, long size, void *func, Virtual *,   long, void *,   long);
+long  set_stack_call_lppll(void *stk, long size, void *func,    void *, void *,   long,   long);
+long  set_stack_call_lplll(void *stk, long size, void *func,    void *,   long,   long,   long);
+long  set_stack_call_lvplp(void *stk, long size, void *func, Virtual *, void *,   long, void *);
+long  set_stack_call_lvppl(void *stk, long size, void *func, Virtual *, void *, void *,   long);
 void lib_vdi_s(void *, void *, long);
 void lib_vdi_sp(void *, void *, long, void *);
 void lib_vdi_spppp(void *, void *, long, void *, void *, void *, void *);
