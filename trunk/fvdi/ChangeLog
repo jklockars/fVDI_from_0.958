@@ -1,3 +1,7 @@
+2006-02-24 - johan
+Proper prototypes for stack change calls.
+Fix for too long names in vqt_xfntnames().
+
 2006-02-23 - standa
 Fixed an obvious bug which might have caused a buffer overflow for
 'non-antialias' mode and bitmap FT2 fonts.

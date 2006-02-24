@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.10 2006-02-23 09:36:09 johan Exp $
+ * $Id: textlib.c,v 1.11 2006-02-24 12:11:47 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1009,9 +1009,9 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
   info->index  = index;
 
   if ((font->flags & 0x8000) && external_xfntinfo) {
-    set_stack_call(vdi_stack_top, vdi_stack_size,
-                   external_xfntinfo,
-                   vwk, font, flags, info);
+    set_stack_call_lvplp(vdi_stack_top, vdi_stack_size,
+                         external_xfntinfo,
+                         vwk, font, flags, info);
     return;
   }
 
@@ -1027,13 +1027,15 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
   /* Dummy text */
   if (flags & 0x02) {
     strncpy(info->family_name, "Century 725 Italic BT",
-            sizeof(info->family_name));
+            sizeof(info->family_name) - 1);
+    info->family_name[sizeof(info->family_name) - 1] = 0;
   }
 
   /* Dummy text */
   if (flags & 0x04) {
     strncpy(info->style_name, "Italic",
-            sizeof(info->style_name));
+            sizeof(info->style_name) - 1);
+    info->style_name[sizeof(info->style_name) - 1] = 0;
   }
 
   if (flags & 0x08) {
@@ -1084,9 +1086,9 @@ void lib_vqt_fontheader(Virtual *vwk, VQT_FHDR *fhdr)
   font = vwk->text.current_font;
 
   if ((font->flags & 0x8000) && external_fontheader) {
-    set_stack_call(vdi_stack_top, vdi_stack_size,
-                   external_fontheader,
-                   vwk, font, fhdr, 0);
+    set_stack_call_lvppl(vdi_stack_top, vdi_stack_size,
+                         external_fontheader,
+                         vwk, font, fhdr, 0);
     return;
   }
 
@@ -1192,9 +1194,9 @@ void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points)
 	/* Handle differently? This is not really allowed at all! */
 	if (!external_vqt_extent)
 	    return;
-	width = set_stack_call(vdi_stack_top, vdi_stack_size,
-			       external_vqt_extent,
-			       vwk->text.current_font, string, length, 0);
+	width = set_stack_call_lppll(vdi_stack_top, vdi_stack_size,
+			             external_vqt_extent,
+			             vwk->text.current_font, string, length, 0);
     } else {
 
 	char_tab = vwk->text.current_font->table.character;
@@ -1348,9 +1350,9 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 #if DEB
 	puts("  vector ok\x0d\x0a");
 #endif
-	font = set_stack_call_p(vdi_stack_top, vdi_stack_size,
-				external_vst_point,
-				vwk, height, sizes, 0);
+	font = set_stack_call_pvlpl(vdi_stack_top, vdi_stack_size,
+			            external_vst_point,
+			            vwk, height, sizes, 0);
 #if DEB
 	puts("  vector found\x0d\x0a");
 #endif
