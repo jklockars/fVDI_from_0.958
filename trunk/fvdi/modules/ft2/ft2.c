@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.27 2006-02-27 20:39:33 standa Exp $
+ * $Id: ft2.c,v 1.28 2006-02-27 21:41:33 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -305,11 +305,11 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 /*
  * Load a font and make it ready for use
  */
-Fontheader *ft2_load_font(const char *filename)
+Fontheader *ft2_load_font(Virtual *vwk, const char *filename)
 {
    Fontheader *font = (Fontheader *)malloc(sizeof(Fontheader));
    if (font) {
-	   static id = 5000;
+	   short id;
 	   FT_Error error;
 	   FT_Face face;
 
@@ -334,7 +334,39 @@ Fontheader *ft2_load_font(const char *filename)
 		   strncpy(font->name, buf, 32);		/* family name would be the font name? */
 	   }
 
-	   font->id = id++;
+	   {
+		   /* get the family_name + style_name hashcode */
+		   short id_conflict;
+		   const char *p;
+		   short hc = 0;
+		   for (p = face->family_name; *p; p++) hc = (hc<<5) - hc + *p;
+		   for (p = face->style_name; *p; p++) hc = (hc<<5) - hc + *p;
+
+		   /* id is >5000 for Vector fonts (from SpeedoGDOS)  */
+		   id = hc + 5000;
+		   if ( id < 0 ) id = -id;
+		   if ( id < 5000 ) id += 5000;
+
+		   /* find out whether there already is such a font ID */
+		   do {
+			   Fontheader *f = vwk->real_address->writing.first_font;
+			   id++;
+			   id_conflict = 0;
+
+			   while ( f ) {
+				   if (f->id == id) {
+					   id_conflict = 1;
+					   break;
+				   }
+				   f = f->next;
+			   }
+		   } while ( id_conflict );
+	   }
+
+	   /* FIXME: store the font type (TTF, Type1) somewhere for vqt_xfntinfo and vq_fontheader functions
+	    *        e.g. the x.app decides what to call depending on the type of the font. */
+
+	   font->id = id;
 	   font->flags = 0x8000 |				/* FT2 handled font */
 			 (FT_IS_SCALABLE(face)    ? 0x4000 : 0) |
 		  	 (FT_IS_FIXED_WIDTH(face) ? 0x0008 : 0);	/* .FNT compatible flag */

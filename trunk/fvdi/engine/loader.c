@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.31 2006-02-27 20:39:32 standa Exp $
+ * $Id: loader.c,v 1.32 2006-02-27 21:41:33 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -32,7 +32,7 @@
 #ifdef FT2
 /* Headers to ft2_* functions ... FIXME: to be moved */
 long        ft2_init(void);
-Fontheader* ft2_load_font(const char *filename);
+Fontheader* ft2_load_font(Virtual *vwk, const char *filename);
 long        ft2_char_width(Virtual *vwk, Fontheader *font, long ch);
 long        ft2_text_width(Virtual *vwk, Fontheader *font, short *s, long slen);
 Fontheader* ft2_vst_point(Virtual *vwk, long ptsize, short *sizes);
@@ -44,7 +44,7 @@ void        ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *
 void        ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr);
 
 long        (*external_init)(void) = ft2_init;
-Fontheader* (*external_load_font)(const char *font) = ft2_load_font;
+Fontheader* (*external_load_font)(Virtual *vwk, const char *font) = ft2_load_font;
 long        (*external_vqt_extent)(Virtual *vwk, Fontheader *font, short *text, long length) = ft2_text_width;
 long        (*external_vqt_width)(Virtual *vwk, Fontheader *font, long ch) = ft2_char_width;
 Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes) = ft2_vst_point;
@@ -56,7 +56,7 @@ void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, XFN
 void        (*external_fontheader)(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr) = ft2_fontheader;
 #else
 long        (*external_init)(void) = 0;
-Fontheader* (*external_load_font)(const char *font) = 0;
+Fontheader* (*external_load_font)(Virtual *vwk, const char *font) = 0;
 long        (*external_vqt_extent)(Virtual *vwk, Fontheader *font, short *text, long length) = 0;
 long        (*external_vqt_width)(Virtual *vwk, Fontheader *font, long ch) = 0;
 Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes) = 0;
@@ -1071,7 +1071,7 @@ long load_fonts(Virtual *vwk, const char **ptr)
       puts_nl(fonts);
 #endif
 
-      if ((new_font = external_load_font(fonts))) {
+      if ((new_font = external_load_font(vwk, fonts))) {
          /* It's assumed that a device has been initialized (driver exists) */
          if (insert_font(&vwk->real_address->writing.first_font, new_font))
             vwk->real_address->writing.fonts++;

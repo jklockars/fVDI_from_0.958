@@ -1,6 +1,9 @@
 2006-02-27 - standa
 Virtual* propagated into all FT2 functions as they need DPI information
 eventually.
+Font ID is now an adjusted family_name+style_name hashcode (stays the
+same if you add a font to your setup - if doesn't conflict with any
+previously added font).
 
 2006-02-26 - standa
 Hardcoded 95DPI for the FT2 vst_font() height until we adjust the code
