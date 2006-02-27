@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.23 2006-02-24 12:14:07 johan Exp $
+ * $Id: ft2.c,v 1.24 2006-02-27 03:36:17 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -50,9 +50,6 @@ typedef struct cached_glyph {
 #define FT_FLOOR(X)	((X & -64) / 64)
 #define FT_CEIL(X)	(((X + 63) & -64) / 64)
 
-/* external leading */
-#define LINE_GAP	1
-
 #define CACHED_METRICS	0x10
 #define CACHED_BITMAP	0x01
 #define CACHED_PIXMAP	0x02
@@ -61,70 +58,6 @@ typedef struct cached_glyph {
 #define DEBUG_FONTS 1
 #endif
 
-#if 0
-
-/* The structure used to hold internal font information */
-struct _TTF_Font {
-	/* Freetype2 maintains all sorts of useful info itself */
-	FT_Face face;
-	/* filename and size */
-	int	opened;
-	char	*filename;
-	int	ptsize;
-	long	index;
-
-
-	/* We'll cache these ourselves */
-	int height;
-	int ascent;
-	int descent;
-	int lineskip;
-
-	/* The font style */
-	int style;
-
-	/* Extra width in glyph bounds for text styles */
-	int glyph_overhang;
-	float glyph_italics;
-
-	/* Information in the font for underlining */
-	int underline_offset;
-	int underline_height;
-
-	/* Cache for style-transformed glyphs */
-	c_glyph *current;
-	c_glyph cache[256];
-	c_glyph scratch;
-};
-
-/* The FreeType font engine/library */
-static int TTF_initialized = 0;
-
-
-TTF_Font *TTF_OpenFontIndex(const char *file, int ptsize, long index)
-{
-	TTF_Font* font;
-
-	font = (TTF_Font *)malloc(sizeof *font);
-	if (font == NULL) {
-		TTF_SetError("Out of memory");
-		return NULL;
-	}
-	setmem(font, 0, sizeof(*font));
-
-	font->filename = strdup(file);
-	font->ptsize = ptsize;
-	font->index = index;
-
-	return TTF_FTOpen(font);
-}
-
-TTF_Font *TTF_OpenFont(const char *file, int ptsize)
-{
-	return TTF_OpenFontIndex(file, ptsize, 0);
-}
-
-#endif
 
 static FT_Library library;
 static LIST       fonts;
@@ -217,10 +150,6 @@ static void ft2_close_face(Fontheader *font)
 
 static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize)
 {
-       	/* SM124 640x400px -> 238x149mm */
-	//static long ydpi = ( 64 /*26.6 float*/ * 25.4 /*per inch*/ * 400 ) / 149;
-	//static long ydpi = 64 /*26.6 float*/ * 72 /* dots per inch */;
-
 	FT_Error error;
 
 	if (FT_IS_SCALABLE(face)) {
@@ -233,7 +162,9 @@ static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 			ptsize = 10;
 		}
 #endif
-		error = FT_Set_Char_Size(face, 0, ptsize * /*FIXME!*/ 144, 0, 0);
+		/* FIXME: hardcoded for now. Propagate vwk and get
+		 * (vwk->screen.pixel.height * 25400) instead of the 95DPI */
+		error = FT_Set_Char_Size(face, 0, ptsize * 64, 0, 95);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
 			ft2_close_face(font);
@@ -319,7 +250,7 @@ static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 
 	/* Finish the font metrics fill-in */
 	font->distance.half = (font->distance.top + font->distance.bottom) >> 1;
-	font->height        = font->distance.ascent + font->distance.descent + LINE_GAP;
+	font->height        = font->distance.ascent + font->distance.descent - 1;
 
 	/* Fake for vqt_fontinfo() as some apps might rely on this */
 	font->code.low  = 0;
@@ -512,14 +443,10 @@ static inline FT_Face ft2_get_face(Fontheader *font)
 {
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
-#if 0
-		font = ft2_open_face(font, font->size);
-#else
 		if (font->size)
 			font = ft2_open_face(font, font->size);
 		else
 			font = ft2_open_face(font, 10);
-#endif
 	}
 
 	return (FT_Face)font->extra.unpacked.data;
@@ -1163,7 +1090,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	/* Check kerning */
 	use_kerning = 0; /* FIXME: FT_HAS_KERNING(face); */
 
-	y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
+	y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical] - 1;
 
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
@@ -1607,7 +1534,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 			colors[1] = vwk->text.colour.background;
 			colors[0] = vwk->text.colour.foreground;
 
-			y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
+			y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical] - 1;
 
 			pxy[0] = 0;
 			pxy[1] = 0;
