@@ -1,6 +1,8 @@
 2006-02-26 - standa
 Hardcoded 95DPI for the FT2 vst_font() height until we adjust the code
 to propagate the vwk and get wvk->screen.pixel.height * 25400.
+Pixmap glyph storage added to get bitmap from getbitmap_info even when
+antialias is on.
 Little un-#if0ying in ft2.c.
 
 2006-02-24 - johan
