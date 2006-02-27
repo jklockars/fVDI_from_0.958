@@ -3,7 +3,7 @@
 /*
  * fVDI function declarations
  *
- * $Id: function.h,v 1.14 2006-02-24 12:08:12 johan Exp $
+ * $Id: function.h,v 1.15 2006-02-27 20:39:32 standa Exp $
  *
  * Copyright 2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -62,6 +62,7 @@ extern void lib_vdi_pp(void *, void *, void *, void *);
  #ifdef __GNUC__
 void *set_stack_call_pvlpl(void *stk, long size, void *func, Virtual *,   long, void *,   long);
 long  set_stack_call_lppll(void *stk, long size, void *func,    void *, void *,   long,   long);
+long  set_stack_call_lpppll(void *stk, long size, void *func,   void *, void *, void *,   long,   long);
 long  set_stack_call_lplll(void *stk, long size, void *func,    void *,   long,   long,   long);
 long  set_stack_call_lvplp(void *stk, long size, void *func, Virtual *, void *,   long, void *);
 long  set_stack_call_lvppl(void *stk, long size, void *func, Virtual *, void *, void *,   long);
@@ -122,13 +123,13 @@ extern short isqrt(unsigned long x);
 
 extern long         (*external_init)(void);
 extern Fontheader* (*external_load_font)(const char *font);
-extern long        (*external_vqt_extent)(Fontheader *font, short *text, long length);
-extern long        (*external_vqt_width)(Fontheader *font, long ch);
+extern long        (*external_vqt_extent)(Virtual *vwk, Fontheader *font, short *text, long length);
+extern long        (*external_vqt_width)(Virtual *vwk, Fontheader *font, long ch);
 extern Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes);
 extern long        (*external_renderer)(Virtual *vwk, unsigned long coords,
 					short *text, long length);
-extern void*       (*external_char_bitmap)(Fontheader *font, long ch, short *bitmap_info);
-extern void*       (*external_char_advance)(Fontheader *font, long ch, short *advance_info);
+extern void*       (*external_char_bitmap)(Virtual *vwk, Fontheader *font, long ch, short *bitmap_info);
+extern void*       (*external_char_advance)(Virtual *vwk, Fontheader *font, long ch, short *advance_info);
 
 extern void        (*external_xfntinfo)(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *info);
 extern void        (*external_fontheader)(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr);

@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.26 2006-02-27 04:42:24 standa Exp $
+ * $Id: ft2.c,v 1.27 2006-02-27 20:39:33 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -70,7 +70,7 @@ typedef struct {
 } FontheaderListItem;
 
 
-static FT_Error ft2_find_glyph(Fontheader* font, short ch, int want);
+static FT_Error ft2_find_glyph(Virtual *vwk, Fontheader* font, short ch, int want);
 
 
 #define USE_FREETYPE_ERRORS 1
@@ -149,7 +149,7 @@ static void ft2_close_face(Fontheader *font)
 	font->extra.unpacked.data = NULL;
 }
 
-static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize)
+static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face, short ptsize)
 {
 	FT_Error error;
 
@@ -163,9 +163,9 @@ static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 			ptsize = 10;
 		}
 #endif
-		/* FIXME: hardcoded for now. Propagate vwk and get
-		 * (vwk->screen.pixel.height * 25400) instead of the 95DPI */
-		error = FT_Set_Char_Size(face, 0, ptsize * 64, 95, 95);
+		error = FT_Set_Char_Size(face, 0, ptsize * 64,
+				25400 / vwk->real_address->screen.pixel.width,
+				25400 / vwk->real_address->screen.pixel.height);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
 			ft2_close_face(font);
@@ -237,7 +237,7 @@ static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 	       	/* Scan the font for widest parts */
 		short ch;
 		for(ch = 32; ch < 128; ch++) {
-			FT_Error error = ft2_find_glyph(font, ch, CACHED_METRICS);
+			FT_Error error = ft2_find_glyph(vwk, font, ch, CACHED_METRICS);
 			if (!error) {
 				c_glyph *glyph = font->extra.current;
 
@@ -371,7 +371,7 @@ Fontheader *ft2_load_font(const char *filename)
 }
 
 
-static Fontheader *ft2_open_face(Fontheader *font, short ptsize)
+static Fontheader *ft2_open_face(Virtual *vwk, Fontheader *font, short ptsize)
 {
 	FT_Error error;
 	FT_Face face;
@@ -428,7 +428,7 @@ static Fontheader *ft2_open_face(Fontheader *font, short ptsize)
 		memset(font->extra.scratch, 0, sizeof(c_glyph));
 	}
 
-	font = ft2_load_metrics(font, face, ptsize);
+	font = ft2_load_metrics(vwk, font, face, ptsize);
 	if (!font) {
 		access->funcs.puts("FT2  Cannot load metrics\r\n");
 		return NULL;
@@ -440,20 +440,20 @@ static Fontheader *ft2_open_face(Fontheader *font, short ptsize)
 	return font;
 }
 
-static inline FT_Face ft2_get_face(Fontheader *font)
+static inline FT_Face ft2_get_face(Virtual *vwk, Fontheader *font)
 {
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
 		if (font->size)
-			font = ft2_open_face(font, font->size);
+			font = ft2_open_face(vwk, font, font->size);
 		else
-			font = ft2_open_face(font, 10);
+			font = ft2_open_face(vwk, font, 10);
 	}
 
 	return (FT_Face)font->extra.unpacked.data;
 }
 
-static Fontheader *ft2_dup_font(Fontheader *src, short ptsize)
+static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize)
 {
    Fontheader *font = (Fontheader *)malloc(sizeof(Fontheader));
    if (font) {
@@ -479,7 +479,7 @@ static Fontheader *ft2_dup_font(Fontheader *src, short ptsize)
 	   }
 #endif
 
-	   font = ft2_open_face(font, ptsize);
+	   font = ft2_open_face(vwk, font, ptsize);
    }
 
    return font;
@@ -500,7 +500,7 @@ static void ft2_dispose_font(Fontheader *font)
 void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
 {
 	int i;
-	FT_Face face = ft2_get_face(font);
+	FT_Face face = ft2_get_face(vwk, font);
 
 	/* Strings should not have NUL termination if max size. */
 	/* Normally 1000 ORUs per Em square (width of 'M'), but header says. */
@@ -608,7 +608,7 @@ void ft2_xfntinfo(Virtual *vwk, Fontheader *font,
                   long flags, XFNT_INFO *info)
 {
 	int i;
-	FT_Face face = ft2_get_face(font);
+	FT_Face face = ft2_get_face(vwk, font);
 
 	info->format = (font->flags & 0x4000) ? 4 : 1;
 
@@ -653,7 +653,7 @@ void ft2_xfntinfo(Virtual *vwk, Fontheader *font,
 	}
 }
 
-static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int want)
+static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph *cached, int want)
 {
 	FT_Face face;
 	FT_Error error;
@@ -661,7 +661,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	FT_Glyph_Metrics *metrics;
 	FT_Outline *outline;
 
-	face = ft2_get_face(font);
+	face = ft2_get_face(vwk, font);
 
 	/* Load the glyph */
 	if (!cached->index) {
@@ -887,7 +887,7 @@ static void ft2_flush_cache(Fontheader *font)
 	}
 }
 
-static FT_Error ft2_find_glyph(Fontheader *font, short ch, int want)
+static FT_Error ft2_find_glyph(Virtual *vwk, Fontheader *font, short ch, int want)
 {
 	int retval = 0;
 
@@ -900,15 +900,15 @@ static FT_Error ft2_find_glyph(Fontheader *font, short ch, int want)
 		font->extra.current = font->extra.scratch;
 	}
 	if ((((c_glyph *)font->extra.current)->stored & want) != want) {
-		retval = ft2_load_glyph(font, ch, font->extra.current, want);
+		retval = ft2_load_glyph(vwk, font, ch, font->extra.current, want);
 	}
 
 	return retval;
 }
 
-void *ft2_char_advance(Fontheader *font, long ch, short *advance_info)
+void *ft2_char_advance(Virtual *vwk, Fontheader *font, long ch, short *advance_info)
 {
-	if (!ft2_find_glyph(font, ch, CACHED_METRICS)) {
+	if (!ft2_find_glyph(vwk, font, ch, CACHED_METRICS)) {
 		c_glyph *g = (c_glyph *)font->extra.current;
 
 		/* FIXME! Text orientation not taken care of here */
@@ -936,9 +936,9 @@ void *ft2_char_advance(Fontheader *font, long ch, short *advance_info)
 	return 0;
 }
 
-void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
+void *ft2_char_bitmap(Virtual *vwk, Fontheader *font, long ch, short *bitmap_info)
 {
-	if (!ft2_find_glyph(font, ch, CACHED_METRICS | CACHED_BITMAP)) {
+	if (!ft2_find_glyph(vwk, font, ch, CACHED_METRICS | CACHED_BITMAP)) {
 		c_glyph *g = (c_glyph *)font->extra.current;
 
 		*bitmap_info++ = g->bitmap.width;	/* Width */
@@ -982,7 +982,7 @@ void *ft2_char_bitmap(Fontheader *font, long ch, short *bitmap_info)
 }
 
 
-int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
+int ft2_text_size(Virtual *vwk, Fontheader *font, const short *text, int *w, int *h)
 {
 #if 0
 	char buf[255];
@@ -1006,7 +1006,7 @@ int ft2_text_size(Fontheader *font, const short *text, int *w, int *h)
 #if 0
 		buf[ch - text] = *ch;
 #endif
-		error = ft2_find_glyph(font, *ch, CACHED_METRICS);
+		error = ft2_find_glyph(vwk, font, *ch, CACHED_METRICS);
 		if (error) {
 			return -1;
 		}
@@ -1099,7 +1099,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
 
-		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_PIXMAP);
+		error = ft2_find_glyph(vwk, font, c, CACHED_METRICS | CACHED_PIXMAP);
 		if (error) {
 			free(textbuf->address);
 			return NULL;
@@ -1168,7 +1168,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	}
 }
 
-MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
+MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *textbuf)
 {
 	int xstart;
 	int width;
@@ -1186,7 +1186,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 	FT_Face face;
 
 	/* Get the dimensions of the text surface */
-	if ((ft2_text_size(font, text, &width, NULL) < 0) || !width) {
+	if ((ft2_text_size(vwk, font, text, &width, NULL) < 0) || !width) {
 		// TTF_SetError("Text has zero width");
 		return NULL;
 	}
@@ -1242,7 +1242,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 #endif
 
 #if 0
-		error = ft2_find_glyph(font, c, CACHED_METRICS | CACHED_BITMAP);
+		error = ft2_find_glyph(vwk, font, c, CACHED_METRICS | CACHED_BITMAP);
 		if (error) {
 			free(textbuf->address);
 			return NULL;
@@ -1260,7 +1260,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 		}
 		if ((glyph->stored & (CACHED_METRICS | CACHED_BITMAP)) !=
 		    (CACHED_METRICS | CACHED_BITMAP)) {
-			if (ft2_load_glyph(font, c, glyph,
+			if (ft2_load_glyph(vwk, font, c, glyph,
 			                   (CACHED_METRICS | CACHED_BITMAP))) {
 				free(textbuf->address);
 				return NULL;
@@ -1416,7 +1416,7 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
  * different sizes of FreeType2 fonts loaded in the beginning
  * (which are maintained in the global font list normally).
  **/
-Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
+Fontheader *ft2_find_fontsize(Virtual *vwk, Fontheader *font, short ptsize)
 {
 	static short font_count = 0;
 	Fontheader *f;
@@ -1463,13 +1463,13 @@ Fontheader *ft2_find_fontsize(Fontheader *font, short ptsize)
 
 	/* Create additional size face as it is a scalable font */
 	if (font->flags & 0x4000) {
-		f = ft2_dup_font(font, ptsize);
+		f = ft2_dup_font(vwk, font, ptsize);
 	} else {
 		f = font;
 
 		/* Read the font metrics before */
 		if (!font->underline) {
-			f = ft2_open_face(font, font->size);
+			f = ft2_open_face(vwk, font, font->size);
 		}
 
 		if (debug > 1) {
@@ -1514,7 +1514,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 	if (!font->size) {
 		access->funcs.puts("FT2  text_render_default font->size == 0\r\n");
 		/* Create a copy of the font for the particular size */
-		font = ft2_find_fontsize(font, 16);
+		font = ft2_find_fontsize(vwk, font, 16);
 		if (!font) {
 			access->funcs.puts("Cannot open face\r\n");
 			return 0;
@@ -1529,7 +1529,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 		short y = coords & 0xffffUL;
 		ft2_text_render_antialias(vwk, font, x, y, s, &textbuf); 
 	} else {
-		t = ft2_text_render(font, s, &textbuf); 
+		t = ft2_text_render(vwk, font, s, &textbuf); 
 		if (t && t->address) {
 			short colors[2];
 			short pxy[8];
@@ -1561,26 +1561,26 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 	return 1;
 }
 
-long ft2_char_width(Fontheader *font, long ch)
+long ft2_char_width(Virtual *vwk, Fontheader *font, long ch)
 {
 	short s[] = {ch, 0};
 	int width;
 	/* Get the dimensions of the text surface */
-	if ((ft2_text_size(font, s, &width, NULL) < 0) || !width) {
+	if ((ft2_text_size(vwk, font, s, &width, NULL) < 0) || !width) {
 		return 0;
 	}
 
 	return width;
 }
 
-long ft2_text_width(Fontheader *font, short *s, long slen)
+long ft2_text_width(Virtual *vwk, Fontheader *font, short *s, long slen)
 {
 	int width;
 
 	/* Terminate text */
 	s[slen] = 0;
 	/* Get the dimensions of the text surface */
-	if ((ft2_text_size(font, s, &width, NULL) < 0) || !width) {
+	if ((ft2_text_size(vwk, font, s, &width, NULL) < 0) || !width) {
 		return 0;
 	}
 
@@ -1634,7 +1634,7 @@ Fontheader *ft2_vst_point(Virtual *vwk, long ptsize, unsigned short *sizes)
 	}
 #endif
 
-	font = ft2_find_fontsize(font, ptsize);
+	font = ft2_find_fontsize(vwk, font, ptsize);
 
 	/* Dispose of the FreeType2 objects */
 	// ft2_close_face(font);

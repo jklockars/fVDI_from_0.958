@@ -14,7 +14,7 @@
 
 	xdef	_lib_vdi_s,_lib_vdi_sp,_lib_vdi_spppp,_lib_vdi_pp
 
-	xdef	_set_stack_call_pvlpl,_set_stack_call_lppll
+	xdef	_set_stack_call_pvlpl,_set_stack_call_lppll,_set_stack_call_lpppll
 	xdef	_set_stack_call_lplll,_set_stack_call_lvplp
 	xdef	_set_stack_call_lvppl
 
@@ -40,7 +40,26 @@ _set_stack_call_lvppl:
 	move.l	-(a1),-(a7)
 	move.l	12(a0),a1
 	jsr	(a1)
-	add.w	#20,a7
+	add.w	#4*4+4,a7
+
+	move.l	(a7),a7		; Return to original stack
+	rts
+
+_set_stack_call_lpppll:
+	move.l	a7,a0		; Set new stack and remember old
+	move.l	4(a7),a7
+	move.l	a0,-(a7)
+
+	move.l	8(a0),-(a7)
+	lea	5*4+16(a0),a1	; Copy 5 longs worth of actual parameters
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	-(a1),-(a7)
+	move.l	12(a0),a1
+	jsr	(a1)
+	add.w	#5*4+4,a7
 
 	move.l	(a7),a7		; Return to original stack
 	rts

@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.17 2006-02-20 20:49:44 standa Exp $
+* $Id: text_sq.s,v 1.18 2006-02-27 20:39:32 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -95,8 +95,9 @@ v_getbitmap_info:
 	move.l	a2,-(a7)			; bitmap block
 	move.l	d0,-(a7)			; char code
 	move.l	vwk_text_current_font(a0),-(a7) ; Fontheader
+	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
-	add.w	#4*4,a7
+	add.w	#5*4,a7
 	;move.l	(a7)+,a1
 
 	move.l	(a7),a7				; Return to original stack
@@ -151,8 +152,9 @@ vqt_advance:
 	move.l	a2,-(a7)			; advance block
 	move.l	d0,-(a7)			; char code
 	move.l	vwk_text_current_font(a0),-(a7) ; Fontheader
+	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
-	add.w	#4*4,a7
+	add.w	#5*4,a7
 
 	move.l	(a7),a7				; Return to original stack
 	lbra	.done,2
@@ -919,8 +921,9 @@ vqt_extent:
 	move.l	d0,-(a7)
 	move.l	a1,-(a7)
 	move.l	a4,-(a7)			; Fontheader
+	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
-	add.w	#4*4,a7
+	add.w	#5*4,a7
 	move.l	d0,d2
 	movem.l	(a7)+,d0-d1/a0-a2
 
@@ -1050,12 +1053,13 @@ vqt_width:
 	move.w	(a2),d0			; Character to check
 	move.l	ptsout(a1),a2
 	move.l	intout(a1),a1
-	move.l	vwk_text_current_font(a0),a0	; a0 no longer -> VDI struct!
+	move.l	vwk_text_current_font(a0),a3
 
 * Some other method should be used for this!
-	tst.w	font_flags(a0)
+	tst.w	font_flags(a3)
 	bmi	.external_vqt_width
 
+	move.l	a3,a0			; a0 no longer -> VDI struct!
 	move.l	font_table_character(a0),a3
 	move.w	font_code_low(a0),d1
 
@@ -1105,9 +1109,10 @@ vqt_width:
 	move.l	_vdi_stack_size,-(a7)	
 	ext.l	d0
 	move.l	d0,-(a7)			; Character
-	move.l	a0,-(a7)			; Fontheader
+	move.l	vwk_text_current_font(a0),-(a7)	; Fontheader
+	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
-	add.w	#3*4,a7
+	add.w	#4*4,a7
 	move.l	d0,d2
 	movem.l	(a7)+,d0-d1/a0-a2
 

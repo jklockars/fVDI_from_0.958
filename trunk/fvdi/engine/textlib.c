@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.11 2006-02-24 12:11:47 johan Exp $
+ * $Id: textlib.c,v 1.12 2006-02-27 20:39:32 standa Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -911,8 +911,15 @@ int lib_vst_font(Virtual *vwk, long fontID)
     vwk->text.font = fontID;
     vwk->text.current_font = font;
 
+#if 1
+    vwk->text.character.width  = font->widest.character;
+    vwk->text.character.height = font->distance.top;
+    vwk->text.cell.width       = font->widest.cell;
+    vwk->text.cell.height      = font->height;
+#else
     /* Choose the right size */
     lib_vst_point(vwk, size, &dummy, &dummy, &dummy, &dummy);
+#endif
 
     return fontID;
 }
@@ -1194,9 +1201,9 @@ void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points)
 	/* Handle differently? This is not really allowed at all! */
 	if (!external_vqt_extent)
 	    return;
-	width = set_stack_call_lppll(vdi_stack_top, vdi_stack_size,
+	width = set_stack_call_lpppll(vdi_stack_top, vdi_stack_size,
 			             external_vqt_extent,
-			             vwk->text.current_font, string, length, 0);
+			             vwk, vwk->text.current_font, string, length, 0);
     } else {
 
 	char_tab = vwk->text.current_font->table.character;
