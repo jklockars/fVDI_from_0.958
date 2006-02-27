@@ -1,3 +1,7 @@
+2006-02-27 - standa
+Virtual* propagated into all FT2 functions as they need DPI information
+eventually.
+
 2006-02-26 - standa
 Hardcoded 95DPI for the FT2 vst_font() height until we adjust the code
 to propagate the vwk and get wvk->screen.pixel.height * 25400.
