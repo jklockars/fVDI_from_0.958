@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.25 2006-02-27 04:13:11 standa Exp $
+ * $Id: ft2.c,v 1.26 2006-02-27 04:42:24 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -34,6 +34,7 @@ typedef struct cached_glyph {
 	int stored;
 	FT_UInt index;
 	FT_Bitmap bitmap;
+	FT_Bitmap pixmap;
 	int minx;
 	int maxx;
 #if CACHE_YSIZE
@@ -164,7 +165,7 @@ static Fontheader *ft2_load_metrics(Fontheader *font, FT_Face face, short ptsize
 #endif
 		/* FIXME: hardcoded for now. Propagate vwk and get
 		 * (vwk->screen.pixel.height * 25400) instead of the 95DPI */
-		error = FT_Set_Char_Size(face, 0, ptsize * 64, 0, 95);
+		error = FT_Set_Char_Size(face, 0, ptsize * 64, 95, 95);
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set vector font size", error));
 			ft2_close_face(font);
@@ -718,7 +719,7 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP)) ||
 	    ((want & CACHED_PIXMAP) && !(cached->stored & CACHED_PIXMAP))) { 
 		int i;
-		FT_Bitmap *src;
+		FT_Bitmap *src = &glyph->bitmap;
 		FT_Bitmap *dst;
 
 #if 0
@@ -738,17 +739,16 @@ static FT_Error ft2_load_glyph(Fontheader *font, short ch, c_glyph *cached, int 
 		/* FIXME! What if we enable antialiasing here ;) */
 
 		/* Render the glyph */
-		if (want & CACHED_PIXMAP)
+		if (want & CACHED_PIXMAP) {
+			dst = &cached->pixmap;
 			error = FT_Render_Glyph(glyph, ft_render_mode_normal);
-		else
+		} else {
+			dst = &cached->bitmap;
 			error = FT_Render_Glyph(glyph, ft_render_mode_mono);
-		if (error) {
-			return error;
 		}
+		if (error) return error;
 
-		/* Copy over information to cache */
-		src = &glyph->bitmap;
-		dst = &cached->bitmap;
+		/* copy over to cache */
 		memcpy(dst, src, sizeof(*dst));
 
 #if 0
@@ -863,6 +863,10 @@ static void ft2_flush_glyph(c_glyph *glyph)
 	if (glyph->bitmap.buffer) {
 		free(glyph->bitmap.buffer);
 		glyph->bitmap.buffer = 0;
+	}
+	if (glyph->pixmap.buffer) {
+		free(glyph->pixmap.buffer);
+		glyph->pixmap.buffer = 0;
 	}
 	glyph->cached = 0;
 }
@@ -1102,7 +1106,8 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 		}
 		glyph = font->extra.current;
 
-		current = &glyph->bitmap;
+		current = &glyph->pixmap;
+
 		/* Ensure the width of the pixmap is correct. In some cases,
 		 * FreeType may report a larger pixmap than possible.
 		 */
@@ -1284,8 +1289,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			unsigned char lmask = ~rmask;
 			int row, col;
 
-			/* Ensure the width of the pixmap is correct. In some cases,
-			 * FreeType may report a larger pixmap than possible.
+			/* Ensure the width of the bitmap is correct. In some cases,
+			 * FreeType may report a larger bitmap than possible.
 			 */
 			width = current->width;
 			if (width > glyph->maxx - glyph->minx) {
@@ -1346,8 +1351,8 @@ MFDB *ft2_text_render(Fontheader *font, const short *text, MFDB *textbuf)
 			if (last_row + glyph->yoffset >= textbuf->height)
 			    last_row = textbuf->height - glyph->yoffset - 1;
 
-			/* Ensure the width of the pixmap is correct. In some cases,
-			 * FreeType may report a larger pixmap than possible.
+			/* Ensure the width of the bitmap is correct. In some cases,
+			 * FreeType may report a larger bitmap than possible.
 			 */
 			width = current->width;
 			if (width > glyph->maxx - glyph->minx) {
