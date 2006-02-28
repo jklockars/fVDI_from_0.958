@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.18 2006-02-27 20:39:32 standa Exp $
+* $Id: text_sq.s,v 1.19 2006-02-28 21:21:51 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -22,7 +22,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xref	_lib_vqt_name,_lib_vqt_xfntinfo,_lib_vqt_fontheader
 	xref	_display_output
 
-	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font
+	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font,vst_charmap
 	xdef	vqt_name,vqt_font_info,vst_point,vst_height,vqt_attributes,vqt_extent
 	xdef	vst_load_fonts,vst_unload_fonts,vqt_width
 	xdef	vqt_f_extent,vqt_xfntinfo,vqt_fontheader
@@ -352,6 +352,16 @@ lib_vst_rotation:
  label .any,3
 	move.w	d0,vwk_text_rotation(a0)
 	rts
+
+
+	dc.b	0,"vst_charmap",0
+* vst_charmap - Standard Trap function
+* In:   a1      Parameter block
+*       a0      VDI struct
+vst_charmap:
+	move.l	intin(a1),a2
+	move.w	(a2),vwk_text_charmap(a0)
+	done_return
 
 
 	dc.b	0,"vst_font",0

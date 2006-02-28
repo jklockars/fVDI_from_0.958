@@ -1,7 +1,7 @@
 /*
  * fVDI workstation setup functions
  *
- * $Id: setup.c,v 1.12 2005-11-21 08:32:41 johan Exp $
+ * $Id: setup.c,v 1.13 2006-02-28 21:21:51 standa Exp $
  *
  * Copyright 1999-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -220,6 +220,7 @@ Virtual *initialize_vdi(void)
    vwk->text.alignment.horizontal = 0;
    vwk->text.alignment.vertical = 0;
    vwk->text.rotation = 0;
+   vwk->text.charmap = 1;	      /* ASCII words mapping */
    vwk->text.font = 0;
    vwk->text.current_font = 0;        /* Address will be set on first call to vst_font */
    vwk->line.colour.background = WHITE;

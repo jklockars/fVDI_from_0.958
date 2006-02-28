@@ -1,7 +1,7 @@
 *****
 * fVDI unimplemented functions
 *
-* $Id: unimpl.s,v 1.16 2006-02-20 11:35:57 johan Exp $
+* $Id: unimpl.s,v 1.17 2006-02-28 21:21:51 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -31,7 +31,7 @@ transparent	equ	1		; Fall through?
 	xdef	v_contourfill
 	xdef	vqin_mode
 	xdef	v_cellarray,vq_cellarray
-	xdef	vst_name,vst_width,vst_charmap
+	xdef	vst_name,vst_width
 	xdef	v_getoutline,vst_scratch
 ;	xdef	vst_error,vq_devinfo,v_savecache
 	xdef	vst_error,v_savecache
@@ -111,7 +111,6 @@ v_kill_outline:
 	dc.b	0,"NVDI",0
 vst_name:
 vst_width:
-vst_charmap:
 v_getoutline:
 vst_scratch:
 vst_error:

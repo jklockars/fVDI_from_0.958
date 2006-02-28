@@ -1,3 +1,10 @@
+2006-02-28 - standa
+vst_charmap() and vst_map_mode() implemenetated. Highwire maps characters
+directly to UNICODE when NVDI >4.0 is available. Highwire displays
+everything nicely again.
+Initial spdchar.map load implemented. Will test and enable later on.
+Warning! The Virtual vwk structure has changed! Recompile all the drivers!
+
 2006-02-27 - standa
 Virtual* propagated into all FT2 functions as they need DPI information
 eventually.

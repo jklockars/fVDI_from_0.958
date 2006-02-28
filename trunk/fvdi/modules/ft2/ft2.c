@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.28 2006-02-27 21:41:33 standa Exp $
+ * $Id: ft2.c,v 1.29 2006-02-28 21:21:51 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -18,6 +18,8 @@
 #include <freetype/ftoutln.h>
 #include <freetype/ttnameid.h>
 #endif
+
+#include <mint/osbind.h>
 
 #include "fvdi.h"
 #include "globals.h"
@@ -59,6 +61,9 @@ typedef struct cached_glyph {
 #define DEBUG_FONTS 1
 #endif
 
+
+/* NVDI/SpeedoGDOS spdchar.map tables */
+static Fontspdcharmap spdchar_map;
 
 static FT_Library library;
 static LIST       fonts;
@@ -302,12 +307,53 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 	return font;
 }
 
+int ft2_load_spdchar_map(Virtual *vwk, const char *filename)
+{
+   long r;
+   int file;
+	
+   if ((file = Fopen(filename, 0)) < 0)
+	   return -1;
+
+   r = Fread(file, sizeof(spdchar_map), &spdchar_map);
+   Fclose(file);
+
+   if ( debug > 1 ) {
+	   char buf[20];
+	   puts( "spdchar.map: len=");
+	   ltoa( buf, (long)r, 10);
+	   puts( buf);
+	   puts( " filename=");
+	   puts_nl( filename);
+   }
+
+   return 0;
+}
+
 /*
  * Load a font and make it ready for use
  */
 Fontheader *ft2_load_font(Virtual *vwk, const char *filename)
 {
-   Fontheader *font = (Fontheader *)malloc(sizeof(Fontheader));
+   Fontheader *font;
+   int len = strlen(filename);
+
+   /* FIXME: hack */
+   /* all this to just use strcmp() instead of the strcasestr() which
+    * is not available atm. */
+   if ( len >= 11 ) {
+	   char name[14]; char *d; const char *s;
+	   for (d = name, s = filename + len - 11; *s; s++) *d++ = *s | 0x20;
+	   *d++ = '\0';
+	   name[7] = '.';
+ 
+	   if ( !strcmp("spdchar.map", name) ) {
+		   ft2_load_spdchar_map( vwk, filename );
+		   return NULL;
+	   }
+   }
+
+   font = (Fontheader *)malloc(sizeof(Fontheader));
    if (font) {
 	   short id;
 	   FT_Error error;
@@ -697,8 +743,22 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	/* Load the glyph */
 	if (!cached->index) {
-		cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch]);
+		/* vst_charmap (vst_map_mode()) mapping settings */
+		if ( !vwk->text.charmap ) /* no char -> index translation */
+			cached->index = ch;
+		else if ( vwk->text.charmap == 2 /* UNICODE */ )
+			cached->index = FT_Get_Char_Index(face, ch);
+		else {
+			cached->index = FT_Get_Char_Index(face, 
+#if 0
+					( ch > 32 && ch < 256 ) ? spdchar_map.true_type.map[ch - 32] : ch
+#else
+					Atari2Unicode[ch]
+#endif
+					);
+		}
 	}
+
 	error = FT_Load_Glyph(face, cached->index, FT_LOAD_DEFAULT);
 	if (error) {
 		return error;
