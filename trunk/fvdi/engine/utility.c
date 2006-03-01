@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.33 2006-02-19 01:15:22 johan Exp $
+ * $Id: utility.c,v 1.34 2006-03-01 23:54:06 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1917,8 +1917,17 @@ long puts(const char *text)
 
    if ((debug_out == -3) && debug_file) {
       file = -1;
+
+#if 0
+/* WHY: THIS SEQUENCE MAKES FreeMiNT GO OUT OF PROCESS IO HANDLES */ 
+      file = Fopen(debug_file, O_WRONLY);
+      Fseek(0, file, SEEK_END);
+      Cconws("Write to debug file failed!\x0d\x0a");
+      Fclose(file);
+#endif
+
       if (((file = Fopen(debug_file, O_WRONLY)) < 0) ||
-          (Fseek(0, file, SEEK_END) <= 0) ||
+          (Fseek(0, file, SEEK_END) < 0) ||
           (Fwrite(file, strlen(text), text) < 0)) {
          free(debug_file);
          debug_file = 0;
