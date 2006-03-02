@@ -1,3 +1,7 @@
+2006-03-01 - johan
+Fixed alignment for vst_charmap.
+Some further optimizations for FreeType2 rendering from cached bitmaps.
+
 2006-03-01 - standa
 Made it possible to have file debug output go to a non-seekable device.
 
