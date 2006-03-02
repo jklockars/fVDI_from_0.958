@@ -1,3 +1,6 @@
+2006-03-01 - standa
+Made it possible to have file debug output go to a non-seekable device.
+
 2006-02-28 - standa
 vst_charmap() and vst_map_mode() implemenetated. Highwire maps characters
 directly to UNICODE when NVDI >4.0 is available. Highwire displays
