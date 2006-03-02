@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.29 2006-02-28 21:21:51 standa Exp $
+ * $Id: ft2.c,v 1.30 2006-03-02 00:36:29 johan Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -318,13 +318,13 @@ int ft2_load_spdchar_map(Virtual *vwk, const char *filename)
    r = Fread(file, sizeof(spdchar_map), &spdchar_map);
    Fclose(file);
 
-   if ( debug > 1 ) {
+   if (debug > 1) {
 	   char buf[20];
-	   puts( "spdchar.map: len=");
-	   ltoa( buf, (long)r, 10);
-	   puts( buf);
-	   puts( " filename=");
-	   puts_nl( filename);
+	   puts("spdchar.map: len=");
+	   ltoa(buf, (long)r, 10);
+	   puts(buf);
+	   puts(" filename=");
+	   puts_nl(filename);
    }
 
    return 0;
@@ -341,14 +341,17 @@ Fontheader *ft2_load_font(Virtual *vwk, const char *filename)
    /* FIXME: hack */
    /* all this to just use strcmp() instead of the strcasestr() which
     * is not available atm. */
-   if ( len >= 11 ) {
-	   char name[14]; char *d; const char *s;
-	   for (d = name, s = filename + len - 11; *s; s++) *d++ = *s | 0x20;
+   if (len >= 11) {
+	   char name[14];
+	   char *d;
+	   const char *s;
+	   for(d = name, s = filename + len - 11; *s; s++)
+	       *d++ = *s | 0x20;
 	   *d++ = '\0';
 	   name[7] = '.';
  
-	   if ( !strcmp("spdchar.map", name) ) {
-		   ft2_load_spdchar_map( vwk, filename );
+	   if (!strcmp("spdchar.map", name)) {
+		   ft2_load_spdchar_map(vwk, filename);
 		   return NULL;
 	   }
    }
@@ -385,13 +388,17 @@ Fontheader *ft2_load_font(Virtual *vwk, const char *filename)
 		   short id_conflict;
 		   const char *p;
 		   short hc = 0;
-		   for (p = face->family_name; *p; p++) hc = (hc<<5) - hc + *p;
-		   for (p = face->style_name; *p; p++) hc = (hc<<5) - hc + *p;
+		   for(p = face->family_name; *p; p++)
+		   	hc = (hc << 5) - hc + *p;
+		   for(p = face->style_name; *p; p++)
+			hc = (hc << 5) - hc + *p;
 
 		   /* id is >5000 for Vector fonts (from SpeedoGDOS)  */
 		   id = hc + 5000;
-		   if ( id < 0 ) id = -id;
-		   if ( id < 5000 ) id += 5000;
+		   if (id < 0)
+		       id = -id;
+		   if (id < 5000)
+		       id += 5000;
 
 		   /* find out whether there already is such a font ID */
 		   do {
@@ -399,14 +406,14 @@ Fontheader *ft2_load_font(Virtual *vwk, const char *filename)
 			   id++;
 			   id_conflict = 0;
 
-			   while ( f ) {
+			   while (f) {
 				   if (f->id == id) {
 					   id_conflict = 1;
 					   break;
 				   }
 				   f = f->next;
 			   }
-		   } while ( id_conflict );
+		   } while (id_conflict);
 	   }
 
 	   /* FIXME: store the font type (TTF, Type1) somewhere for vqt_xfntinfo and vq_fontheader functions
@@ -518,7 +525,7 @@ static Fontheader *ft2_open_face(Virtual *vwk, Fontheader *font, short ptsize)
 	return font;
 }
 
-static inline FT_Face ft2_get_face(Virtual *vwk, Fontheader *font)
+static FT_Face ft2_get_face(Virtual *vwk, Fontheader *font)
 {
 	/* Open the face if needed */
 	if (!font->extra.unpacked.data) {
@@ -744,18 +751,18 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 	/* Load the glyph */
 	if (!cached->index) {
 		/* vst_charmap (vst_map_mode()) mapping settings */
-		if ( !vwk->text.charmap ) /* no char -> index translation */
+		if (!vwk->text.charmap) /* no char -> index translation */
 			cached->index = ch;
-		else if ( vwk->text.charmap == 2 /* UNICODE */ )
+		else if (vwk->text.charmap == 2 /* UNICODE */)
 			cached->index = FT_Get_Char_Index(face, ch);
 		else {
 			cached->index = FT_Get_Char_Index(face, 
 #if 0
-					( ch > 32 && ch < 256 ) ? spdchar_map.true_type.map[ch - 32] : ch
+					((ch > 32) && (ch < 256)) ? spdchar_map.true_type.map[ch - 32] : ch
 #else
 					Atari2Unicode[ch]
 #endif
-					);
+			                                 );
 		}
 	}
 
@@ -838,7 +845,8 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			dst = &cached->bitmap;
 			error = FT_Render_Glyph(glyph, ft_render_mode_mono);
 		}
-		if (error) return error;
+		if (error)
+			return error;
 
 		/* copy over to cache */
 		memcpy(dst, src, sizeof(*dst));
@@ -915,7 +923,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			int col;
 			int offset;
 			int pixel;
-			unsigned char* pixmap;
+			unsigned char *pixmap;
 
 /* FIXME: Right now we assume the gray-scale renderer Freetype is using
    supports 256 shades of gray, but we should instead key off of num_grays
@@ -924,7 +932,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 			/* The pixmap is a little hard, we have to add and clamp */
 			for(row = dst->rows - 1; row >= 0; --row) {
-				pixmap = (unsigned char*) dst->buffer + row * dst->pitch;
+				pixmap = (unsigned char *)dst->buffer + row * dst->pitch;
 				for(offset = 1; offset <= font->glyph_overhang; ++offset) {
 					for(col = dst->width - 1; col > 0; --col) {
 						pixel = (pixmap[col] + pixmap[col - 1]);
@@ -939,7 +947,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 #endif
 
 		/* Mark that we rendered this format */
-		cached->stored |= want & (CACHED_BITMAP|CACHED_PIXMAP);
+		cached->stored |= want & (CACHED_BITMAP | CACHED_PIXMAP);
 	}
 
 	/* We're done, mark this glyph cached */
@@ -1272,16 +1280,77 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 	c_glyph *glyph;
 
 	FT_Bitmap *current;
+#if 0
 	FT_Error error;
+#endif
 	FT_Long use_kerning;
 	FT_UInt prev_index = 0;
 	FT_Face face;
 
 	/* Get the dimensions of the text surface */
+#if 0
 	if ((ft2_text_size(vwk, font, text, &width, NULL) < 0) || !width) {
 		// TTF_SetError("Text has zero width");
 		return NULL;
 	}
+#else
+	{
+		int x, z;
+		int minx, maxx;
+
+		minx = maxx = 0;
+
+		/* Load each character and sum its bounding box */
+		x = 0;
+		for(ch = text; *ch; ++ch) {
+ #if 0
+			if (ft2_find_glyph(vwk, font, *ch, CACHED_METRICS))
+				return NULL;
+			}
+			glyph = font->extra.current;
+ #else
+			short c = *ch;
+			/* This should be done via a macro! */
+			if (c < 256) {
+				glyph = &((c_glyph *)font->extra.cache)[c];
+			} else {
+				if (((c_glyph *)font->extra.scratch)->cached != c) {
+					ft2_flush_glyph(font->extra.scratch);
+				}
+				glyph = font->extra.scratch;
+			}
+			if (!(glyph->stored & CACHED_METRICS)) {
+				if (ft2_load_glyph(vwk, font, c, glyph, CACHED_METRICS)) {
+					return NULL;
+				}
+			}
+ #endif
+
+			z = x + glyph->minx;
+			if (minx > z) {
+				minx = z;
+			}
+ #if CAN_BOLD
+			if (font->style & TTF_STYLE_BOLD) {
+				x += font->glyph_overhang;
+			}
+ #endif
+			if (glyph->advance > glyph->maxx) {
+				z = x + glyph->advance;
+			} else {
+				z = x + glyph->maxx;
+			}
+			if (maxx < z) {
+				maxx = z;
+			}
+			x += glyph->advance;
+		}
+
+		width = maxx - minx;
+		if (!width)
+			return NULL;
+	}
+#endif
 	height = font->height;
 
 	/* Fill in the target surface */
@@ -1423,7 +1492,12 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 			unsigned long byte;
 			short row, col, width;
 			short dst_inc, src_inc;
+ #if 0
 			unsigned char *src_base, *dst_base;
+ #else
+  #define src_base src
+  #define dst_base dst
+ #endif
 			
 			row = 0;
 			src_base = current->buffer;
@@ -1435,8 +1509,13 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 			} else if (glyph->yoffset) {
 			    dst_base += glyph->yoffset * textbuf->wdwidth * 2;
 			}
+#if 0
 			src = src_base;
 			dst = dst_base;
+#else
+ #undef src_base
+ #undef dst_base
+#endif
 
 			/* Over limit? */
 			last_row = current->rows - 1;
