@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.19 2006-02-28 21:21:51 standa Exp $
+* $Id: text_sq.s,v 1.20 2006-03-02 00:32:38 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -354,7 +354,7 @@ lib_vst_rotation:
 	rts
 
 
-	dc.b	0,"vst_charmap",0
+	dc.b	0,0,"vst_charmap",0
 * vst_charmap - Standard Trap function
 * In:   a1      Parameter block
 *       a0      VDI struct
