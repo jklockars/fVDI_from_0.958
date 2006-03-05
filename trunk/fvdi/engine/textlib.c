@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.12 2006-02-27 20:39:32 standa Exp $
+ * $Id: textlib.c,v 1.13 2006-03-05 22:41:19 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -911,7 +911,7 @@ int lib_vst_font(Virtual *vwk, long fontID)
     vwk->text.font = fontID;
     vwk->text.current_font = font;
 
-#if 1
+#if 0
     vwk->text.character.width  = font->widest.character;
     vwk->text.character.height = font->distance.top;
     vwk->text.cell.width       = font->widest.cell;
@@ -1337,7 +1337,6 @@ lib_vst_height:
 #endif
 
 
-// point_set = lib_vst_point(height, &charw, &charh, &cellw, &cellh)
 int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
                    short *cellw, short *cellh)
 {
@@ -1360,6 +1359,61 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 	font = set_stack_call_pvlpl(vdi_stack_top, vdi_stack_size,
 			            external_vst_point,
 			            vwk, height, sizes, 0);
+#if DEB
+	puts("  vector found\x0d\x0a");
+#endif
+    } else {
+#if DEB
+	char buf[10];
+	ltoa(buf, height, 10);
+	puts(buf);
+	puts(" ");
+#endif
+
+	font = vwk->text.current_font->extra.first_size;
+
+	while (font->extra.next_size && (font->extra.next_size->size <= height)) {
+	    font = font->extra.next_size;
+	}
+#if DEB
+	ltoa(buf, font->height, 10);
+	puts(buf);
+	puts("\x0d\x0a");
+#endif
+    }
+
+    vwk->text.current_font = font;
+    *charw = vwk->text.character.width  = font->widest.character;
+    *charh = vwk->text.character.height = font->distance.top;
+    *cellw = vwk->text.cell.width       = font->widest.cell;
+    *cellh = vwk->text.cell.height      = font->height;
+
+    return font->size;
+}
+
+
+int lib_vst_arbpt(Virtual *vwk, long height, short *charw, short *charh,
+                   short *cellw, short *cellh)
+{
+    Fontheader *font;
+
+    /* Some other method should be used for this! */
+#if DEB
+    puts("lib_vst_arbpt\x0d\x0a");
+#endif
+    if (vwk->text.current_font->flags < 0) {
+#if DEB
+	puts("  vector\x0d\x0a");
+#endif
+	/* Handle differently? This is not really allowed at all! */
+	if (!external_vst_point)
+	    return 0;
+#if DEB
+	puts("  vector ok\x0d\x0a");
+#endif
+	font = set_stack_call_pvlpl(vdi_stack_top, vdi_stack_size,
+			            external_vst_point,
+			            vwk, height, 0, 0);
 #if DEB
 	puts("  vector found\x0d\x0a");
 #endif
