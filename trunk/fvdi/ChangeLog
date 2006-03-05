@@ -1,3 +1,7 @@
+2006-03-05 - johan
+Made vst_arbpt() do something useful for non-vector fonts.
+Made vst_font() call vst_point() for size setting.
+
 2006-03-01 - johan
 Fixed alignment for vst_charmap.
 Some further optimizations for FreeType2 rendering from cached bitmaps.
