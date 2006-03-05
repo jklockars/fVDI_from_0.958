@@ -1,7 +1,7 @@
 *****
 * fVDI trap table
 *
-* $Id: traptabl.s,v 1.12 2006-02-28 21:21:51 standa Exp $
+* $Id: traptabl.s,v 1.13 2006-03-05 22:39:48 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -296,7 +296,7 @@ default_functions:
 	dc.l	vst_scratch
 	dc.w	0,0
 	dc.l	vst_error
-	dc.w	0,0
+	dc.w	2,1
 	dc.l	vst_arbpt
 	dc.w	4,0
 	dc.l	vqt_advance
