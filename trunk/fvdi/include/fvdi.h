@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.15 2006-02-28 21:21:51 standa Exp $
+ * $Id: fvdi.h,v 1.16 2006-03-05 22:39:05 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -287,7 +287,6 @@ typedef struct vwk_ {
 	short font;
 	Fgbg colour;
 	short rotation;
-	short charmap;
 	struct alignment_ {
 		short horizontal;
 		short vertical;
@@ -301,6 +300,7 @@ typedef struct vwk_ {
 		short height;
 	} cell;
 	short effects;
+	short charmap;
 	Fontheader *current_font;	/* Not in standard VDI */
    } text;
    struct line_ {
