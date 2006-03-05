@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.20 2006-03-02 00:32:38 johan Exp $
+* $Id: text_sq.s,v 1.21 2006-03-05 22:41:45 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -20,6 +20,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xref	_external_char_bitmap, _external_char_advance
 	xref	_sizes
 	xref	_lib_vqt_name,_lib_vqt_xfntinfo,_lib_vqt_fontheader
+	xref	_lib_vst_arbpt,_lib_vst_point
 	xref	_display_output
 
 	xdef	vst_color,vst_effects,vst_alignment,vst_rotation,vst_font,vst_charmap
@@ -1305,6 +1306,30 @@ lib_vst_height:
 *       a0      VDI struct
 vst_arbpt:
 	uses_d1
+	movem.l	d2/a1,-(a7)
+	move.l	ptsout(a1),a2
+	pea	6(a2)
+	pea	4(a2)
+	pea	2(a2)
+	pea	0(a2)
+	move.l	intin(a1),a2
+	move.w	(a2),d0
+	ext.l	d0
+	move.l	d0,-(a7)
+	move.l	a0,-(a7)
+	jsr	_lib_vst_arbpt
+  ifne 1
+	move.l	(a7),a0
+  endc
+	add.w	#6*4,a7
+	movem.l	(a7)+,d2/a1
+	move.l	intout(a1),a2
+	move.w	d0,(a2)
+	used_d1
+	done_return
+
+ ifne 0
+	uses_d1
 	move.l	a3,-(a7)
 	move.l	intin(a1),a2
 	move.w	(a2),d0
@@ -1359,6 +1384,7 @@ vst_arbpt:
 	move.l	(a7)+,a3
 	used_d1
 	done_return
+ endc
 
 
 	dc.b	0,0,"vst_point",0
