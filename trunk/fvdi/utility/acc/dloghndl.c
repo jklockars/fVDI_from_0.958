@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
 #else
    #include <aes.h>
    #include <vdi.h>
@@ -31,13 +35,13 @@ extern char *formtext(int, int);
 
 extern int do_popup(OBJECT *popup, int defobj, OBJECT *parent, int selobj);
 
-extern int win_form_do(Window *wind, int which, int *msg, int x, int y, int button, int kstate, int kreturn, int breturn);
+extern int win_form_do(Window *wind, int which, short *msg, int x, int y, int button, int kstate, int kreturn, int breturn);
 extern int xwind_redraw(Window *wind, GRECT *p, OBJECT *dlog, int object, int (*redraw)(int, GRECT *, OBJECT *, int));
 extern int redraw(int handle, GRECT *p, OBJECT *dlog, int object);
 extern void event_loop(void);
 extern void menu_update(void);
 
-Window *add_window(int handle, int (*handler)(Window *, int, int*, int, int, int, int, int, int));
+Window *add_window(int handle, int (*handler)(Window *, int, short *, int, int, int, int, int, int));
 int remove_window(Window *wind);
 
 
@@ -107,7 +111,7 @@ void set_tedinfo(OBJECT *tree, int obj, char *source)
 {
    char *dest;
 
-#ifdef __TURBOC__
+#if defined(__TURBOC__) || (defined(__GNUC__) && defined(NEW_GEMLIB))
    dest = tree[obj].ob_spec.tedinfo->te_ptext;
 #else   
    dest = ((TEDINFO *)tree[obj].ob_spec)->te_ptext;
@@ -122,7 +126,7 @@ void get_tedinfo(OBJECT *tree, int obj, char *dest)
 {
    char *source;
 
-#ifdef __TURBOC__
+#if defined(__TURBOC__) || (defined(__GNUC__) && defined(NEW_GEMLIB))
    source = tree[obj].ob_spec.tedinfo->te_ptext;
 #else   
    source = ((TEDINFO *)tree[obj].ob_spec)->te_ptext;   /* extract address */
@@ -350,7 +354,7 @@ int add_xdialog(int dialog, int (*return_func)(int), int gadgets, char *text)
    int handle;
    Window *wind;
    int editnum = 0;
-   int message[8];
+   short message[8];
 
    if (form[dialog].window) {
 #if 0
@@ -386,7 +390,11 @@ int add_xdialog(int dialog, int (*return_func)(int), int gadgets, char *text)
 #if 0   
    wind_title(handle, dlogtext);
 #endif
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+   wind_set_str(handle, WF_NAME, text);
+#else
    wind_set(handle, WF_NAME, text);
+#endif
    wind_set(handle, WF_BEVENT, 0x0001, 0, 0 ,0);
    wind_open(handle, p.g_x, p.g_y, p.g_w, p.g_h);  
 
