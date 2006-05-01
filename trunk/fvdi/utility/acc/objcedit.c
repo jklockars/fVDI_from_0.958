@@ -7,8 +7,12 @@
 #include <string.h>
 #include <ctype.h>
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
    #include <support.h>       /* No ltoa otherwise! */
    #define ltoa _ltoa
 #else
@@ -57,14 +61,18 @@ const unsigned char character_type[] = {
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-int xobjc_edit(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int ed_obj, int keycode, int *curpos, int kind)
+int xobjc_edit(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int ed_obj, int keycode, short *curpos, int kind)
 {
    TEDINFO *ed_txt;
    char *txt;
    short cursor_pos, o, x;
    int key, tmask, n, chg, update;
 
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+   ed_txt = tree[ed_obj].ob_spec.tedinfo;
+#else
    ed_txt = (TEDINFO*)tree[ed_obj].ob_spec;
+#endif
    txt = ed_txt->te_ptext;
    cursor_pos = ed_txt->te_tmplen;
 
