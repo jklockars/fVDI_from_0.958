@@ -1,8 +1,17 @@
+/*
+ * popup.c - Handling of popup menus
+ */
+
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
    #include <support.h>       /* No ltoa otherwise! */
    #define ltoa _ltoa
+   #include <math.h>          /* No min/max otherwise! */
 #else
    #ifdef LATTICE
       #define ltoa(a,b,c)   stcl_d(b, (long)a)
@@ -32,12 +41,18 @@ extern int popfix;
 int do_popup(OBJECT *popup, int defobj, OBJECT *parent, int selobj)
 {
    OBJECT *item;
-   int  x, y, w, h, status;
-   int  evnt_m, pmx, pmy, check = 1, i, m_state = 0;
-   int  mbuf[8];
-   int  deskx, desky, deskw, deskh;
+   short x, y, w, h;
+   int  status;
+   int  evnt_m;
+   short pmx, pmy;
+   int  check = 1;
+   short i;
+   int  m_state = 0;
+   short  mbuf[8];
+   short deskx, desky, deskw, deskh;
    int  border, pborder, xbox, ybox, wbox, hbox;
-   int  events, newobj, start = 0, button;
+   int  events, newobj, start = 0;
+   short button;
    long timer;
 
    events = MU_BUTTON | MU_M1;
@@ -69,8 +84,13 @@ int do_popup(OBJECT *popup, int defobj, OBJECT *parent, int selobj)
    popup->ob_y = y;
 
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   border = (int)popup[ROOT].ob_spec.obspec.framesize;
+   pborder = 2 * (int)parent[ROOT].ob_spec.obspec.framesize;
+ #else
    border = (int)(signed char)((popup[ROOT].ob_spec >> 16) & 0xff);
    pborder = 2 * (int)(signed char)((parent[ROOT].ob_spec >> 16) & 0xff);
+ #endif
 #else
  #ifdef __PUREC__
    border = (int)(popup[ROOT].ob_spec.obspec.framesize);
@@ -119,30 +139,47 @@ int do_popup(OBJECT *popup, int defobj, OBJECT *parent, int selobj)
    status = item->ob_state;
    do {
       /* wait until mouse button released or mouse goes outside popup item */
-#if 0
+#if defined(__GNUC__)
+ #if 0
       evnt_m = evnt_multi(MU_BUTTON | MU_M1,
-#else
-      evnt_m = evnt_multi(events,
-#endif
                           1, 1, m_state,
                           check, x + item->ob_x, y + item->ob_y, item->ob_width, item->ob_height,
                           0, 0, 0, 0, 0,
                           mbuf,
-#if 0
-#ifdef __GNUC__
                           0L,
-#else
-                          0, 0,
-#endif
-#else
-#ifdef __GNUC__
-                          timer,
-#else
-                          0, (int)timer,
-#endif
-#endif
                           &pmx, &pmy, &button ,&i,
                           &i, &i);
+ #else
+      evnt_m = evnt_multi(events,
+                          1, 1, m_state,
+                          check, x + item->ob_x, y + item->ob_y, item->ob_width, item->ob_height,
+                          0, 0, 0, 0, 0,
+                          mbuf,
+                          timer,
+                          &pmx, &pmy, &button ,&i,
+                          &i, &i);
+ #endif
+#else
+ #if 0
+      evnt_m = evnt_multi(MU_BUTTON | MU_M1,
+                          1, 1, m_state,
+                          check, x + item->ob_x, y + item->ob_y, item->ob_width, item->ob_height,
+                          0, 0, 0, 0, 0,
+                          mbuf,
+                          0, 0,
+                          &pmx, &pmy, &button ,&i,
+                          &i, &i);
+ #else
+      evnt_m = evnt_multi(events,
+                          1, 1, m_state,
+                          check, x + item->ob_x, y + item->ob_y, item->ob_width, item->ob_height,
+                          0, 0, 0, 0, 0,
+                          mbuf,
+                          0, (int)timer,
+                          &pmx, &pmy, &button ,&i,
+                          &i, &i);
+ #endif
+#endif
 
 #if 1
       newobj = objc_find(popup, R_TREE, MAX_DEPTH, pmx, pmy);
@@ -224,18 +261,25 @@ int do_popup(OBJECT *popup, int defobj, OBJECT *parent, int selobj)
       evnt_button(1, 1, 0, &i, &i, &i, &i);		/* until button up */
    else {
       do {
+#if defined(__GNUC__)
          evnt_m = evnt_multi(MU_TIMER,
                              0, 0, 0,
                              0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0,
                              mbuf,
-#ifdef __GNUC__
                              0L,
-#else
-                             0, 0,
-#endif
                              &i, &i, &button ,&i,
                              &i, &i);
+#else
+         evnt_m = evnt_multi(MU_TIMER,
+                             0, 0, 0,
+                             0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0,
+                             mbuf,
+                             0, 0,
+                             &i, &i, &button ,&i,
+                             &i, &i);
+#endif
       } while (button);
    }
 
