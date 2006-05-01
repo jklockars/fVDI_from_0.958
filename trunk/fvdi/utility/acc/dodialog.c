@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
    #include <support.h>       /* No ltoa otherwise! */
    #define ltoa _ltoa
 #else
@@ -36,7 +40,7 @@ extern int vdi_handle1;
 extern int ap_id;
 
 extern int button_func(Window *wind, int but);
-extern int xobjc_edit(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int ed_obj, int keycode, int *curpos, int kind);
+extern int xobjc_edit(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int ed_obj, int keycode, short *curpos, int kind);
 extern void remove_window(Window *);
 
 int xwind_redraw(Window *wind, GRECT *p, OBJECT *dlog, int object, int (*redraw)(int, GRECT *, OBJECT *, int));
@@ -67,11 +71,15 @@ void clear_radios(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJE
    }
 }
 
-int xform_button(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int obj, int breturn, int *nextob)
+int xform_button(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJECT *tree, int obj, int breturn, short *nextob)
 {
-   int x, y, was_set, new_state, ret;
-   int which, msg[8], button, kstate, kreturn, breturn_;
-   int outside, bx, by, bw, bh;
+   short x, y;
+   int was_set, new_state, ret;
+   int which;
+   short msg[8], button, kstate, kreturn, breturn_;
+   int outside;
+   short bx, by;
+   int bw, bh;
    int thickness;
 
    ret = 1;
@@ -88,7 +96,11 @@ int xform_button(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJEC
    case G_IBOX:
    case G_BOXCHAR:
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+      thickness = tree[obj].ob_spec.obspec.framesize;
+ #else
       thickness = (tree[obj].ob_spec >> 16) & 0x00ff;
+ #endif
 #else
       thickness = (int)((long)tree[obj].ob_spec >> 16) & 0x00ff;
 #endif
@@ -108,7 +120,11 @@ int xform_button(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJEC
    case G_BOXTEXT:
    case G_FTEXT:
    case G_FBOXTEXT:
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+      thickness = tree[obj].ob_spec.tedinfo->te_thickness;
+#else
       thickness = ((TEDINFO *)tree[obj].ob_spec)->te_thickness;
+#endif
       break;
    }
    if (tree[obj].ob_state & OUTLINED)
@@ -139,19 +155,27 @@ int xform_button(Window *wind, int (*redraw)(int, GRECT *, OBJECT *, int), OBJEC
       bw = tree[obj].ob_width + 2 * thickness;
       bh = tree[obj].ob_height + 2 * thickness;
       do {
+#if defined(__GNUC__)
          which = evnt_multi(MU_BUTTON | MU_M1,
                             1, 1, 0,       /* mouse */
                             outside, bx, by, bw, bh,  /* rectangle 1 */
                             0, 0, 0, 0, 0, /* rectangle 2 */
                             msg,           /* message buffer */
-#ifndef __GNUC__
-                            0, 0,          /* return immediately */
-#else
                             0L,            /* return immediately */
-#endif
                             &x, &y,
                             &button, &kstate,
                             &kreturn, &breturn_);
+#else
+         which = evnt_multi(MU_BUTTON | MU_M1,
+                            1, 1, 0,       /* mouse */
+                            outside, bx, by, bw, bh,  /* rectangle 1 */
+                            0, 0, 0, 0, 0, /* rectangle 2 */
+                            msg,           /* message buffer */
+                            0, 0,          /* return immediately */
+                            &x, &y,
+                            &button, &kstate,
+                            &kreturn, &breturn_);
+#endif
 
          if (which & MU_M1) {
             new_state = tree[obj].ob_state & ~SELECTED;
@@ -267,7 +291,7 @@ int xobjc_draw(Window *wind, GRECT *p, OBJECT *dlog, int object, int (*redraw)(i
 
 int xcursor(int handle, GRECT *p, OBJECT *dlog, int object)
 {
-   int rect[4];
+   short rect[4];
 
    rect[0] = p->g_x;
    rect[1] = p->g_y;
@@ -283,9 +307,17 @@ void calc_curpos(Window *wind, OBJECT *dlog, int edit, GRECT *p)
    int w, h;
    char *tmp;
    
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+   i = dlog[edit].ob_spec.tedinfo->te_tmplen;
+#else
    i = ((TEDINFO *)dlog[edit].ob_spec)->te_tmplen;
+#endif
    pos = -1;
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+   tmp = dlog[edit].ob_spec.tedinfo->te_ptmplt;
+#else
    tmp = ((TEDINFO *)dlog[edit].ob_spec)->te_ptmplt;
+#endif
    len = (int)strlen(tmp);
    for(; i >= 0; i--) {
       pos++;
@@ -298,7 +330,11 @@ void calc_curpos(Window *wind, OBJECT *dlog, int edit, GRECT *p)
    objc_offset(dlog, edit, &p->g_x, &p->g_y);
    w = dlog[edit].ob_width;
    h = dlog[edit].ob_height;
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+   switch (dlog[edit].ob_spec.tedinfo->te_just) {
+#else
    switch (((TEDINFO *)dlog[edit].ob_spec)->te_just) {
+#endif
    case 0:
       p->g_x = p->g_x + pos * 8;
       break;
@@ -315,7 +351,7 @@ void calc_curpos(Window *wind, OBJECT *dlog, int edit, GRECT *p)
 
 int safe_xwind_redraw(Window *wind, GRECT *p, OBJECT *dlog, int object, int (*redraw)(int, GRECT *, OBJECT *, int))
 {
-   int junk;
+   short junk;
    int was_edit;
 
    was_edit = dlog[wind->tmp[3]].ob_state & IS_EDIT;
@@ -332,7 +368,7 @@ int xwind_redraw(Window *wind, GRECT *p, OBJECT *dlog, int object, int (*redraw)
 {
    GRECT cp;
    int ok = 1;
-   int *edit;
+   short *edit;
    int cursor_on;
    
    edit = &wind->tmp[3];
@@ -375,12 +411,13 @@ int redraw(int handle, GRECT *p, OBJECT *dlog, int object)
    return 1;
 }
 
-int win_form_do(Window *wind, int which, int *msg, int x, int y, int button, int kstate, int kreturn, int breturn)
+int win_form_do(Window *wind, int which, short *msg, int x, int y, int button, int kstate, short kreturn, int breturn)
 {
-   int *next, *edit, *cont, *idx, *dialog;
+   short *next, *edit, *cont, *idx, *dialog;
    OBJECT *dlog;
-   int junk, tmp;
-   int message[8];
+   short junk;
+   int tmp;
+   short message[8];
    
    dlog = (OBJECT *)wind->ptr;
    dialog = &wind->tmp[0];
@@ -435,8 +472,7 @@ int win_form_do(Window *wind, int which, int *msg, int x, int y, int button, int
       case WM_MOVED:
          wind_set(wind->handle, WF_CURRXYWH, msg[4], msg[5], msg[6], msg[7]);
          wind_calc(WC_WORK, NAME | MOVER, msg[4], msg[5], msg[6], msg[7],
-                   (int *)&dlog[ROOT].ob_x,
-                   (int *)&dlog[ROOT].ob_y, &junk, &junk);
+                   &dlog[ROOT].ob_x, &dlog[ROOT].ob_y, &junk, &junk);
          dlog[ROOT].ob_x += 3;
          dlog[ROOT].ob_y += 3;
          form[*dialog].pos[0] = msg[4];
