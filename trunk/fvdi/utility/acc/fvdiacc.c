@@ -1,6 +1,8 @@
 /*
- * clock.c  - simple clock in a window Desk Accessory
+ * fvdiacc.c - fVDI ACC main code
  *
+ * (The following note now only applies to compilers other than GNU C that
+ *  do not use the MiNTlib (which is capable of ACC/PRG with one binary).
  * Note: When NOT_A_DA is defined the program is built as a true program,
  * but if optimising some unused assignments will be reported.
  */
@@ -11,8 +13,17 @@
    #include <osbind.h>
 #endif
 
-#include <aes.h>
-#include <vdi.h>
+#ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
+   #include <aesbind.h>
+   #include <vdibind.h>
+ #endif
+#else
+   #include <aes.h>
+   #include <vdi.h>
+#endif
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -25,21 +36,30 @@
 #include "wind.h"
 #include "misc.h"
 
-#ifndef NOT_A_DA
-#include <acc.h>
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+extern short _app;
+ #define W_TYPE (NAME | MOVER | CLOSER)
+#else
+ #ifndef NOT_A_DA
+  #include <acc.h>
 
 STACK(4096);	// Hopefully plenty
-#endif
+ #endif
 
-#ifndef NOT_A_DA
-#define W_TYPE (NAME | MOVER | CLOSER)
-#else
-#define W_TYPE (NAME | MOVER)
+ #ifndef NOT_A_DA
+  #define W_TYPE (NAME | MOVER | CLOSER)
+ #else
+  #define W_TYPE (NAME | MOVER)
+ #endif
 #endif
 
 #define rsc_file "fvdiacc.rsc"
 
 extern void get_tedinfo(OBJECT *, int, char *);
+extern int add_xdialog(int, int (*)(int), int, char *);
+extern int frm_find(int);
+extern void event_loop(void);
+extern void init_windows(void);
 
 static int initialise(void);
 void deinitialise(void);
@@ -49,7 +69,7 @@ int aes_version;
 int finished;
 int MultiAES;
 int bkgndinput = 1;
-int vdi_handle1;
+short vdi_handle1;
 int popfix = 0;
 Window window[MAX_WINDOWS];
 char dlogtext[30] = "fVDI Setup";
@@ -139,7 +159,7 @@ int set_screen(int dialog, int but)
 	return 1;
 }
 
-int xfsel_exinput(char *dir, char *fname, int *button, char *title)
+int xfsel_exinput(char *dir, char *fname, short *button, char *title)
 {
    if ((aes_version >= 0x130)) // || options.xtra.fselexinput)
       return fsel_exinput(dir, fname, button, title);
@@ -149,16 +169,16 @@ int xfsel_exinput(char *dir, char *fname, int *button, char *title)
 
 int saver(int dialog, int but)
 {
-	int button;
+	short button;
 	static char file[50] = "saved.raw";
 	static char directory[50] = "c:\\";
-    char fname[100];
+	char fname[100];
 	FILE *outfile;
-	int work_out[57];
+	short work_out[57];
 	int w, h, depth, row;
 	int i;
 	MFDB src, dst;
-	int points[8];
+	short points[8];
    
 	if (xfsel_exinput(directory, file, &button, "File to load")) {
 		if (button) {
@@ -214,36 +234,59 @@ int option(int dialog, int but)
 	return 1;
 }
 
-#ifdef NOT_A_DA
-static void no_more(void)
+#if defined(NOT_A_DA) || (defined(__GNUC__) && defined(NEW_GEMLIB))
+static int no_more(int dummy)
 {
 	finished = 1;
+
+	return 1;
 }
 #endif
 
 int main(void)
 {
-	if (locate_driver()) {
-#ifndef NOT_A_DA
+#if defined(__GNUC__) && defined(NEW_GEMLIB)
+	if (locate_driver() && !_app) {
 		aesbuf(0, 0);
 		set_screen(0, 0);
-#endif
 	}
 
 	if (!initialise())
 		return 0;
 
-#ifndef NOT_A_DA
-	menu_register(ap_id, "  fVDI");	// Register as a DA
-#else
-	add_xdialog(frm_find(FRM_MAIN), no_more, W_TYPE, dlogtext);
-#endif
+	if (!_app)
+		menu_register(ap_id, "  fVDI");	// Register as a DA
+	else
+		add_xdialog(frm_find(FRM_MAIN), no_more, W_TYPE, dlogtext);
 
 	event_loop();
 
-#ifdef NOT_A_DA
+	if (_app)
+		appl_exit();
+	return 0;
+#else
+	if (locate_driver()) {
+ #ifndef NOT_A_DA
+		aesbuf(0, 0);
+		set_screen(0, 0);
+ #endif
+	}
+
+	if (!initialise())
+		return 0;
+
+ #ifndef NOT_A_DA
+	menu_register(ap_id, "  fVDI");	// Register as a DA
+ #else
+	add_xdialog(frm_find(FRM_MAIN), no_more, W_TYPE, dlogtext);
+ #endif
+
+	event_loop();
+
+ #ifdef NOT_A_DA
 	appl_exit();
 	return 0;
+ #endif
 #endif
 }
 
@@ -253,9 +296,9 @@ void menu_update(void)
 
 static int initialise(void)
 {
-   int junk;
-   int work_in[11] = {1,  SOLID, 1,  1, 1,  1, 1,  FIS_SOLID, 0, 1,  2};
-   int work_out[57];
+   short junk;
+   short work_in[11] = {1,  SOLID, 1,  1, 1,  1, 1,  FIS_SOLID, 0, 1,  2};
+   short work_out[57];
 
    if ((ap_id = appl_init()) == -1)
       return 0;
@@ -275,6 +318,8 @@ static int initialise(void)
    finished = 0;
 
 //   *edit = 0;   
+
+   return 1;
 }
 
 void deinitialise(void)
