@@ -6,10 +6,10 @@
 typedef struct _Window {
    struct _Window *next;
    int handle;
-   int (*handler)(struct _Window *, int, int *, int, int, int, int, int, int);
+   int (*handler)(struct _Window *, int, short *, int, int, int, int, int, int);
    void *ptr;
    int (*func)(int);
    int new;
-   int tmp[8];
+   short tmp[8];
 } Window;
 #endif
