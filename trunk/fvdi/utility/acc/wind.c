@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
    #include <support.h>       /* No ltoa otherwise! */
    #define ltoa _ltoa
 #else
@@ -27,6 +31,8 @@
 
 #define BKGND
 
+extern int add_dialog(int, int (*)(int));
+extern int frm_find(int);
 extern void handle_menu(int, int);
 
 extern int check_events(int);
@@ -35,7 +41,7 @@ extern void fixup(int, int);
 
 extern Window window[];
 
-extern no_shorts;
+extern int no_shorts;
 extern short_t shortcut[];
 
 extern char last_loaded[];
@@ -43,8 +49,8 @@ extern char last_loaded[];
 extern int v_x_max;
 extern int v_y_max;
 
-extern bkgndinput;
-extern finished;
+extern int bkgndinput;
+extern int finished;
 extern Menu menu;
 
 #ifndef __GNUC__
@@ -90,11 +96,11 @@ Window *find_window(int handle, int x, int y)
    return NULL;
 }
 
-Window *add_window(int handle, int (*handler)(Window *, int, int*, int, int, int, int, int, int))
+Window *add_window(int handle, int (*handler)(Window *, int, short *, int, int, int, int, int, int))
 {
    Window *new;
 
-   if (new = unused) {
+   if ((new = unused)) {
       unused = new->next;
       new->next = top;
       top = new;
@@ -174,14 +180,16 @@ int event_loop(void)
    return 1;
 }
 
-void no_more(void)
+int no_more(int dummy)
 {
+   return 1;
 }
 
 int check_events(int quick)
 {
-   int x, y, kstate, button, kreturn, breturn;
-   int which, msg[8];
+   short x, y, kstate, button, kreturn, breturn;
+   int which;
+   short msg[8];
    Window *wind;
    int events, finish;
    
@@ -191,19 +199,27 @@ int check_events(int quick)
 
    finish = 0;
    while (!finished && !finish) {
+#if defined(__GNUC__)
       which = evnt_multi(events,
                          1, 1, 1,       /* mouse */
                          0, 0, 0, 0, 0, /* rectangle 1 */
                          0, 0, 0, 0, 0, /* rectangle 2 */
                          msg,           /* message buffer */
-#ifndef __GNUC__
-                         0, 0,          /* return immediately */
-#else
                          0L,            /* return immediately */
-#endif
                          &x, &y,
                          &button, &kstate,
                          &kreturn, &breturn);
+#else
+      which = evnt_multi(events,
+                         1, 1, 1,       /* mouse */
+                         0, 0, 0, 0, 0, /* rectangle 1 */
+                         0, 0, 0, 0, 0, /* rectangle 2 */
+                         msg,           /* message buffer */
+                         0, 0,          /* return immediately */
+                         &x, &y,
+                         &button, &kstate,
+                         &kreturn, &breturn);
+#endif
       if (which & MU_KEYBD) {
          if (bkgndinput) {
             if (!(wind = find_window(0, x, y)))
@@ -228,28 +244,31 @@ int check_events(int quick)
          case VA_START:
             break;
 
-#ifndef NOT_A_DA
+	 /* A normal program never receives
+	  * AC_* accessory specific AES events,
+	  * so it is safe to handle them whether
+	  * running as an accessory or not!
+	  */
          case AC_OPEN:
             add_dialog(frm_find(FRM_MAIN), no_more);
             break;
 
          case AC_CLOSE:
             break;
-#endif
 
          case MN_SELECTED:
             break;
 
          case WM_TOPPED:
-            if (wind = find_window(msg[3], 0, 0)) {
+            if ((wind = find_window(msg[3], 0, 0))) {
                top_window(wind);
-               wind_set(msg[3], WF_TOP, msg[3]);
+               wind_set(msg[3], WF_TOP, msg[3], 0, 0, 0);
             }
             break;
 
          case WM_M_BDROPPED:
          case WM_BOTTOMED:
-            if (wind = find_window(msg[3], 0, 0)) {
+            if ((wind = find_window(msg[3], 0, 0))) {
                bottom_window(wind);
                wind_set(msg[3], WF_BOTTOM, 0, 0, 0, 0);
             }
@@ -267,7 +286,7 @@ int check_events(int quick)
          case WM_MOVED:
          case WM_HSLID:
          case WM_VSLID:
-            if (wind = find_window(msg[3], 0, 0)) {
+            if ((wind = find_window(msg[3], 0, 0))) {
                wind->handler(wind, which & MU_MESAG, msg, x, y, button, kstate, kreturn, breturn);
             }
             break;
