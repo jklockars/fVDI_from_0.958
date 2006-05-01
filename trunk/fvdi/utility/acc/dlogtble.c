@@ -3,8 +3,12 @@
  */
 
 #ifdef __GNUC__
+ #if defined(NEW_GEMLIB)
+   #include <gem.h>
+ #else
    #include <aesbind.h>
    #include <vdibind.h>
+ #endif
    #include <support.h>       /* No ltoa otherwise! */
    #define ltoa _ltoa
 #else
