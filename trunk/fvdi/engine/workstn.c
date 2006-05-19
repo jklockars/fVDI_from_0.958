@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.15 2006-02-19 01:13:58 johan Exp $
+ * $Id: workstn.c,v 1.16 2006-05-19 07:40:21 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -145,7 +145,7 @@ static short find_free_handle(Virtual ***handle_entry)
 		}
 		handle_table[0] = (Virtual *)((long)handles);
 		handle_table[1] = 0;
-		for(handles--; handles >= 0; handles--)
+		for(handles--; handles >= 2; handles--)
 			handle_table[handles] = non_fvdi_vwk;
 		*last = &handle_table[2];
 		*handle_entry = &handle_table[2];
