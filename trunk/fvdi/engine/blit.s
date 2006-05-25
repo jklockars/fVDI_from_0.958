@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.11 2005-07-26 21:39:06 johan Exp $
+* $Id: blit.s,v 1.12 2006-05-25 22:17:24 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -521,12 +521,25 @@ lib_vrt_cpyfm:
 	swap	d0
 
 	uses_d1
-	movem.l	d2-d4/a3-a5,-(a7)
+	movem.l	d2-d5/a3-a5,-(a7)
 
 	sub.l	#16,a7		; VDI struct, destination MFDB, VDI struct, source MFDB
 	move.l	a0,(a7)
 	move.l	a0,8(a7)
 
+	move.l	vwk_real_address(a0),a3
+	moveq	#-1,d5		; Default to clipping
+
+	move.l	10(a1),a2	; a2 - destination MFDB
+	move.l	a2,d3
+	lbeq	.screen_dest,1
+	move.l	mfdb_address(a2),d3
+	lbeq	.screen_dest,1
+	cmp.l	wk_screen_mfdb_address(a3),d3
+	lbeq	.screen_dest,1
+	moveq	#0,d5		; Not screen as destination
+ label .screen_dest,1
+	
 	move.l	2(a1),a2	; Get rectangle coordinates
 	movem.w	8(a2),d1-d4
 
@@ -538,9 +551,12 @@ lib_vrt_cpyfm:
 	sub.w	2(a2),d4
 	add.w	6(a2),d4
 
+	tst.w	d5
+	lbeq	.no_clip,2
 	bsr	clip_rect	; Clipping necessary?
 	blt	.end_vrt_cpyfm	; .end
-
+ label .no_clip,2
+	
 	movem.w	d1-d4,-(a7)
 	sub.w	8(a2),d1	; Calculate clipped source coordinates
 	sub.w	10(a2),d2
@@ -553,7 +569,6 @@ lib_vrt_cpyfm:
 	move.l	6(a1),a2	; a2 - source MFDB
 	move.l	a2,8+12(a7)
 
-	move.l	vwk_real_address(a0),a3
 	move.l	wk_r_expand(a3),d3
 
 	movem.l	d5-d7,-(a7)
@@ -568,7 +583,7 @@ lib_vrt_cpyfm:
 
 .end_vrt_cpyfm:			; .end:
 	add.l	#16,a7
-	movem.l	(a7)+,d2-d4/a3-a5
+	movem.l	(a7)+,d2-d5/a3-a5
 	used_d1
 	moveq	#1,d0		; Successful
 	rts
