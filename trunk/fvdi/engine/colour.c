@@ -1,7 +1,7 @@
 /*
  * fVDI colour handling
  *
- * $Id: colour.c,v 1.3 2006-02-19 01:13:58 johan Exp $
+ * $Id: colour.c,v 1.4 2006-05-25 22:44:18 johan Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -425,10 +425,18 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
 #else
       long length = 48 + 256 * 8;
 #endif
+      Colour *palette = vwk->palette;
+
+      /* Negative indices are always in local palette, but this can't be one of those */
+      if (!palette || ((long)palette & 1))
+        palette = vwk->real_address->screen.palette.colours;
+
+#if 0
       puts("vq_ctab not yet really supported\x0d\x0a");
+#endif
       if (length > *(long *)&intin[0]) {
 	char buf[10];
-	puts("  Too little space available for ctab (");
+	puts("Too little space available for ctab (");
 	ltoa(buf, *(long *)&intin[0], 10);
 	puts(buf);
 	puts(" when ctab needs ");
@@ -449,10 +457,50 @@ int colour_table(Virtual *vwk, long subfunction, short *intin, short *intout)
       ctab->reserved2 = 0;
       ctab->reserved3 = 0;
       ctab->reserved4 = 0;
+
       for(i = 0; i < 256; i++) {
-	ctab->colors[i].rgb.red   = i & 0xe0;
-	ctab->colors[i].rgb.green = (i & 0x1c) << 3;
-	ctab->colors[i].rgb.blue  = (i & 0x03) << 6;
+	ctab->colors[i].rgb.red    = (palette[i].vdi.red   * 255L) / 1000;
+	ctab->colors[i].rgb.green  = (palette[i].vdi.green * 255L) / 1000;
+	ctab->colors[i].rgb.blue   = (palette[i].vdi.blue  * 255L) / 1000;
+	ctab->colors[i].rgb.red   |= ctab->colors[i].rgb.red   << 8;
+	ctab->colors[i].rgb.green |= ctab->colors[i].rgb.green << 8;
+	ctab->colors[i].rgb.blue  |= ctab->colors[i].rgb.blue  << 8;
+#if 0
+	{
+	  char buf[10];
+	  puts("[");
+	  ltoa(buf, i, 10);
+	  puts(buf);
+	  puts("] = ");
+	  ltoa(buf, ctab->colors[i].rgb.red & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, ctab->colors[i].rgb.green & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, ctab->colors[i].rgb.blue & 0xffff, 16);
+	  puts(buf);
+	  puts("  ");
+	  ltoa(buf, palette[i].vdi.red & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, palette[i].vdi.green & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, palette[i].vdi.blue & 0xffff, 16);
+	  puts(buf);
+	  puts("  ");
+	  ltoa(buf, palette[i].hw.red & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, palette[i].hw.green & 0xffff, 16);
+	  puts(buf);
+	  puts(",");
+	  ltoa(buf, palette[i].hw.blue & 0xffff, 16);
+	  puts(buf);
+	  puts("\x0d\x0a");
+	}
+#endif
       }
       return 256;    /* Depending on palette size */
     }
