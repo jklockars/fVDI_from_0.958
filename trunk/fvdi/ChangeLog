@@ -1,3 +1,14 @@
+2006-04-25 - johan
+Made vrt_cpyfm disregard clip rectangle for non-screen destinations.
+Fixed a bug that made vq_ctab sometimes use an incorrect palette address.
+Made vq_ctab return the real colour values.
+
+2006-04-19 - johan
+Fixed a bug in the creation of extra handle tables.
+
+2006-03-07 - johan
+Various optimizations in the bitplane driver mouse drawing code.
+
 2006-03-05 - johan
 Made vst_arbpt() do something useful for non-vector fonts.
 Made vst_font() call vst_point() for size setting.
@@ -10,7 +21,7 @@ Some further optimizations for FreeType2 rendering from cached bitmaps.
 Made it possible to have file debug output go to a non-seekable device.
 
 2006-02-28 - standa
-vst_charmap() and vst_map_mode() implemenetated. Highwire maps characters
+vst_charmap() and vst_map_mode() implemented. Highwire maps characters
 directly to UNICODE when NVDI >4.0 is available. Highwire displays
 everything nicely again.
 Initial spdchar.map load implemented. Will test and enable later on.
