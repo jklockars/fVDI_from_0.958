@@ -1,7 +1,7 @@
 /*
  * Bitplane mouse routine
  *
- * $Id: mouse.c,v 1.3 2006-05-26 06:50:29 johan Exp $
+ * $Id: mouse.c,v 1.4 2006-05-26 07:56:20 johan Exp $
  *
  * Copyright 2006, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -133,7 +133,7 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
 		    (short)(state & 0x3ff) * (long)PLANES * 2);
 #else
     wrap = wk->screen.wrap - PLANES * 2;
-    dst = (UWORD *)((long)wk->screen.mfdb.address + (state & 0x00ffffff));
+    dst = (UWORD *)((long)wk->screen.mfdb.address + (state & 0x00ffffffL));
 #endif
     h = ((unsigned long)state >> 24) & 0x0f;
     save_w = saved;
@@ -291,6 +291,7 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
       state = 0x80000000L;
       state |= (long)(op == 0) << 28;
 #else
+      state  = 0;
       state |= (long)(op == 0) << 31;
 #endif
       state |= (long)((h - 1) & 0x0f) << 24;
