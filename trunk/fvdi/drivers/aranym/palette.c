@@ -7,6 +7,7 @@
 
 long CDECL c_get_hw_colour(short index, long red, long green, long blue, unsigned long *hw_value);
 
+extern Access *access;
 
 #define ECLIPSE 0
 #define NOVA 0		/* 1 - byte swap 16 bit colour value (NOVA etc) */
@@ -152,12 +153,39 @@ SETNAME(Virtual *vwk, long start, long entries, unsigned short *requested, Colou
 			palette[start + i].vdi.blue = (component * 1000L) / 255;
 			palette[start + i].hw.blue = component;
 
+#if 0
+			{
+			    char buf[10];
+			    access->funcs.puts("[");
+			    access->funcs.ltoa(buf, start + i, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("] ");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.red & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.green & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.blue & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("  ");
+			    access->funcs.ltoa(buf, palette[start + i].hw.red & 0xffff, 16);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].hw.green & 0xffff, 16);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].hw.blue & 0xffff, 16);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("\x0d\x0a");
+			}
+#endif
 			/* Would likely be better to have a different mode for this */
-			c_get_hw_colour(  start + i,
-					  palette[start + i].vdi.red,
-					  palette[start + i].vdi.green,
-		              		  palette[start + i].vdi.blue,
-					  &tc_word );
+			c_get_hw_colour(start + i,
+					palette[start + i].vdi.red,
+					palette[start + i].vdi.green,
+		              		palette[start + i].vdi.blue,
+					&tc_word);
 
 			*(PIXEL *)&palette[start + i].real = (PIXEL)tc_word;
 		}
@@ -179,11 +207,39 @@ SETNAME(Virtual *vwk, long start, long entries, unsigned short *requested, Colou
 			colour = (component * ((1L << blue_bits) - 1) + 500L) / 1000;
 			palette[start + i].hw.blue = (colour * 1000 + (1L << (blue_bits - 1))) / ((1L << blue_bits) - 1);
 
-			c_get_hw_colour(  start + i,
-					  palette[start + i].vdi.red,
-					  palette[start + i].vdi.green,
-		              		  palette[start + i].vdi.blue,
-					  &tc_word );
+#if 0
+			{
+			    char buf[10];
+			    access->funcs.puts("[");
+			    access->funcs.ltoa(buf, start + i, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("] ");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.red & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.green & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].vdi.blue & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("  ");
+			    access->funcs.ltoa(buf, palette[start + i].hw.red & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].hw.green & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts(",");
+			    access->funcs.ltoa(buf, palette[start + i].hw.blue & 0xffff, 10);
+			    access->funcs.puts(buf);
+			    access->funcs.puts("\x0d\x0a");
+			}
+#endif
+
+			c_get_hw_colour(start + i,
+					palette[start + i].vdi.red,
+					palette[start + i].vdi.green,
+		              		palette[start + i].vdi.blue,
+					&tc_word);
 
 			*(PIXEL *)&palette[start + i].real = (PIXEL)tc_word;
 		}
