@@ -1,7 +1,7 @@
 /*
  * Bitplane mouse routine
  *
- * $Id: mouse.c,v 1.2 2006-02-19 01:21:51 johan Exp $
+ * $Id: mouse.c,v 1.3 2006-05-26 06:50:29 johan Exp $
  *
  * Copyright 2006, Johan Klockars 
  * Copyright 2002 The EmuTOS development team
@@ -121,31 +121,106 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
 #if LOCAL_PTR
     UWORD *dst, *save_w;
 #endif
+#if 0
     short h, plane, wrap;
+#else
+    short h, wrap;
+#endif
+#if 0
     wrap = (wk->screen.wrap >> 1) - PLANES;
     dst = (UWORD *)((long)wk->screen.mfdb.address +
 		    (short)((state >> 10) & 0x3fff) * (long)wk->screen.wrap +
 		    (short)(state & 0x3ff) * (long)PLANES * 2);
-    h = (state >> 24) & 0x0f;
+#else
+    wrap = wk->screen.wrap - PLANES * 2;
+    dst = (UWORD *)((long)wk->screen.mfdb.address + (state & 0x00ffffff));
+#endif
+    h = ((unsigned long)state >> 24) & 0x0f;
     save_w = saved;
 
+#if 0
     if ((state >> 28) & 0x01) {  	/* Long? */
+#else
+    if (state & 0x80000000L) {  	/* Long? */
+#endif
+#if 0
       for(; h >= 0; h--) {
-	plane = PLANES - 1;
-	do {
-	  *dst++ = *save_w++;
-	  *(dst + PLANES - 1) = *save_w++;
-	} while (--plane >= 0);
+#else
+      do {
+#endif
+#if 0
+        plane = PLANES - 1;
+        do {
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+        } while (--plane >= 0);
 	dst += wrap;
+#else
+        switch (PLANES) {
+        case 8:
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+        case 4:
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+        case 2:
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+        case 1:
+          *dst++ = *save_w++;
+          *(dst + PLANES - 1) = *save_w++;
+          break;
+        }
+	dst = (UWORD *)((long)dst + wrap);
+#endif
+#if 0
       }
+#else
+      } while (--h >= 0);
+#endif
     } else {   	/* Word */
+#if 0
       for(; h >= 0; h--) {
+#else
+      do {
+#endif
+#if 0
 	plane = PLANES - 1;
 	do {
 	  *dst++ = *save_w++;
 	} while (--plane >= 0);
 	dst += wrap;
+#else
+        switch (PLANES) {
+        case 8:
+          *dst++ = *save_w++;
+          *dst++ = *save_w++;
+          *dst++ = *save_w++;
+          *dst++ = *save_w++;
+        case 4:
+          *dst++ = *save_w++;
+          *dst++ = *save_w++;
+        case 2:
+          *dst++ = *save_w++;
+        case 1:
+          *dst++ = *save_w++;
+          break;
+        }
+	dst = (UWORD *)((long)dst + wrap);
+#endif
+#if 0
       }
+#else
+      } while (--h >= 0);
+#endif
     }
 
     save_state = 0;
@@ -212,11 +287,19 @@ c_mouse_draw_8(Workstation *wk, long x, long y, Mouse *mouse)
     save_w = saved;
 
     if (h) {
+#if 0
       state = 0x80000000L;
       state |= (long)(op == 0) << 28;
+#else
+      state |= (long)(op == 0) << 31;
+#endif
       state |= (long)((h - 1) & 0x0f) << 24;
+#if 0
       state |= y << 10;
       state |= x >> 4;
+#else
+      state |= (long)dst - (long)wk->screen.mfdb.address;
+#endif
     } else {
       state = 0;
       return 0;
