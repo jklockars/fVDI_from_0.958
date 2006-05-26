@@ -1,3 +1,6 @@
+2006-04-26 - johan
+Bug fix for bitplane driver mouse cursor removal.
+
 2006-04-25 - johan
 Made vrt_cpyfm disregard clip rectangle for non-screen destinations.
 Fixed a bug that made vq_ctab sometimes use an incorrect palette address.
