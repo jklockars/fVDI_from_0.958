@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.21 2006-03-05 22:41:45 johan Exp $
+* $Id: text_sq.s,v 1.22 2006-06-12 22:38:46 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -29,7 +29,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 	xdef	vqt_f_extent,vqt_xfntinfo,vqt_fontheader
 
 	xdef	lib_vst_effects,lib_vst_alignment,lib_vst_rotation
-	xdef	lib_vqt_font_info,lib_vst_height,lib_vqt_attributes,lib_vqt_extent
+	xdef	lib_vqt_font_info,lib_vst_height,lib_vqt_attributes
 	xdef	lib_vst_load_fonts,lib_vst_unload_fonts,lib_vqt_width
 
 	xdef	vst_arbpt
@@ -849,6 +849,10 @@ vqt_extent:
 	uses_d1
 	movem.l	d2-d4/a3-a4,-(a7)
 
+  ifne 1
+	move.l	a1,-(a7)
+  endc
+
 	move.l	control(a1),a2
 	move.w	6(a2),d0			; Number of characters
 	move.l	ptsout(a1),a2
@@ -912,6 +916,15 @@ vqt_extent:
 	move.l	d2,(a2)+
 	ext.l	d2
 	move.l	d2,(a2)+
+
+  ifne 1
+	move.l	(a7)+,a1
+	movem.l	d1-d2,-(a7)
+	move.l	a1,-(a7)
+;	jsr	_display_output
+	addq.l	#4,a7
+	movem.l	(a7)+,d1-d2
+  endc
 
 	movem.l	(a7)+,d2-d4/a3-a4
 	used_d1
