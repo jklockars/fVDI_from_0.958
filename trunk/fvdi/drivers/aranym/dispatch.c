@@ -111,9 +111,17 @@ c_expand_area(Virtual *vwk, MFDB *src, long src_x, long src_y,
 {
    long foreground;
    long background;
-   get_colours_r((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+   MFDB *simple_dst;
 
-   return ARAnyM((NF_fVDI+FVDI_EXPAND_AREA, vwk, src, src_x, src_y, simplify(vwk, dst),
+   simple_dst = simplify(vwk, dst);
+   if (!simple_dst || (dst->bitplanes > 8)) {
+       get_colours_r((Virtual *)((long)vwk & ~1), colour, &foreground, &background);
+   } else {
+       foreground = colour & 0xff;
+       background = (colour >> 16) & 0xff;
+   }
+
+   return ARAnyM((NF_fVDI+FVDI_EXPAND_AREA, vwk, src, src_x, src_y, simple_dst,
                   dst_x, dst_y, w, h, operation, foreground, background));
 }
 
