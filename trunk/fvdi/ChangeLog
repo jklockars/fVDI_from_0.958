@@ -1,3 +1,18 @@
+2006-06-05 - johan
+Reversed bit order for 32 bit vr_trnfm.
+Fix for debug output of return values.
+Correction of colour selection for mono-expand blit in ARAnyM driver.
+
+2006-06-02 - johan
+Correction for vq_devinfo debug output.
+
+2006-05-26 - johan
+vqt_ctab now uses correct palette address and returns real colour values.
+Made vrt_cpyfm disregard clip rectangle for non-screen destinations.
+
+2006-05-19 - johan
+Fixed bug in creation of extra handle table.
+
 2006-04-26 - johan
 Bug fix for bitplane driver mouse cursor removal.
 
