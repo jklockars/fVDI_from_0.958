@@ -1,7 +1,7 @@
 /*
  * fVDI startup
  *
- * $Id: startup.c,v 1.58 2006-05-25 22:17:43 johan Exp $
+ * $Id: startup.c,v 1.59 2006-06-12 22:38:06 johan Exp $
  *
  * Copyright 1999-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -24,7 +24,7 @@
 #define SYSNAME "fvdi.sys"
 
 #define VERSION	0x0967
-#define BETA	9
+#define BETA	10
 #define VERmaj	(VERSION >> 12)
 #define VERmin	(((VERSION & 0x0f00) >> 8) * 100 + ((VERSION & 0x00f0) >> 4) * 10 + (VERSION & 0x000f))
 
@@ -743,7 +743,7 @@ void display_output(VDIpars *pars)
   char buf[10];
   int i;
 
-  if (pars->control->l_intin) {
+  if (pars->control->l_intout) {
     access->funcs.puts("  Intout");
     access->funcs.ltoa(buf, pars->control->l_intout, 10);
     access->funcs.puts(buf);
