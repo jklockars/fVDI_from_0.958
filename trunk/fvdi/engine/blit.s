@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.12 2006-05-25 22:17:24 johan Exp $
+* $Id: blit.s,v 1.13 2006-06-12 22:36:17 johan Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -1233,8 +1233,9 @@ to_standard_32:
  label .loop3c,3
 	move.l	0(a6,d4),d5	; Was .w
 	add.l	d5,d5		; Was .w
-	addx.w	d6,d6		; Was .l
+;;	addx.w	d6,d6		; Was .l
 ;	roxr.l	#1,d6		; This _is_ the right one!
+	roxr.w	#1,d6		; This _is_ the right one!
 	move.l	d5,0(a6,d4)	; Was .w
 	subq.l	#4,d4		; Was 2
 	lbpl	.loop3c,3
