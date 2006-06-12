@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.16 2006-05-19 07:40:21 johan Exp $
+ * $Id: workstn.c,v 1.17 2006-06-12 22:54:45 johan Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -571,23 +571,17 @@ void vq_devinfo(VDIpars *pars)
 		if (old_gdos != -2) {		/* No pass-through without old GDOS */
 			char buf[10];
 			call_other(pars, 0);	/* Dummy handle for call */
-			puts("vq_devinfo: ");
-			ltoa(buf, pars->intout[0], 10);
-			puts(buf);
-			puts(",");
-			ltoa(buf, pars->intout[1], 10);
-			puts(buf);
+			puts("vq_devinfo:\x0d\x0a");
+			display_output(pars);
+			puts(*(char **)&pars->intin[1]);
+			puts("\x0d\x0a");
+			puts(*(char **)&pars->intin[3]);
+			puts("\x0d\x0a");
+			puts(*(char **)&pars->intin[5]);
 			puts("\x0d\x0a");
 		} else
 		    puts("no old GDOS (vq_devinfo)\x0d\x0a");
 #endif
-		display_output(pars);
-		puts(*(char **)&pars->intin[1]);
-		puts("\x0d\x0a");
-		puts(*(char **)&pars->intin[3]);
-		puts("\x0d\x0a");
-		puts(*(char **)&pars->intin[5]);
-		puts("\x0d\x0a");
 		return;
 	}
 
