@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.30 2006-03-02 00:36:29 johan Exp $
+ * $Id: ft2.c,v 1.31 2006-07-14 21:59:28 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -756,13 +756,11 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 		else if (vwk->text.charmap == 2 /* UNICODE */)
 			cached->index = FT_Get_Char_Index(face, ch);
 		else {
-			cached->index = FT_Get_Char_Index(face, 
-#if 0
-					((ch > 32) && (ch < 256)) ? spdchar_map.true_type.map[ch - 32] : ch
+#if 1
+			cached->index = FT_Get_Char_Index(face, ( ch > 32 && ch < 256 ) ? spdchar_map.true_type.map[ch - 32] : ch);
 #else
-					Atari2Unicode[ch]
+			cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch] );
 #endif
-			                                 );
 		}
 	}
 
@@ -892,17 +890,17 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 					int doffset = i * dst->pitch;
 					unsigned char *srcp = src->buffer + soffset;
 					unsigned char *dstp = dst->buffer + doffset;
-					unsigned char ch;
+					unsigned char pix;
 					int j, k;
 					for(j = 0; j < src->width; j += 8) {
-						ch = *srcp++;
+						pix = *srcp++;
 						for(k = 0; k < 8; ++k) {
-							if (ch & 0x80) {
+							if (pix & 0x80) {
 								*dstp++ = 0xff;
 							} else {
 								*dstp++ = 0x00;
 							}
-							ch <<= 1;
+							pix <<= 1;
 						}
 					}
 				}
@@ -914,6 +912,31 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 					       src->buffer + soffset, src->pitch);
 				}
 			}
+
+			if ( debug > 3) {
+				// DEBUG bitmaps
+				unsigned char pix;
+				int j;
+
+				char buf[50];
+				ltoa(buf, dst->width, 10);
+				access->funcs.puts( "glyph width: " );
+				access->funcs.puts( buf );
+				ltoa(buf, cached->advance, 10);
+				access->funcs.puts( " advance: " );
+				access->funcs.puts( buf );
+				access->funcs.puts( "\r\n" );
+
+				for(i = 0; i < dst->rows; i++) {
+					for(j = 0; j < dst->width; j++) {
+						pix = *(char*)((long)dst->buffer + (dst->pitch * i) + j);
+						access->funcs.puts((pix > 120) ? "*" : ".");
+					}
+					access->funcs.puts("\r\n");
+				}
+				access->funcs.puts("\r\n");
+			}
+
 		}
 
 #if 0
@@ -1256,7 +1279,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 			pxy[1] = 0;
 			pxy[2] = t->width - 1;
 			pxy[3] = t->height - 1;
-			pxy[4] = x + xstart;
+			pxy[4] = x + xstart + glyph->minx;
 			pxy[5] = y + glyph->yoffset;
 			pxy[6] = pxy[4] + t->width - 1;
 			pxy[7] = pxy[5] + t->height - 1;

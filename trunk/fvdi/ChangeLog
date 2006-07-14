@@ -1,3 +1,8 @@
+2006-07-14 - standa
+FreeType antialiased rendering uses the glyph->minx too now. No weird
+kerning anymore.
+Glyph debugging added for debug > 3.
+
 2006-06-05 - johan
 Reversed bit order for 32 bit vr_trnfm.
 Fix for debug output of return values.
