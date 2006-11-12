@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.22 2006-06-12 22:38:46 johan Exp $
+* $Id: text_sq.s,v 1.23 2006-11-12 20:06:23 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -17,7 +17,7 @@ SUB1		equ	0		; Subtract 1 from text width? (NVDI apparently doesn't)
 
 	xref	_vdi_stack_top,_vdi_stack_size
 	xref	_external_vst_point,_external_vqt_extent,_external_vqt_width
-	xref	_external_char_bitmap, _external_char_advance
+	xref	_external_char_bitmap, _external_char_advance, _external_vst_effects
 	xref	_sizes
 	xref	_lib_vqt_name,_lib_vqt_xfntinfo,_lib_vqt_fontheader
 	xref	_lib_vst_arbpt,_lib_vst_point
@@ -230,6 +230,31 @@ lib_vst_color:
 vst_effects:
 	move.l	intin(a1),a2
 	move.w	(a2),d0
+
+* Some other method should be used for this!
+	move.l	vwk_text_current_font(a0),a2
+	tst.w	font_flags(a2)
+	bpl	.no_external_vst_effects
+
+	move.l	_external_vst_effects,d2	; (Handle differently?)
+	beq	.no_external_vst_effects	; Not really allowed!
+	move.l	d2,a3
+
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	move.l	_vdi_stack_size,-(a7)
+	move.l	d0,-(a7)			; Effects to set
+	move.l	a2,-(a7) 			; Fontheader
+	move.l	a0,-(a7)			; Virtual
+	jsr	(a3)
+	add.w	#4*4,a7
+
+	move.l	(a7),a7				; Return to original stack
+	done_return
+
+.no_external_vst_effects:
 	move.l	vwk_real_address(a0),a2
 	and.w	wk_writing_effects(a2),d0
 	move.w	d0,vwk_text_effects(a0)
@@ -244,6 +269,31 @@ vst_effects:
 *	a0	VDI struct
 lib_vst_effects:
 	move.w	(a1),d0
+
+* Some other method should be used for this!
+	move.l	vwk_text_current_font(a0),a2
+	tst.w	font_flags(a2)
+	bpl	.no_external_vst_effects
+
+	move.l	_external_vst_effects,d2	; (Handle differently?)
+	beq	.no_external_vst_effects	; Not really allowed!
+	move.l	d2,a3
+
+	move.l	a7,d2				; Give external renderer
+	move.l	_vdi_stack_top,a7		;  extra stack space!
+	move.l	d2,-(a7)			; (Should be improved)
+
+	move.l	_vdi_stack_size,-(a7)
+	move.l	d0,-(a7)			; Effects to set
+	move.l	a2,-(a7) 			; Fontheader
+	move.l	a0,-(a7)			; Virtual
+	jsr	(a3)
+	add.w	#4*4,a7
+
+	move.l	(a7),a7				; Return to original stack
+	rts
+
+.no_external_vst_effects:
 	move.l	vwk_real_address(a0),a2
 	and.w	wk_writing_effects(a2),d0
 	move.w	d0,vwk_text_effects(a0)

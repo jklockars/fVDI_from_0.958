@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.32 2006-02-27 21:41:33 standa Exp $
+ * $Id: loader.c,v 1.33 2006-11-12 20:06:23 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -38,6 +38,7 @@ long        ft2_text_width(Virtual *vwk, Fontheader *font, short *s, long slen);
 Fontheader* ft2_vst_point(Virtual *vwk, long ptsize, short *sizes);
 long        ft2_text_render_default(Virtual *vwk, unsigned long coords,
                                     short *s, long slen);
+long        ft2_set_effects(Virtual *vwk, Fontheader *font, long effects);
 void*       ft2_char_bitmap(Virtual *vwk, Fontheader *font, long ch, short *bitmap_info);
 void*       ft2_char_advance(Virtual *vwk, Fontheader *font, long ch, short *advance_info);
 void        ft2_xfntinfo(Virtual *vwk, Fontheader *font, long flags, XFNT_INFO *info);
@@ -47,6 +48,7 @@ long        (*external_init)(void) = ft2_init;
 Fontheader* (*external_load_font)(Virtual *vwk, const char *font) = ft2_load_font;
 long        (*external_vqt_extent)(Virtual *vwk, Fontheader *font, short *text, long length) = ft2_text_width;
 long        (*external_vqt_width)(Virtual *vwk, Fontheader *font, long ch) = ft2_char_width;
+long        (*external_vst_effects)(Virtual *vwk, Fontheader *font, long effects) = ft2_set_effects;
 Fontheader* (*external_vst_point)(Virtual *vwk, long size, short *sizes) = ft2_vst_point;
 long        (*external_renderer)(Virtual *vwk, unsigned long coords,
                                  short *text, long length) = ft2_text_render_default;
