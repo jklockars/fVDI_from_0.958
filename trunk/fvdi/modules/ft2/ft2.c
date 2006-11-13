@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.33 2006-11-13 01:27:06 standa Exp $
+ * $Id: ft2.c,v 1.34 2006-11-13 20:36:38 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -188,7 +188,7 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 
 		/* This gives us weird values - perhaps caused by taking care of unusual characters out of Latin-1 charset */
 		font->widest.cell = FT_CEIL(FT_MulFix(face->bbox.xMax - face->bbox.xMin, face->size->metrics.x_scale));
-		font->widest.character = FT_CEIL(FT_MulFix(face->max_advance_width, scale));
+		font->widest.character = FT_CEIL(FT_MulFix(face->max_advance_width, face->size->metrics.x_scale));
 
 		font->extra.underline_offset = FT_FLOOR(FT_MulFix(face->underline_position, scale));
 		font->underline = FT_FLOOR(FT_MulFix(face->underline_thickness, scale));
