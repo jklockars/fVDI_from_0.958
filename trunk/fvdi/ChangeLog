@@ -1,7 +1,6 @@
 2006-11-12 - standa
 Implementing algorithmic FreeType font vst_effects() algorithms.
-Left the 'outline' for later completely and bitmap italics only work
-when antialias is on.
+Left the 'outline' for later.
 
 2006-07-14 - standa
 FreeType antialiased rendering uses the glyph->minx too now. No weird

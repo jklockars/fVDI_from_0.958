@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.32 2006-11-12 20:06:23 standa Exp $
+ * $Id: ft2.c,v 1.33 2006-11-13 01:27:06 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -997,7 +997,20 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 					}
 				}
 			} else {
-				/* FIXME: TODO bitmap italics */
+				for(row = dst->rows - 1; row >= 0; --row) {
+					short cnt = (font->height - cached->yoffset - row) / distance;
+					if ( cnt ) {
+						int col;
+						unsigned short maskedPrev = 0;
+						unsigned short mask = (1 << cnt) - 1;
+						unsigned short *bitmap = (unsigned short *)(dst->buffer + row * dst->pitch);
+						for(col = (dst->pitch >> 1) - 1; col >= 0; --col) {
+							unsigned short tmp = *bitmap & mask;
+							*bitmap++ = (maskedPrev << (16 - cnt)) | (*bitmap >> cnt);
+							maskedPrev = tmp;
+						}
+					}
+				}
 			}
 		}
 
