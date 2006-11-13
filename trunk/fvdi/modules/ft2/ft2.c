@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.34 2006-11-13 20:36:38 standa Exp $
+ * $Id: ft2.c,v 1.35 2006-11-13 21:22:44 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -185,6 +185,7 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 		font->distance.descent = FT_CEIL(FT_MulFix(-face->descender, scale));
 		font->distance.top     = FT_CEIL(FT_MulFix(face->bbox.yMax, scale));
 		font->distance.bottom  = FT_CEIL(FT_MulFix(-face->bbox.yMin, scale));
+		font->height           = FT_CEIL(FT_MulFix(face->bbox.yMax - face->bbox.yMin, scale));
 
 		/* This gives us weird values - perhaps caused by taking care of unusual characters out of Latin-1 charset */
 		font->widest.cell = FT_CEIL(FT_MulFix(face->bbox.xMax - face->bbox.xMin, face->size->metrics.x_scale));
@@ -249,6 +250,7 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 		font->distance.descent = 0;
 		font->distance.top     = face->available_sizes[pick].height;
 		font->distance.bottom  = 0;
+		font->height           = font->distance.top + font->distance.bottom;
 
 		/* This gives us weird values - perhaps caused by taking care of unusual characters out of Latin-1 charset */
 		font->widest.cell      = face->available_sizes[pick].width;
@@ -266,8 +268,9 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 	font->lightening = 0xaaaa; /* set the mask to apply to the glyphs */
 
 	/* Finish the font metrics fill-in */
-	font->distance.half = (font->distance.top + font->distance.bottom) >> 1;
-	font->height        = font->distance.ascent + font->distance.descent - 1;
+
+	/* Font half distance (positive distance from baseline) */
+	font->distance.half = font->distance.top - (font->height >> 1);
 
 	/* Fake for vqt_fontinfo() as some apps might rely on this */
 	font->code.low  = 0;
@@ -1300,7 +1303,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	/* Check kerning */
 	use_kerning = 0; /* FIXME: FT_HAS_KERNING(face); */
 
-	y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical] - 1;
+	y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
 
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
@@ -1829,7 +1832,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 			colors[1] = vwk->text.colour.background;
 			colors[0] = vwk->text.colour.foreground;
 
-			y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical] - 1;
+			y += ((short *)&font->extra.distance)[vwk->text.alignment.vertical];
 
 			pxy[0] = 0;
 			pxy[1] = 0;

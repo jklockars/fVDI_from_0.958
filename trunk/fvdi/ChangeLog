@@ -1,3 +1,6 @@
+2006-11-13 - standa
+Some vertical font alignment tuning. Still not completely right IMHO.
+
 2006-11-12 - standa
 Implementing algorithmic FreeType font vst_effects() algorithms.
 Left the 'outline' for later.
