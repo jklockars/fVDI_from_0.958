@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.13 2006-03-05 22:41:19 johan Exp $
+ * $Id: textlib.c,v 1.14 2006-11-15 23:20:06 standa Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -19,6 +19,16 @@
 
 void lib_vqt_extent(Virtual *vwk, long length, short *string, short *points);
 
+static inline void set_current_font(Virtual *vwk, Fontheader *font) {
+    /* adjust the font structure utilization counters */
+    if ( vwk->text.current_font != font) {
+	    if ( vwk->text.current_font )
+		    vwk->text.current_font->extra.ref_count--;
+	    font->extra.ref_count++;
+    }
+
+    vwk->text.current_font = font;
+}
 
 #if 0
 // This function is not allowed to use any kind of kerning and
@@ -908,8 +918,9 @@ int lib_vst_font(Virtual *vwk, long fontID)
     else
         size = 10;
 
+
     vwk->text.font = fontID;
-    vwk->text.current_font = font;
+    set_current_font( vwk, font);
 
 #if 0
     vwk->text.character.width  = font->widest.character;
@@ -992,8 +1003,9 @@ void lib_vqt_xfntinfo(Virtual *vwk, long flags, long id, long index,
   } else if (id) {
     index = 1;
   } else {
-    if (!vwk->text.current_font)
-      vwk->text.current_font = font;
+    if (!vwk->text.current_font) {
+      set_current_font( vwk, font);
+    }
     id = vwk->text.current_font->id;
     index = 1;
   }
@@ -1382,7 +1394,8 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 #endif
     }
 
-    vwk->text.current_font = font;
+    set_current_font( vwk, font);
+
     *charw = vwk->text.character.width  = font->widest.character;
     *charh = vwk->text.character.height = font->distance.top;
     *cellw = vwk->text.cell.width       = font->widest.cell;
@@ -1437,7 +1450,8 @@ int lib_vst_arbpt(Virtual *vwk, long height, short *charw, short *charh,
 #endif
     }
 
-    vwk->text.current_font = font;
+    set_current_font( vwk, font);
+
     *charw = vwk->text.character.width  = font->widest.character;
     *charh = vwk->text.character.height = font->distance.top;
     *cellw = vwk->text.cell.width       = font->widest.cell;

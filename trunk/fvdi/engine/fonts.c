@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: fonts.c,v 1.3 2005-05-06 12:29:37 johan Exp $
+ * $Id: fonts.c,v 1.4 2006-11-15 23:20:06 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -112,6 +112,8 @@ long fixup_font(Fontheader *header, char *buffer, long flip)
    header->extra.unpacked.format  = 0;
    header->extra.width_table      = 0;    /* No smart width table yet */
    
+   header->extra.ref_count        = 1;    /* To keep the structure in memory */
+
    return 1;
 }
 

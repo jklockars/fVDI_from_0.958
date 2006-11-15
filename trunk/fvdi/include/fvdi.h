@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.17 2006-11-12 20:06:23 standa Exp $
+ * $Id: fvdi.h,v 1.18 2006-11-15 23:20:06 standa Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -231,6 +231,8 @@ typedef struct Fontextra_ {
    short *width_table;		/* Precalculated widths */
    struct Fontheader_ *next_size;
    struct Fontheader_ *first_size;
+
+   short ref_count;		/* Reference count (dispose if 0) */
 
    /* Vector fonts */
    char *filename;		/* Font filename for on-demand backends */

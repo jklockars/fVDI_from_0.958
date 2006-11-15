@@ -1,7 +1,7 @@
 /*
  * fVDI workstation functions
  * 
- * $Id: workstn.c,v 1.17 2006-06-12 22:54:45 johan Exp $
+ * $Id: workstn.c,v 1.18 2006-11-15 23:20:06 standa Exp $
  *
  * Copyright 2000/2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -482,6 +482,8 @@ void v_clsvwk(Virtual *vwk, VDIpars *pars)
 			free((void *)(((long)vwk->palette & ~1) - NEG_PAL_N * sizeof(Colour)));
 	}
 
+        if ( vwk->text.current_font )
+        	vwk->text.current_font->extra.ref_count--; /* allow the font to be freed if appropriate */
 	free(vwk);	/* This will work for off-screen bitmaps too, fortunately */
 
 	/* Reset VDI structure address to default */

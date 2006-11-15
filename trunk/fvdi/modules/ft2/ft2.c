@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.36 2006-11-15 23:12:40 standa Exp $
+ * $Id: ft2.c,v 1.37 2006-11-15 23:20:06 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -80,6 +80,7 @@ typedef struct {
 
 static FT_Error ft2_find_glyph(Virtual *vwk, Fontheader* font, short ch, int want);
 static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize);
+static void ft2_dispose_font(Fontheader *font);
 
 
 #define USE_FREETYPE_ERRORS 1
@@ -118,6 +119,16 @@ static char *ft2_error(const char *msg, FT_Error error)
 
 void ft2_term(void)
 {
+	/* cleanup the FT2 font cache */
+	FontheaderListItem *x = (FontheaderListItem *)listLast(&fonts);
+	while ( x ) {
+		FontheaderListItem *tmp = (FontheaderListItem *)listPrev( x);
+		listRemove((LINKABLE *)x);
+		ft2_dispose_font(x->font); /* Remove the whole font */
+		x = tmp;
+	}
+
+	/* terminate the FT2 library */
 	FT_Done_FreeType(library);
 }
 
@@ -260,8 +271,8 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 	  	font->extra.underline_offset = FT_FLOOR(face->underline_position);
 	  	font->underline = FT_FLOOR(face->underline_thickness);
 
-		/* x offset = cos(((90.0-12)/360)*2*M_PI), or 12 degree angle - rounded up */
-		font->skewing = (int)(0.207f * font->height + 0.5);
+		/* x offset = cos(((90.0-12)/360)*2*M_PI), or 12 degree angle */
+		font->skewing = (int)(0.207f * font->height + 1 /* ceiling */);
 	}
 
 	font->size = ptsize;
@@ -569,6 +580,7 @@ static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize)
    if (font) {
 	   memcpy(font, src, sizeof(Fontheader));
 	   font->extra.filename = strdup(src->extra.filename);
+	   font->extra.ref_count = 0;
 
 	   /* Clean the FT2 data and cache -> initialized below here */
 	   font->extra.unpacked.data = NULL;
@@ -593,18 +605,6 @@ static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize)
    }
 
    return font;
-}
-
-static void ft2_dispose_font(Fontheader *font)
-{
-	/* Close the FreeType2 face */
-	ft2_close_face(font);
-
-	/* Dispose of the data */
-	free(font->extra.filename);
-	free(font->extra.cache);
-	free(font->extra.scratch);
-	free(font);
 }
 
 void ft2_fontheader(Virtual *vwk, Fontheader *font, VQT_FHDR *fhdr)
@@ -1093,6 +1093,21 @@ static void ft2_flush_cache(Fontheader *font)
 	if (((c_glyph *)font->extra.scratch)->cached) {
 		ft2_flush_glyph(font->extra.scratch);
 	}
+}
+
+static void ft2_dispose_font(Fontheader *font)
+{
+	/* Close the FreeType2 face */
+	ft2_close_face(font);
+
+	/* Remove glyph bitmaps */
+	ft2_flush_cache(font);
+
+	/* Dispose of the data */
+	free(font->extra.filename);
+	free(font->extra.cache);
+	free(font->extra.scratch);
+	free(font);
 }
 
 static FT_Error ft2_find_glyph(Virtual *vwk, Fontheader *font, short ch, int want)
@@ -1767,11 +1782,43 @@ Fontheader *ft2_find_fontsize(Virtual *vwk, Fontheader *font, short ptsize)
 	}
 
 	/* FIXME: handle maximum number of fonts in the cache here (configurable) */
+
+	/* BUG! Cannot dispose any Fontheader structure when held by a vwk.
+	 *      Either all functions would update the current_font pointer when
+	 *      called or all currently used by vwks need to stay in mem.
+	 */
 	if (font_count > 10) {
 		FontheaderListItem *x = (FontheaderListItem *)listLast(&fonts);
-		listRemove((LINKABLE *)x);
-		ft2_dispose_font(x->font); /* Remove the whole font */
-		free(x);
+		/* flush the cache anyway */
+		if ( x ) ft2_flush_cache(x->font);
+
+		if (debug > 0) {
+			char buf[10];
+			puts("FT2 find_font: flush cache: ");
+			puts(x ? x->font->extra.filename : "[null]");
+			puts(" refs=");
+			ltoa(buf, (long)x ? x->font->extra.ref_count : -1, 10);
+			puts_nl(buf);
+		}
+
+		/* find the first one that we can dispose */
+		while ( x && x->font->extra.ref_count )
+			x = (FontheaderListItem *)listPrev( x);
+
+		if ( x ) {
+			if (debug > 0) {
+				char buf[10];
+				puts("FT2 find_font: found disposable victim: ");
+				puts(x->font->extra.filename);
+				puts(" refs=");
+				ltoa(buf, (long)x ? x->font->extra.ref_count : -1, 10);
+				puts_nl(buf);
+			}
+
+			listRemove((LINKABLE *)x);
+			ft2_dispose_font(x->font); /* Remove the whole font */
+			free(x);
+		}
 		font_count--;
 	}
 
@@ -1887,7 +1934,15 @@ long ft2_set_effects(Virtual *vwk, Fontheader *font, long effects)
 	vwk->text.effects = effects;
 
 	/* update the font metrics after effects change */
-	vwk->text.current_font = ft2_find_fontsize(vwk, font, font->size);
+	font = ft2_find_fontsize(vwk, font, font->size);
+
+	/* assign and update the ref_counts */
+	if ( vwk->text.current_font != font) {
+		if ( vwk->text.current_font )
+			vwk->text.current_font->extra.ref_count--;
+		font->extra.ref_count++;
+		vwk->text.current_font = font;
+	}
 
 	return effects;
 }
