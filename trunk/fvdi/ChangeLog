@@ -1,3 +1,7 @@
+2006-11-15 - standa
+Underline effect doesn't need to keep a font glyph cached (done in the
+text rendering function directly.
+
 2006-11-13 - standa
 Some vertical font alignment tuning. Still not completely right IMHO.
 

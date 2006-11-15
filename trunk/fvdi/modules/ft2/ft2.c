@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.35 2006-11-13 21:22:44 standa Exp $
+ * $Id: ft2.c,v 1.36 2006-11-15 23:12:40 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -57,7 +57,8 @@ typedef struct cached_glyph {
 #define CACHED_BITMAP	0x01
 #define CACHED_PIXMAP	0x02
 
-#define FT2_EFFECTS_MASK 0x1F
+/* underline doesn't warrant a new font cache */
+#define FT2_EFFECTS_MASK 0x17
 
 #if 1
 #define DEBUG_FONTS 1
@@ -1365,7 +1366,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 	}
 
 	/* Handle the underline style */
-	if (font->extra.effects & 0x8) {
+	if (vwk->text.effects & 0x8) {
 		short row = font->distance.ascent - font->extra.underline_offset - 1;
 		if (row + font->underline > font->height) {
 			row = (font->height - 1) - font->underline;
@@ -1678,7 +1679,7 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 	}
 
 	/* Handle the underline style */
-	if (font->extra.effects & 0x8) {
+	if (vwk->text.effects & 0x8) {
 		unsigned char color = 0xff;
 
 		short row = font->distance.ascent - font->extra.underline_offset - 1;
