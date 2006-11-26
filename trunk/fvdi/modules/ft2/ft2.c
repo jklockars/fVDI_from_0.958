@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.37 2006-11-15 23:20:06 standa Exp $
+ * $Id: ft2.c,v 1.38 2006-11-26 07:33:58 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -1373,7 +1373,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 			pxy[5] = y + glyph->yoffset;
 			pxy[6] = pxy[4] + tb.width - 1;
 			pxy[7] = pxy[5] + tb.height - 1;
-			lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, &tb, NULL, colors);
+			lib_vdi_spppp(&lib_vrt_cpyfm_nocheck, vwk, vwk->mode, pxy, &tb, NULL, colors);
 		}
 
 		xstart += glyph->advance;
@@ -1401,7 +1401,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 		pxy[5] = y;
 		pxy[6] = pxy[4] + tb.width - 1;
 		pxy[7] = pxy[5] + tb.height - 1;
-		lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, &tb, NULL, colors);
+		lib_vdi_spppp(&lib_vrt_cpyfm_nocheck, vwk, vwk->mode, pxy, &tb, NULL, colors);
 
 		free( tb.address);
 	}
@@ -1891,7 +1891,7 @@ long ft2_text_render_default(Virtual *vwk, unsigned long coords, short *s, long 
 			pxy[6] = x + t->width - 1;
 			pxy[7] = y + t->height - 1;
 
-			lib_vdi_spppp(&lib_vrt_cpyfm, vwk, vwk->mode, pxy, t, NULL, colors);
+			lib_vdi_spppp(&lib_vrt_cpyfm_nocheck, vwk, vwk->mode, pxy, t, NULL, colors);
 			free(t->address);
 		}
 	}

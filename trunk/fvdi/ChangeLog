@@ -1,3 +1,7 @@
+2006-11-25/26 - standa
+Using the newly created lib_vrt_cpyfm_nocheck to mono/8bit expand text
+(fixes vst_fg_color() using Papyrus X demo text color rendering).
+
 2006-11-15 - standa
 Underline effect doesn't need to keep a font glyph cached (done in the
 text rendering function directly.
