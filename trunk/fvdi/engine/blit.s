@@ -1,7 +1,7 @@
 *****
 * fVDI blit type functions
 *
-* $Id: blit.s,v 1.13 2006-06-12 22:36:17 johan Exp $
+* $Id: blit.s,v 1.14 2006-11-26 07:30:56 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -32,7 +32,7 @@ lookup32	equ	0		; Palette lookup for 32 bit vr_trn_fm?
 	xdef	lib_vr_trn_fm
 	xdef	lib_v_get_pixel
 
-	xdef	_lib_vrt_cpyfm,_lib_vro_cpyfm
+	xdef	_lib_vrt_cpyfm,_lib_vrt_cpyfm_nocheck,_lib_vro_cpyfm
 	xdef	_lib_vr_trn_fm
 	xdef	_default_fill,_default_expand,_default_blit
 
@@ -518,6 +518,13 @@ lib_vrt_cpyfm:
 	blo	.okb
 	move.w	#WHITE,d0
 .okb:
+	bra	.nocheck
+
+_lib_vrt_cpyfm_nocheck:
+	move.l	14(a1),a2
+	move.l	(a2),d0		; Colours
+
+.nocheck:
 	swap	d0
 
 	uses_d1
