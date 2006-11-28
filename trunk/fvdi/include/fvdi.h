@@ -3,7 +3,7 @@
 /* 
  * fVDI structure declarations, by Johan Klockars.
  *
- * $Id: fvdi.h,v 1.18 2006-11-15 23:20:06 standa Exp $
+ * $Id: fvdi.h,v 1.19 2006-11-28 12:19:45 johan Exp $
  *
  * Most C files in the fVDI engine, as well as in its
  * device drivers, need to include this file.
@@ -240,8 +240,8 @@ typedef struct Fontextra_ {
    void *current;		/* Font current glyph */
    void *cache;			/* Glyph cache */
    void *scratch;		/* Glyph scratch .. */
-   short effects;		/* effect combination the font was rendered to */
-   short underline_offset;	/* offset or the underline stroke */
+   short effects;		/* Effect combination the font was rendered to */
+   short underline_offset;	/* Offset or the underline stroke */
 } Fontextra;
 
 
