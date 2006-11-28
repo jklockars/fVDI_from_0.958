@@ -11,6 +11,7 @@ ifeq ($(M68K_ATARI_MINT_CROSS),yes)
  AR     = $(CROSSPREFIX)-ar
  RANLIB = $(CROSSPREFIX)-ranlib
  STRIP  = $(CROSSPREFIX)-strip
+ FLAGS  = $(CROSSPREFIX)-flags
 else
  CC     = gcc
  AS     = as
@@ -18,6 +19,7 @@ else
  AR     = ar
  RANLIB = ranlib
  STRIP  = strip
+ FLAGS  = flags
 endif
 
 # Debug build (mainly FreeType2 debugs here)

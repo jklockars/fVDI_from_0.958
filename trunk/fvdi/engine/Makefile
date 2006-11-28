@@ -149,6 +149,7 @@ $(LIBFT2):
 
 $(TARGET): depend $(OBJECTS) $(LIBFILES)
 	$(LD) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
+	$(FLAGS) -S $@
 
 $(top_srcdir)/include/types.inc: $(top_srcdir)/include/fvdi.h
 	cd $(top_srcdir)/utility/structer; make

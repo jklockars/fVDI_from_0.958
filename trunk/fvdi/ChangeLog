@@ -1,5 +1,6 @@
 2006-11-27 - johan
 Cache flush enabled after driver load.
+Turned on supervisor memory access flag in engine binary.
 fVDI engine version bumped to 0.968beta.
 
 2006-11-25/26 - standa
