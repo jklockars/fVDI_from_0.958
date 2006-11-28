@@ -1,7 +1,7 @@
 /*
  * fVDI preferences and driver loader
  *
- * $Id: loader.c,v 1.33 2006-11-12 20:06:23 standa Exp $
+ * $Id: loader.c,v 1.34 2006-11-28 12:14:36 johan Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1005,7 +1005,8 @@ int load_driver(const char *name, Driver *driver, Virtual *vwk, char *opts)
    Fclose(file);
 
    relocate(addr, &header);
-#if 0
+#if 1
+   /* This will cause trouble if ever called from supervisor mode! */
    Supexec((long)cache_flush);
 #endif
 
