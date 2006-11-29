@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.39 2006-11-28 12:18:57 johan Exp $
+ * $Id: ft2.c,v 1.40 2006-11-29 20:44:48 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -30,6 +30,9 @@
 #undef CACHE_YSIZE
 
 extern short Atari2Unicode[];
+extern short Atari2Bics[];
+extern short Bics2Unicode[];
+
 
 /* Cached glyph information */
 typedef struct cached_glyph {
@@ -67,6 +70,7 @@ typedef struct cached_glyph {
 
 /* NVDI/SpeedoGDOS spdchar.map tables */
 static Fontspdcharmap spdchar_map;
+static short spdchar_map_len = 0;
 
 static FT_Library library;
 static LIST       fonts;
@@ -330,7 +334,7 @@ static int ft2_load_spdchar_map(Virtual *vwk, const char *filename)
    if ((file = Fopen(filename, 0)) < 0)
 	   return -1;
 
-   r = Fread(file, sizeof(spdchar_map), &spdchar_map);
+   spdchar_map_len = Fread(file, sizeof(spdchar_map), &spdchar_map);
    Fclose(file);
 
    if (debug > 1) {
@@ -779,17 +783,88 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	/* Load the glyph */
 	if (!cached->index) {
-		/* vst_charmap (vst_map_mode()) mapping settings */
-		if (!vwk->text.charmap) /* no char -> index translation */
-			cached->index = ch;
-		else if (vwk->text.charmap == 2 /* UNICODE */)
-			cached->index = FT_Get_Char_Index(face, ch);
-		else {
+		/* vwk->text.charmap  ~  vst_charmap (vst_map_mode()) mapping settings */
+		if (vwk->text.charmap == 1 /* ASCII */ && ch >= 0 && ch < 256) {
+			short cc = -1;
+
+			if ( debug > 1 ) { char buf[10]; puts("FT2 char: A:"); ltoa(buf, (long)ch, 10); puts(buf); }
+
+			/* if there is no spdchar.map (or not enough data)
+			 * -> use built-in mapping */
+			if ( spdchar_map_len < 450 ) {
+				cc = Atari2Bics[ch];
+
+				if ( debug > 1 ) { char buf[10];
+					puts(" -> B:"); ltoa(buf, (long)cc, 10); puts(buf); }
+			} else {
+				if ( ch > 31 ) {
+					/* NVDI really seems to be using the _first_ map '00' in the
+					 * spdchar.map file no matter what the font format is.
+					 *
+					 * The TT table seems to contain a lot of crap for non ASCII
+					 * chars commonly.
+					 */
+					cc = spdchar_map.bs_int.map[ch - 32];
+
+					if ( debug > 1 ) { char buf[10];
+						puts(" => B:"); ltoa(buf, (long)cc, 10); puts(buf); }
+
+				}
+
+				/* in case we don't have BICS code => fallback to the default mapping */
+				if ( cc < 0 || cc > 563 || ch < 32) {
+					cc = Atari2Bics[ch];
+
+					if ( debug > 1 ) { char buf[10];
+						puts(" -> B:"); ltoa(buf, (long)cc, 10); puts(buf); }
+				}
+			}
+
+			/* in case we don't have BICS -> UNICODE the cc value will be -1 */
+			cc = Bics2Unicode[ cc ];
+
+			/* get the font character index */
+			cached->index = FT_Get_Char_Index(face, cc);
+
+			/* When there is no such character in the font (or cc was -1)
+			 * we fallback to the default built-in mapping */
+			if ( !cached->index  ) {
+				cc = Atari2Bics[ch];
+
+				if ( debug > 1 ) { char buf[10];
+					puts(" >> B:"); ltoa(buf, (long)cc, 10); puts(buf); }
+
+				/* valid BICS code => to unicode */
+				cc = Bics2Unicode[ cc ];
+
+				/* sanity check */
+				if ( cc < 0 ) cc = ch;
+
+				/* get the font character index */
+				cached->index = FT_Get_Char_Index(face, cc);
+			}
+
+			if ( debug > 1 ) { char buf[10];
+				puts(" => U:"); ltoa(buf, (long)cc, 16); puts(buf); }
+
+			if ( debug > 1 ) puts_nl("");
+
 #if 0
-			cached->index = FT_Get_Char_Index(face, (ch > 32 && ch < 256) ? spdchar_map.true_type.map[ch - 32] : ch);
-#else
-			cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch]);
+			cached->index = FT_Get_Char_Index(face, Atari2Unicode[ch] );
 #endif
+		} else if (vwk->text.charmap == 2 /* UNICODE */) {
+			/* app use: used at least by the 'Highwire web browser' */
+			cached->index = FT_Get_Char_Index(face, ch);
+		} else if (!vwk->text.charmap) {
+		       	/* BICS */ /* no char -> index translation, BICS char index is expected */
+
+			/* app use: might perhaps be used by the 'charmap5' spdchar.map editor */
+			short cc = Bics2Unicode[ ch ];
+			if ( cc < 0 ) cc = ch;
+			cached->index = FT_Get_Char_Index(face, cc);
+		} else {
+			puts("FT2 MAPPING THAT SHOULD HAVE NEVER HAPPENED!!!");
+			cached->index = ch;
 		}
 	}
 

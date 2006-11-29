@@ -106,6 +106,8 @@ ifneq ($(ft2_srcdir),)
  CSRC+= \
 	$(top_srcdir)/modules/ft2/ft2.c \
 	$(top_srcdir)/modules/ft2/atari2unicode.c \
+	$(top_srcdir)/modules/ft2/atari2bics.c \
+	$(top_srcdir)/modules/ft2/bics2unicode.c \
 	$(top_srcdir)/modules/ft2/ft2_ftsystem.c
 
  ifeq ($(DEBUG),yes)

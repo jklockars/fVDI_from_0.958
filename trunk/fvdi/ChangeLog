@@ -1,3 +1,8 @@
+2006-11-29 - standa
+Hopefully NVDI compatible spdchar.map handling now in place. Default
+NVDI mapping added. Can use our 'Czech KEYBCS' spdchar.map table
+with no problem. IMHO 98% of character mappings should be correct.
+
 2006-11-27 - johan
 Cache flush enabled after driver load.
 Turned on supervisor memory access flag in engine binary.
