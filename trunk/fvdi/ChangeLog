@@ -2,6 +2,8 @@
 Hopefully NVDI compatible spdchar.map handling now in place. Default
 NVDI mapping added. Can use our 'Czech KEYBCS' spdchar.map table
 with no problem. IMHO 98% of character mappings should be correct.
+Adding the #include <freetype/internal/internal.h> to the
+ft2_ftsystem.c to get FreeType2 2.2.1 build working.
 
 2006-11-27 - johan
 Cache flush enabled after driver load.
