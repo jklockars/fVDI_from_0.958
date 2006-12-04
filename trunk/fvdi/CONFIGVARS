@@ -43,7 +43,8 @@ endif
 #stdlib_srcdir  = $(top_srcdir)/modules/ft2/stdlib
 #ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.9
 #ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.1.10
-ft2_srcdir     = $(top_srcdir)/../freetype2
+ft2_srcdir     = $(top_srcdir)/modules/ft2/freetype-2.2.1
+#ft2_srcdir     = $(top_srcdir)/../freetype2
 #libkern_srcdir = $(top_srcdir)/../freemint/sys/libkern
 
 #stdlib_srcdir  =
