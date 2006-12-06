@@ -3,7 +3,7 @@
 /*
  * fVDI text handling
  *
- * $Id: textlib.c,v 1.15 2006-11-28 12:14:36 johan Exp $
+ * $Id: textlib.c,v 1.16 2006-12-06 20:36:12 standa Exp $
  *
  * Copyright 2005, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -1372,6 +1372,13 @@ int lib_vst_point(Virtual *vwk, long height, short *charw, short *charh,
 	font = set_stack_call_pvlpl(vdi_stack_top, vdi_stack_size,
 			            external_vst_point,
 			            vwk, height, sizes, 0);
+
+	/* fall back to the built-in bitmap font
+	 * in case something went wrong */
+	if ( !font ) {
+		puts("vst_point: external_vst_point returned NULL\x0d\x0a");
+		font = vwk->real_address->writing.first_font;
+	}
 #if DEB
 	puts("  vector found\x0d\x0a");
 #endif
@@ -1428,6 +1435,13 @@ int lib_vst_arbpt(Virtual *vwk, long height, short *charw, short *charh,
 	font = set_stack_call_pvlpl(vdi_stack_top, vdi_stack_size,
 			            external_vst_point,
 			            vwk, height, 0, 0);
+
+	/* fall back to the built-in bitmap font
+	 * in case something went wrong */
+	if ( !font ) {
+		puts("vst_arbpt: external_vst_point returned NULL\x0d\x0a");
+		font = vwk->real_address->writing.first_font;
+	}
 #if DEB
 	puts("  vector found\x0d\x0a");
 #endif
