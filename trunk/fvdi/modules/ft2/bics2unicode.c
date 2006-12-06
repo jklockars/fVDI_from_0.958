@@ -1,4 +1,4 @@
-/* see javadoc at the bottom */ short Bics2Unicode[] = { 0xfb04, 0x0021,
+/* see javadoc at the bottom */ short Bics2Unicode[] = { 0x0020, 0x0021,
 	0x0022,
 	0x0023,
 	0x0024,
