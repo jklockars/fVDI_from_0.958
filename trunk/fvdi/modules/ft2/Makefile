@@ -34,9 +34,9 @@ subdir      = ft2
 include $(top_srcdir)/CONFIGVARS
 
 ifneq ($(stdlib_srcdir),)
-CFLAGS = -m68$(CPU) $(OPTS) -I$(srcdir)/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/src -I$(ft2_srcdir)/include -I$(stdlib_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
+CFLAGS = -m68$(CPU) -DFT2_BUILD_LIBRARY $(OPTS) -I$(srcdir)/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/src -I$(ft2_srcdir)/include -I$(stdlib_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
 else
-CFLAGS = -m68$(CPU) $(OPTS) -I$(srcdir)/include -I$(top_srcdir)/modules/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/src -I$(ft2_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
+CFLAGS = -m68$(CPU) -DFT2_BUILD_LIBRARY $(OPTS) -I$(srcdir)/include -I$(top_srcdir)/modules/include $(FT2_DEBUG_OPTS) -I$(ft2_srcdir)/src -I$(ft2_srcdir)/include $(M68K_ATARI_MINT_CFLAGS)
 endif
 
 #
