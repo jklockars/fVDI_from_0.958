@@ -1,7 +1,7 @@
 /*
  * fVDI utility functions
  *
- * $Id: utility.c,v 1.34 2006-03-01 23:54:06 standa Exp $
+ * $Id: utility.c,v 1.35 2006-12-06 14:34:46 standa Exp $
  *
  * Copyright 1997-2003, Johan Klockars 
  * This software is licensed under the GNU General Public License.
@@ -846,9 +846,8 @@ void ltoa(char *buf, long n, unsigned long base)
 
 #ifndef USE_LIBKERN
 /* Mostly complete, but only simple things tested */
-long sprintf(char *str, const char *format, ...)
+long vsprintf(char *str, const char *format, va_list args)
 {
-   va_list args;
    int mode = 0;
    char *s, *text, ch;
    long val_l;
@@ -859,7 +858,6 @@ long sprintf(char *str, const char *format, ...)
    char *num_start;
 
    s = str;
-   va_start(args, format);
 
    while (ch = *format++) {
       if (mode) {
@@ -1105,10 +1103,17 @@ long sprintf(char *str, const char *format, ...)
    }
    *str = 0;
 
-   va_end(args);
-
    return strlen(s);
 }
+
+long sprintf(char *str, const char *format, ...)
+{
+   va_list args;
+   va_start(args, format);
+   vsprintf(str, format, args);
+   va_end(args);
+}
+
 
 
 /* This is really a Shell sort. */

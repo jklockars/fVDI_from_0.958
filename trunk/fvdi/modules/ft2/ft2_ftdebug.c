@@ -43,6 +43,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <freetype/internal/internal.h>
 #include FT_INTERNAL_DEBUG_H
 
 #include "globals.h"
@@ -56,7 +57,7 @@
     char buf[255];
 
     va_start( ap, fmt );
-    vsprintf(buf, sizeof(buf), fmt, ap);
+    vsprintf(buf, fmt, ap);
     va_end( ap );
 
     access->funcs.puts(buf);
@@ -71,7 +72,7 @@
     char buf[255];
 
     va_start( ap, fmt );
-    vsprintf(buf, sizeof(buf), fmt, ap);
+    vsprintf(buf, fmt, ap);
     va_end( ap );
 
     access->funcs.puts(buf);
