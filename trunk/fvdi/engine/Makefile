@@ -223,4 +223,8 @@ clean: clean_gnu
 	rm -rf $(OBJECTS)
 	rm depend
 
+mrproper:
+	make clean
+	cd $(top_srcdir)/modules/ft2; make clean
+
 include depend

@@ -25,7 +25,9 @@
 # (and either ftdebug.o or ftdebugpure.o if you enabled FT_DEBUG_LEVEL_ERROR or
 # FT_DEBUG_LEVEL_TRACE in include/freetype/config/ftoption.h).
 
-all:	libft2.a
+TARGET = libft2.a
+
+all:	$(TARGET)
 
 top_srcdir  = ../..
 srcdir      = .
@@ -194,8 +196,10 @@ FONTDOBJ = cff.o type1.o type42.o type1cid.o truetype.o bdf.o pfr.o winfnt.o
 
 OBJS = $(BASEOBJ) $(AHINTOBJ) $(PSOBJ) $(RASTEROBJ) sfnt.o ftcache.o $(FONTDOBJ)
 
-libft2.a: $(OBJS) 
+$(TARGET): $(OBJS) 
 	$(AR) cr $@ $(OBJS); $(RANLIB) $@
 
 clean:
 	rm -rf $(OBJS)
+	rm $(TARGET)
+
