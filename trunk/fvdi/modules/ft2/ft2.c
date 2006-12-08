@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.40 2006-11-29 20:44:48 standa Exp $
+ * $Id: ft2.c,v 1.41 2006-12-08 16:19:00 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -93,21 +93,29 @@ static char *ft2_error(const char *msg, FT_Error error)
 {
 	static char buffer[1024] = "uninitialized\r\n";
 #ifdef USE_FREETYPE_ERRORS
+#if 0
 #undef FTERRORS_H
 #define FT_ERRORDEF(e, v, s)  {e, s},
+#else
+#undef __FTERRORS_H__
+#define FT_ERRORDEF(e, v, s)  {e, s},
+#define FT_ERROR_START_LIST     {
+#define FT_ERROR_END_LIST       { 0, 0 } };   
+#endif
+
 	static const struct
 	{
 	  int          err_code;
 	  const char*  err_msg;
-	} ft_errors[] = {
+	} ft_errors[] =
 #include <freetype/fterrors.h>
-	};
+
 	int i;
 	const char *err_msg;
 
 	err_msg = NULL;
 	for(i = 0; i < ((sizeof ft_errors) / (sizeof ft_errors[0])); ++i) {
-		if (error == ft_errors[i].err_code) {
+		if (FT_ERROR_BASE(error) == ft_errors[i].err_code) {
 			err_msg = ft_errors[i].err_msg;
 			break;
 		}
@@ -115,7 +123,7 @@ static char *ft2_error(const char *msg, FT_Error error)
 	if (!err_msg) {
 		err_msg = "unknown FreeType error";
 	}
-	sprintf(buffer, "%s: %s\r\n", msg, err_msg);
+	sprintf(buffer, "%s: %s (%d)\r\n", msg, err_msg, FT_ERROR_BASE(error));
 #endif /* USE_FREETYPE_ERRORS */
 	return buffer;
 }
@@ -187,6 +195,7 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 			ptsize = 10;
 		}
 #endif
+
 		error = FT_Set_Char_Size(face, 0, ptsize * 64,
 				25400 / vwk->real_address->screen.pixel.width,
 				25400 / vwk->real_address->screen.pixel.height);
@@ -254,10 +263,21 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 			access->funcs.puts("\r\n");
 		}
 
-		/* Set the character size and use default DPI (72) */
+#if FREETYPE_MAJOR >= 2 && FREETYPE_MINOR > 1
+		/* FreeType 2.2 and onwards */
+		error = FT_Select_Size( face, pick);
+#else
+		/* FreeType 2.1.x */
 		error = FT_Set_Pixel_Sizes(face, face->available_sizes[pick].width, face->available_sizes[pick].height);
+#endif
 		if (error) {
 			access->funcs.puts(ft2_error("FT2  Couldn't set bitmap font size", error));
+			if (debug > 1) {
+				char buf[10];
+				access->funcs.puts(" pick: ");
+				ltoa(buf, (long)pick, 10); access->funcs.puts(buf);
+				access->funcs.puts("\r\n");
+			}
 			ft2_close_face(font);
 			return NULL;
 		}
@@ -577,6 +597,8 @@ static FT_Face ft2_get_face(Virtual *vwk, Fontheader *font)
 			font = ft2_open_face(vwk, font, 10);
 	}
 
+	if (!font) return NULL;
+
 	return (FT_Face)font->extra.unpacked.data;
 }
 
@@ -591,6 +613,7 @@ static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize)
 	   /* Clean the FT2 data and cache -> initialized below here */
 	   font->extra.unpacked.data = NULL;
 	   font->extra.cache = NULL;
+	   font->extra.scratch = NULL;
 
    	   /* underline == 0 -> metrics were not read yet */
 	   font->underline = 0;
@@ -780,6 +803,10 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 	FT_Outline *outline;
 
 	face = ft2_get_face(vwk, font);
+	if ( !face) {
+		access->funcs.puts(ft2_error("FT2  Couldn't get face", 0));
+		return 0;
+	}
 
 	/* Load the glyph */
 	if (!cached->index) {
@@ -847,6 +874,9 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			if ( debug > 1 ) { char buf[10];
 				puts(" => U:"); ltoa(buf, (long)cc, 16); puts(buf); }
 
+			if ( debug > 1 ) { char buf[10];
+				puts(" ---> I:"); ltoa(buf, (long)cached->index, 10); puts(buf); }
+
 			if ( debug > 1 ) puts_nl("");
 
 #if 0
@@ -870,6 +900,13 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	error = FT_Load_Glyph(face, cached->index, FT_LOAD_DEFAULT);
 	if (error) {
+		access->funcs.puts(ft2_error("FT2  Couldn't load glyph", error));
+		if (debug > 1) {
+			char buf[10];
+			access->funcs.puts("glyph index: ");
+			ltoa(buf, (long)cached->index, 10); access->funcs.puts(buf);
+			access->funcs.puts("\r\n");
+		}
 		return error;
 	}
 
@@ -970,8 +1007,13 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			dst = &cached->bitmap;
 			error = FT_Render_Glyph(glyph, ft_render_mode_mono);
 		}
-		if (error)
-			return error;
+		if (error) {
+			if (debug > 1)
+				access->funcs.puts(ft2_error("FT2  Couldn't render glyph", error));
+
+			/* not rendered -> quite fine, just clean it up */
+			memset( src, 0, src->pitch * src->rows);
+		}
 
 		/* Copy over to cache */
 		memcpy(dst, src, sizeof(*dst));
@@ -1000,7 +1042,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			}
 			setmem(dst->buffer, 0, dst->pitch * dst->rows);
 
-			if ((want & CACHED_PIXMAP) && !FT_IS_SCALABLE(face)) {
+			if ((want & CACHED_PIXMAP) && (src->pixel_mode == FT_PIXEL_MODE_MONO)) {
 				/* This special case wouldn't
 				 * be here if the FT_Render_Glyph()
 				 * function wasn't buggy when it tried
@@ -1038,7 +1080,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 				}
 			}
 
-			if (debug > 3) {
+			if (debug > 3 && (want & CACHED_PIXMAP)) {
 				// DEBUG bitmaps
 				unsigned char pix;
 				int j;
@@ -1052,6 +1094,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 				access->funcs.puts(buf);
 				access->funcs.puts("\r\n");
 
+				/* print */
 				for(i = 0; i < dst->rows; i++) {
 					for(j = 0; j < dst->width; j++) {
 						pix = *(char *)((long)dst->buffer + (dst->pitch * i) + j);
@@ -1300,7 +1343,7 @@ static int ft2_text_size(Virtual *vwk, Fontheader *font, const short *text, int 
 	for(ch = text; *ch; ++ch) {
 		error = ft2_find_glyph(vwk, font, *ch, CACHED_METRICS);
 		if (error) {
-			return -1;
+			continue;
 		}
 		glyph = font->extra.current;
 
@@ -1344,8 +1387,7 @@ static int ft2_text_size(Virtual *vwk, Fontheader *font, const short *text, int 
 #endif
 	}
 
-#if 0
-	if (1) {
+	if (debug > 2) {
 		char buf[255];
 		for(ch = text; *ch; ++ch) {
 			buf[ch - text] = *ch;
@@ -1354,13 +1396,10 @@ static int ft2_text_size(Virtual *vwk, Fontheader *font, const short *text, int 
 
 		access->funcs.puts("txt width: \"");
 		access->funcs.puts(buf);
-		access->funcs.puts("\"\r\n");
-		ltoa(buf, (long)*w, 10);
-		access->funcs.puts("txt width: ");
-		access->funcs.puts(buf);
-		access->funcs.puts("\"\r\n");
+		access->funcs.puts("\" -> ");
+		ltoa(buf, (long)*w, 10); access->funcs.puts(buf);
+		access->funcs.puts("\r\n");
 	}
-#endif
 
 	return 0;
 }
@@ -1403,8 +1442,7 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 
 		error = ft2_find_glyph(vwk, font, c, CACHED_METRICS | CACHED_PIXMAP);
 		if (error) {
-			free(textbuf->address);
-			return NULL;
+			continue;
 		}
 		glyph = font->extra.current;
 
@@ -1521,7 +1559,7 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 		for(ch = text; *ch; ++ch) {
  #if 0
 			if (ft2_find_glyph(vwk, font, *ch, CACHED_METRICS))
-				return NULL;
+				continue;
 			}
 			glyph = font->extra.current;
  #else
@@ -1537,7 +1575,7 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 			}
 			if (!(glyph->stored & CACHED_METRICS)) {
 				if (ft2_load_glyph(vwk, font, c, glyph, CACHED_METRICS)) {
-					return NULL;
+					continue;
 				}
 			}
  #endif
@@ -1587,10 +1625,21 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 	/* Check kerning */
 	use_kerning = 0; // FIXME: FT_HAS_KERNING(face);
 	
+	if ( debug > 2) {
+		puts_nl( "");
+		puts( "Text: ");
+	}
+
 	/* Load and render each character */
 	xstart = 0;
 	for(ch = text; *ch; ++ch) {
 		short c = *ch;
+		if ( debug > 2) {
+			char buf[2];
+			buf[0] = c;
+			buf[1] = 0;
+			puts( buf);
+		}
 #if 0
 		int swapped;
 		swapped = TTF_byteswapped;
@@ -1616,8 +1665,7 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 #if 0
 		error = ft2_find_glyph(vwk, font, c, CACHED_METRICS | CACHED_BITMAP);
 		if (error) {
-			free(textbuf->address);
-			return NULL;
+			continue;
 		}
 		glyph = font->extra.current;
 #else
@@ -1634,8 +1682,7 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 		    (CACHED_METRICS | CACHED_BITMAP)) {
 			if (ft2_load_glyph(vwk, font, c, glyph,
 			                   (CACHED_METRICS | CACHED_BITMAP))) {
-				free(textbuf->address);
-				return NULL;
+				continue;
 			}
 		}
 #endif
@@ -1769,6 +1816,9 @@ MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *t
 
 		prev_index = glyph->index;
 	}
+	if ( debug > 2) {
+		puts_nl( ""); puts_nl( "");
+	}
 
 	/* Handle the underline style */
 	if (vwk->text.effects & 0x8) {
@@ -1874,6 +1924,9 @@ Fontheader *ft2_find_fontsize(Virtual *vwk, Fontheader *font, short ptsize)
 			char buf[10];
 			puts("FT2 find_font: flush cache: ");
 			puts(x ? x->font->extra.filename : "[null]");
+			puts(" ID=");
+			ltoa(buf, (long)x ? x->font->id : -1, 10);
+			puts(buf);
 			puts(" refs=");
 			ltoa(buf, (long)x ? x->font->extra.ref_count : -1, 10);
 			puts_nl(buf);
@@ -2015,7 +2068,7 @@ long ft2_set_effects(Virtual *vwk, Fontheader *font, long effects)
 	font = ft2_find_fontsize(vwk, font, font->size);
 
 	/* Assign and update the ref_counts */
-	if (vwk->text.current_font != font) {
+	if (vwk->text.current_font != font && font ) {
 		if (vwk->text.current_font)
 			vwk->text.current_font->extra.ref_count--;
 		font->extra.ref_count++;
