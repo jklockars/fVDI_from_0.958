@@ -1,7 +1,7 @@
 *****
 * fVDI text set/query functions
 *
-* $Id: text_sq.s,v 1.23 2006-11-12 20:06:23 standa Exp $
+* $Id: text_sq.s,v 1.24 2006-12-08 16:13:13 standa Exp $
 *
 * Copyright 1997-2002, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -228,6 +228,7 @@ lib_vst_color:
 * In:   a1      Parameter block
 *       a0      VDI struct
 vst_effects:
+	uses_d1
 	move.l	intin(a1),a2
 	move.w	(a2),d0
 
@@ -235,6 +236,8 @@ vst_effects:
 	move.l	vwk_text_current_font(a0),a2
 	tst.w	font_flags(a2)
 	bpl	.no_external_vst_effects
+
+	movem.l	d2/a3,-(a7)
 
 	move.l	_external_vst_effects,d2	; (Handle differently?)
 	beq	.no_external_vst_effects	; Not really allowed!
@@ -244,14 +247,22 @@ vst_effects:
 	move.l	_vdi_stack_top,a7		;  extra stack space!
 	move.l	d2,-(a7)			; (Should be improved)
 
+	movem.l	d0-d1/a0-a2,-(a7)
 	move.l	_vdi_stack_size,-(a7)
 	move.l	d0,-(a7)			; Effects to set
 	move.l	a2,-(a7) 			; Fontheader
 	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
 	add.w	#4*4,a7
+	move.l	d0,d2
+	movem.l	(a7)+,d0-d1/a0-a2
 
 	move.l	(a7),a7				; Return to original stack
+
+	move.l	intout(a1),a2
+	move.w	d2,(a2)
+	movem.l	(a7)+,d2/a3
+	used_d1
 	done_return
 
 .no_external_vst_effects:
@@ -260,6 +271,7 @@ vst_effects:
 	move.w	d0,vwk_text_effects(a0)
 	move.l	intout(a1),a2
 	move.w	d0,(a2)
+	used_d1
 	done_return
 
   ifne 0
@@ -275,6 +287,8 @@ lib_vst_effects:
 	tst.w	font_flags(a2)
 	bpl	.no_external_vst_effects
 
+	movem.l	d2/a3,-(a7)
+
 	move.l	_external_vst_effects,d2	; (Handle differently?)
 	beq	.no_external_vst_effects	; Not really allowed!
 	move.l	d2,a3
@@ -283,14 +297,17 @@ lib_vst_effects:
 	move.l	_vdi_stack_top,a7		;  extra stack space!
 	move.l	d2,-(a7)			; (Should be improved)
 
+	movem.l	d0-d1/a0-a2,-(a7)
 	move.l	_vdi_stack_size,-(a7)
 	move.l	d0,-(a7)			; Effects to set
 	move.l	a2,-(a7) 			; Fontheader
 	move.l	a0,-(a7)			; Virtual
 	jsr	(a3)
 	add.w	#4*4,a7
+	movem.l	(a7)+,d0-d1/a0-a2
 
 	move.l	(a7),a7				; Return to original stack
+	movem.l	(a7)+,d2/a3
 	rts
 
 .no_external_vst_effects:

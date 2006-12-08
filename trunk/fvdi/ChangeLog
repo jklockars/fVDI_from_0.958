@@ -1,3 +1,7 @@
+2006-12-08 - standa
+Save some more registers in vst_effects() and fVDI runs in TOS4.04
+again here.
+
 2006-12-04 - johan
 Changed to the latest stable release of FreeType (2.2.1).
 
