@@ -1,3 +1,8 @@
+2007-01-11 - standa
+Outline effect implemented for FT2 scalable fonts. There is some
+code for bitmap fonts which is #if 0 as it crashes for unknown
+reason to me.
+
 2006-12-08 - standa
 Save some more registers in vst_effects() and fVDI runs in TOS4.04
 again here.

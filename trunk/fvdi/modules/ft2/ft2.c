@@ -1,7 +1,7 @@
 /*
  * fVDI font load and setup
  *
- * $Id: ft2.c,v 1.41 2006-12-08 16:19:00 standa Exp $
+ * $Id: ft2.c,v 1.42 2007-01-11 22:07:04 standa Exp $
  *
  * Copyright 1997-2000/2003, Johan Klockars 
  *                     2005, Standa Opichal
@@ -12,6 +12,8 @@
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #include <freetype/ftglyph.h>
+#include <freetype/ftsynth.h>	/* FT_GlyphSlot_Embolden */
+#include <freetype/ftstroke.h>	/* FT_Stroker, ... */
 
 #if 0
 #include <freetype/freetype.h>
@@ -86,6 +88,19 @@ static FT_Error ft2_find_glyph(Virtual *vwk, Fontheader* font, short ch, int wan
 static Fontheader *ft2_dup_font(Virtual *vwk, Fontheader *src, short ptsize);
 static void ft2_dispose_font(Fontheader *font);
 
+/* from ft2_ftsystem.c */
+void ft_keep_open(void);
+void ft_keep_closed(void);
+
+/* from engine/text.s */
+void CDECL bitmap_outline( void *src, void *dst, long pitch, long wdwidth, long lines);
+
+/* just debug temporarilly used in the bitmap_outline() */
+void CDECL bt( void *src, void *dst, long pitch, long wdwidth, long lines) {
+	char buf[255];
+	sprintf( buf, "src = %p, dst = %p, pitch = %ld, wdwidth = %ld, lines = %ld", src, dst, pitch, wdwidth, lines);
+	puts_nl(buf);
+}
 
 #define USE_FREETYPE_ERRORS 1
 
@@ -319,12 +334,17 @@ static Fontheader *ft2_load_metrics(Virtual *vwk, Fontheader *font, FT_Face face
 #if 0
 	if (debug > 1) {
 		char buf[255];
-		access->funcs.puts("Font metrics:\r\n");
-		sprintf(buf,"\tascent = %d, descent = %d\r\n",
-		        font->distance.ascent, font->distance.descent);
+		access->funcs.puts("Font metrics: ");
+		access->funcs.puts(font->name);
+		access->funcs.puts("\r\n");
+		sprintf(buf,"\tascent = %d, descent = %d, sum = %d\r\n",
+		        font->distance.ascent, font->distance.descent, font->distance.ascent + font->distance.descent);
 		access->funcs.puts(buf);
-		sprintf(buf,"\ttop = %d, bottom = %d\r\n",
-		        font->distance.top, font->distance.bottom);
+		sprintf(buf,"\ttop = %d, bottom = %d, height = %d\r\n",
+		        font->distance.top, font->distance.bottom, font->height);
+		access->funcs.puts(buf);
+		sprintf(buf,"\ty_ppem = %d, height = %ld\r\n",
+		        face->size->metrics.y_ppem, face->size->metrics.height);
 		access->funcs.puts(buf);
 		sprintf(buf,"\tcell = %d, character = %d\r\n",
 		        font->widest.cell, font->widest.character);
@@ -798,14 +818,13 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	FT_Face face;
 	FT_Error error;
+	FT_Glyph g;
 	FT_GlyphSlot glyph;
-	FT_Glyph_Metrics *metrics;
-	FT_Outline *outline;
 
 	face = ft2_get_face(vwk, font);
 	if ( !face) {
 		access->funcs.puts(ft2_error("FT2  Couldn't get face", 0));
-		return 0;
+		return 1;
 	}
 
 	/* Load the glyph */
@@ -912,19 +931,26 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	/* Get our glyph shortcuts */
 	glyph = face->glyph;
-	metrics = &glyph->metrics;
-	outline = &glyph->outline;
 
 	bitmap_italics_shear = 0;
 
 	/* Handle 'Bold' effect */
 	if (font->extra.effects & 0x1) {
+		/* From 2.1.10 ChangeLog:
+		 *
+		 * - A new  API `FT_Outline_Embolden'  (in FT_OUTLINE_H) gives  finer
+		 * control how  outlines are embolded.
+		 *
+		 * - `FT_GlyphSlot_Embolden' (in FT_SYNTHESIS_H)  now handles bitmaps
+		 * also (code contributed  by Chia I Wu).  Note that this  function
+		 * is still experimental and may be replaced with a better API. 
+		 */
 		FT_GlyphSlot_Embolden(glyph);
 	}
 
 	/* Handle 'Italic' style */
 	if (font->extra.effects & 0x4) {
-		if (FT_IS_SCALABLE(face)) {
+		if (glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			FT_Matrix shear;
 
 			/* FIXME: not always 12 degree angle here for VDI: see vst_skew() */
@@ -935,20 +961,36 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			shear.yx = 0;
 			shear.yy = 1 << 16;
 
-			FT_Outline_Transform(outline, &shear);
+			FT_Outline_Transform(&glyph->outline, &shear);
 		} else if (face->num_fixed_sizes) {
 			bitmap_italics_shear = font->skewing;
 		}
 	}
 
+	FT_Get_Glyph(glyph, &g);
+
+	/* Outlined style */
+	if (font->extra.effects & 0x10 && glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+		FT_Stroker s;
+
+		error = FT_Stroker_New( library, &s );
+		if (!error) {
+			FT_Stroker_Set(s, 16, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0); 
+			FT_Glyph_Stroke( &g, s, 1 /* delete the original glyph */);
+
+			FT_Stroker_Done( s);
+		}
+	}
+
+
 	/* Get the glyph metrics if desired */
 	if ((want & CACHED_METRICS) && !(cached->stored & CACHED_METRICS)) {
+		FT_Glyph_Metrics *metrics = &glyph->metrics;
+
 		/* Get the bounding box */
 		if (FT_IS_SCALABLE(face)) {
 #if 1
-			FT_Glyph g;
 			FT_BBox bbox;
-			FT_Get_Glyph(glyph, &g);
 			FT_Glyph_Get_CBox(g, FT_GLYPH_BBOX_PIXELS, &bbox);
 
 			cached->minx = bbox.xMin;
@@ -985,9 +1027,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			cached->yoffset = 0;
 			cached->advance = FT_CEIL(metrics->horiAdvance);
 
-			if (bitmap_italics_shear) {
-				cached->maxx += bitmap_italics_shear;
-			}
+			cached->maxx += bitmap_italics_shear;
 		}
 
 		cached->stored |= CACHED_METRICS;
@@ -995,24 +1035,29 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 
 	if (((want & CACHED_BITMAP) && !(cached->stored & CACHED_BITMAP)) ||
 	    ((want & CACHED_PIXMAP) && !(cached->stored & CACHED_PIXMAP))) { 
+		FT_Render_Mode render_mode = (want & CACHED_PIXMAP)
+			? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO;
+		FT_Bitmap *src;
+		FT_Bitmap *dst = (render_mode == FT_RENDER_MODE_NORMAL)
+			? &cached->pixmap : &cached->bitmap;
 		int i;
-		FT_Bitmap *src = &glyph->bitmap;
-		FT_Bitmap *dst;
 
 		/* Render the glyph */
-		if (want & CACHED_PIXMAP) {
-			dst = &cached->pixmap;
-			error = FT_Render_Glyph(glyph, ft_render_mode_normal);
+		if (glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			error = FT_Glyph_To_Bitmap( &g, render_mode, NULL, 0);
+			src = &((FT_BitmapGlyph)g)->bitmap;
 		} else {
-			dst = &cached->bitmap;
-			error = FT_Render_Glyph(glyph, ft_render_mode_mono);
+			error = FT_Render_Glyph( glyph, render_mode);
+			src = &(glyph->bitmap);
 		}
+
 		if (error) {
 			if (debug > 1)
 				access->funcs.puts(ft2_error("FT2  Couldn't render glyph", error));
 
 			/* not rendered -> quite fine, just clean it up */
-			memset( src, 0, src->pitch * src->rows);
+			src->rows = src->width = src->pitch = 0;
+			src->buffer = NULL;
 		}
 
 		/* Copy over to cache */
@@ -1024,23 +1069,53 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 		}
 #endif
 		/* Need to enlarge to fit the italics shear if bitmap font */ 
-		if (bitmap_italics_shear) {
-			dst->width += bitmap_italics_shear;
-		}
+		dst->width += bitmap_italics_shear;
 
-		/* NOTE: This all assumes that the ft_render_mode_normal result is 8 bit */
-
-		dst->pitch = ((dst->width + 15) >> 4) << 1;   /* Only whole words */
 		if (want & CACHED_PIXMAP) {
+			/* NOTE: This all assumes that the ft_render_mode_normal result is 8 bit */
 			dst->pitch = (dst->width + 1) & ~1;   /* Even width is the pitch */
+		} else {
+			dst->pitch = ((dst->width + 15) >> 4) << 1;   /* Only whole words */
 		}
 
-		if (dst->rows != 0) {
+		if (src->rows != 0) {
 			dst->buffer = malloc(dst->pitch * dst->rows);
 			if (!dst->buffer) {
-				return FT_Err_Out_Of_Memory;
+				access->funcs.puts("FT2  Not dst alloc: enough memory");
+				FT_Done_Glyph( g);
+				return 1;
 			}
 			setmem(dst->buffer, 0, dst->pitch * dst->rows);
+
+			/* Outlined style */
+			if (font->extra.effects & 0x10 && glyph->format == FT_GLYPH_FORMAT_BITMAP) {
+#if 0
+				CRASHES ...
+
+				/* convert to the word aligned pitch (to dst buffer) */
+				long pitch = ((src->width + 15) >> 4) << 1;   /* whole words */
+				for(i = 0; i < src->rows; i++) {
+					int soffset = i * src->pitch;
+					int doffset = i * pitch;
+					memcpy(dst->buffer + doffset,
+					       src->buffer + soffset, src->pitch);
+				}
+
+				/* set the src pitch to the same */
+				src->pitch = pitch;
+				src->buffer = realloc(src->buffer, src->pitch * src->rows);
+				setmem(src->buffer, 0, src->pitch * src->rows);
+
+				/* now word aligned pitch is in dst
+				 * -> outline the glyph into src->buffer */
+				bitmap_outline( dst->buffer, src->buffer,
+						src->pitch, src->pitch >> 1, src->rows);
+
+				/* clean the temporary dst again */
+				setmem(dst->buffer, 0, dst->pitch * dst->rows);
+#endif
+			}
+
 
 			if ((want & CACHED_PIXMAP) && (src->pixel_mode == FT_PIXEL_MODE_MONO)) {
 				/* This special case wouldn't
@@ -1072,6 +1147,7 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 					}
 				}
 			} else {
+				/* convert to the dst pitch */
 				for(i = 0; i < src->rows; i++) {
 					int soffset = i * src->pitch;
 					int doffset = i * dst->pitch;
@@ -1138,11 +1214,6 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 			}
 		}
 
-		/* Outlined style */
-		if (font->extra.effects & 0x10) {
-			/* FIXME: TODO */
-		}
-
 		/* Light/grey effect */
 		if (font->extra.effects & 0x2) {
 			int row, col;
@@ -1150,9 +1221,10 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 				unsigned char *pixmap = (unsigned char *)dst->buffer;
 
 				for(row = dst->rows - 1; row >= 0; --row) {
-					short lightening = row & 1 ? font->lightening : ~font->lightening;
 					for(col = 0; col < dst->width; col++) {
 						/* This is rather bitmap grey effect
+						 * short lightening = row & 1 ? font->lightening : ~font->lightening;
+						 *
 						 * *(pixmap + col) = (lightening & (1 << (col % 16)) ) ? *(pixmap + col) : 0;
 						 *
 						 * Better to just make the color greyer:
@@ -1177,6 +1249,8 @@ static FT_Error ft2_load_glyph(Virtual *vwk, Fontheader *font, short ch, c_glyph
 		/* Mark that we rendered this format */
 		cached->stored |= want & (CACHED_BITMAP | CACHED_PIXMAP);
 	}
+
+	FT_Done_Glyph( g);
 
 	/* We're done, mark this glyph cached */
 	cached->cached = ch;
@@ -1520,6 +1594,8 @@ MFDB *ft2_text_render_antialias(Virtual *vwk, Fontheader *font, short x, short y
 
 		free(tb.address);
 	}
+
+	return NULL;
 }
 
 MFDB *ft2_text_render(Virtual *vwk, Fontheader *font, const short *text, MFDB *textbuf)
