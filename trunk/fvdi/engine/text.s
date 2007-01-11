@@ -1,7 +1,7 @@
 *****
 * fVDI text drawing functions
 *
-* $Id: text.s,v 1.9 2005-10-03 22:51:42 johan Exp $
+* $Id: text.s,v 1.10 2007-01-11 22:06:09 standa Exp $
 *
 * Copyright 1997-2003, Johan Klockars 
 * This software is licensed under the GNU General Public License.
@@ -18,7 +18,7 @@ transparent	equ	1		; Fall through?
 	xref	line_types
 	xref	_lib_vqt_extent,lib_vrt_cpyfm
 	xref	allocate_block,free_block
-	xref	text_area
+	xref	text_area, _bt
 	xref	_vdi_stack_top,_vdi_stack_size,_external_renderer
 
 	xdef	v_gtext,v_ftext,v_justified
@@ -28,6 +28,8 @@ transparent	equ	1		; Fall through?
 	xdef	_default_text
 
 	xdef	_draw_text
+
+	xdef	_bitmap_outline
 
 
 	text
@@ -894,6 +896,35 @@ bold:
 	add.l	a6,a0
 	add.l	a6,a1
 	dbra	d7,.lines_b
+	rts
+
+
+_bitmap_outline:
+	move.l	a5,-(a7)
+	move.l	a7,a5		; frame pointer
+	movem.l	d1-d7/a2-a4/a6,-(a7)
+
+	move.l	8+0(a5),a0	; src
+	move.l	8+4(a5),a1	; dst
+	move.l	8+8(a5),a6	; wrap (pitch)
+	move.l	8+12(a5),d3	; wdwidth
+	move.l	8+16(a5),d7	; lines
+
+  ifne 1
+	movem.l	d1-d7/a1-a6,-(a7)
+	move.l	d7,-(a7)
+	move.l	d3,-(a7)
+	move.l	a6,-(a7)
+	move.l	a1,-(a7)
+	move.l	a0,-(a7)
+	jsr	_bt
+	add.l	#5*4,a7
+	movem.l	(a7)+,d1-d7/a1-a6
+  endc
+
+	bsr	outline
+	movem.l	(a7)+,d1-d7/a2-a4/a6
+	move.l	(a7)+,a5
 	rts
 
 
