@@ -35,7 +35,7 @@ OPTS   = -O2 -fomit-frame-pointer
 # If building for 68000 (no long multiply instruction),
 # this must be set to point to the gcc library.
 ifeq ($(CPU),000)
- LIBS = -L/usr/lib/gcc-lib/m68k-atari-mint/2.95.3/ -lgcc
+ LIBS = -L/opt/cross-mint/lib/gcc/m68k-atari-mint/4.6.3/ -lgcc
 endif
 
 
