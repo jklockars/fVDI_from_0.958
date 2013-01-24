@@ -10,35 +10,35 @@ sed "s%;.*$%%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Conditional compilation
-sed "s%^\\([ \t]\+\\)ifne%\1.ifne%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)ifne%\1.ifne%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)ifeq%\1.ifeq%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)ifeq%\1.ifeq%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)ifge%\1.ifge%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)ifge%\1.ifge%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)else%\1.else%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)else%\1.else%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)endc%\1.endif%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)endc%\1.endif%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Constants
-sed "s%^\\([^ \t]*\\)[ \t]\+equ[ \t]\+%\t.equiv\t\\1,%" $file.tmp >$file.gnu
+sed "s%^\\([^ 	]*\\)[ 	][ 	]*equ[ 	][ 	]*%	.equiv	\\1,%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([^ \t]*\\)[ \t]\+set[ \t]\+%\t.set\t\\1,%" $file.tmp >$file.gnu
+sed "s%^\\([^ 	]*\\)[ 	][ 	]*set[ 	][ 	]*%	.set	\\1,%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Sections
-sed "s%^\\([ \t]\+\\)text%\1.text%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)text%\1.text%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)data%\1.data%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)data%\1.data%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%^\\([ \t]\+\\)bss%\1.bss%" $file.tmp >$file.gnu
+sed "s%^\\([ 	][ 	]*\\)bss%\1.bss%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Includes
 sed "s%\.inc\"%.inc.gnu\"%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)include%\1.include%" $file.tmp >$file.gnu
+sed "s%\\([ 	][ 	]*\\)include%\1.include%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Hexadecimal numbers
@@ -46,17 +46,21 @@ sed "s%\\$%0x%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Data
-sed "s%\\([ \t]\+\\)dc.b%\1.byte%" $file.tmp >$file.gnu
+sed "s%\\([ 	][ 	]*\\)dc.b%\1.byte%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.w%\1.word%" $file.tmp >$file.gnu
+sed "s%\\([ 	][ 	]*\\)dc.w%\1.word%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)dc.l%\1.long%" $file.tmp >$file.gnu
+sed "s%\\([ 	][ 	]*\\)dc.l%\1.long%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 # Miscellaneous directives
-sed "s%\.end\\([ \t]\+\|$\|\:\\)%.end___fix\1%" $file.tmp >$file.gnu
+sed "s%\.end\\([ 	][ 	]*\|$\|\:\\)%.end___fix\1%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
-sed "s%\\([ \t]\+\\)end\\(\\([ \t]\+\\)\|$\\)%\1.end%" $file.tmp >$file.gnu
+sed "s%\\([ 	][ 	]*\\)end\\(\\([ 	][ 	]*\\)\|$\\)%\1.end%" $file.tmp >$file.gnu
+mv $file.gnu $file.tmp
+sed "s%\\([ 	][ 	]*\\)end\\([ 	][ 	]*\\)%\1.end%" $file.tmp >$file.gnu
+mv $file.gnu $file.tmp
+sed "s%\\([ 	][ 	]*\\)end\\($\\)%\1.end%" $file.tmp >$file.gnu
 mv $file.gnu $file.tmp
 
 
